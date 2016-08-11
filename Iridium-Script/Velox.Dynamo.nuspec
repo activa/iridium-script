@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>velox.core</id>
+    <version>1.0.1</version>
+    <title>Velox.Dynamo</title>
+    <authors>Philippe Leybaert</authors>
+    <owners>Philippe Leybaert</owners>
+    <licenseUrl>https://raw.githubusercontent.com/velox/Core/master/LICENSE</licenseUrl>
+    <projectUrl>http://github.com/velox/dynamo</projectUrl>
+    <iconUrl>http://dstyler.com/vici/32x32/im-_IconPlain100-w32-h32.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Portable and lightweight C# library for scripting, expression evaluation and template rendering. Compatible with mobile platforms where Reflection.Emit is not supported.</description>
+    <language>en-US</language>
+    <tags>velox dynamo scripting c# expression templates</tags>
+    <dependencies>
+      <dependency id="velox.core" version="1.0.1.6" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="*.dll" target="lib\portable-net45+netcore45+wpa81+wp8" />
+  </files>
+</package>
