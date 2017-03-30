@@ -151,8 +151,8 @@
     <Compile Include="TemplateParser\Tokenizer\TemplateTokenType.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Iridium-Script.nuspec" />
     <None Include="packages.config" />
-    <None Include="Velox.Dynamo.nuspec" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Iridium-Core, Version=1.1.2.33720, Culture=neutral, processorArchitecture=MSIL">

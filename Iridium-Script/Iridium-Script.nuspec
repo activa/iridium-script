@@ -1,23 +1,23 @@
 <?xml version="1.0"?>
 <package>
   <metadata>
-    <id>velox.core</id>
-    <version>1.0.1</version>
-    <title>Velox.Dynamo</title>
+    <id>iridium.script</id>
+    <version>1.0.0</version>
+    <title>Iridium-Script</title>
     <authors>Philippe Leybaert</authors>
     <owners>Philippe Leybaert</owners>
-    <licenseUrl>https://raw.githubusercontent.com/velox/Core/master/LICENSE</licenseUrl>
-    <projectUrl>http://github.com/velox/dynamo</projectUrl>
+    <licenseUrl>https://raw.githubusercontent.com/activa/iridium-script/master/LICENSE</licenseUrl>
+    <projectUrl>http://github.com/activa/iridium-script</projectUrl>
     <iconUrl>http://dstyler.com/vici/32x32/im-_IconPlain100-w32-h32.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Portable and lightweight C# library for scripting, expression evaluation and template rendering. Compatible with mobile platforms where Reflection.Emit is not supported.</description>
     <language>en-US</language>
-    <tags>velox dynamo scripting c# expression templates</tags>
+    <tags>iridium scripting c# expression templates mobile xamarin</tags>
     <dependencies>
-      <dependency id="velox.core" version="1.0.1.6" />
+      <dependency id="Iridium-Core" version="1.1.2" />
     </dependencies>
   </metadata>
   <files>
-    <file src="*.dll" target="lib\portable-net45+netcore45+wpa81+wp8" />
+    <file src="*.dll" target="lib\portable-net45+win8+wpa81" />
   </files>
 </package>
