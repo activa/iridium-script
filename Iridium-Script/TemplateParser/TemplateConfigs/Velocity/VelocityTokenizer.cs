@@ -24,6 +24,7 @@
 //=============================================================================
 #endregion
 
+using Iridium.Core;
 using Iridium.Script.CSharp;
 
 namespace Iridium.Script

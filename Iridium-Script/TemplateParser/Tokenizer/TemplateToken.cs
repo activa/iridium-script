@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Iridium.Core;
 
 namespace Iridium.Script
 {

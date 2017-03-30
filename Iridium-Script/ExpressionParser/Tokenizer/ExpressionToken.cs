@@ -26,6 +26,7 @@
 
 using System;
 using System.Linq;
+using Iridium.Core;
 
 namespace Iridium.Script
 {

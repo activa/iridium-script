@@ -24,6 +24,8 @@
 //=============================================================================
 #endregion
 
+using Iridium.Core;
+
 namespace Iridium.Script.CSharp
 {
     public class StringLiteralMatcher : ITokenMatcher, ITokenProcessor

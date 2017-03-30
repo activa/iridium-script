@@ -24,6 +24,8 @@
 //=============================================================================
 #endregion
 
+using Iridium.Core;
+
 namespace Iridium.Script
 {
     public class WrappedExpressionMatcher : ITokenMatcher, ITokenProcessor

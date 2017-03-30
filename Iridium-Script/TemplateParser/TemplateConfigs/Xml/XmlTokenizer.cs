@@ -25,6 +25,7 @@
 #endregion
 
 using System.Text.RegularExpressions;
+using Iridium.Core;
 
 namespace Iridium.Script
 {
