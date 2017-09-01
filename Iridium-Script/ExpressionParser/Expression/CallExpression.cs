@@ -49,67 +49,60 @@ namespace Iridium.Script
             Type[] parameterTypes = parameters.ConvertAll(expr => expr.Type);
             object[] parameterValues = parameters.ConvertAll(expr => expr.Value);
 
-			if (methodObject is MethodDefinition)
+			switch (methodObject)
 			{
-				Type returnType;
+			    case MethodDefinition methodDefinition:
+			        return Exp.Value((methodDefinition).Invoke(parameterTypes, parameterValues, out var returnType), returnType);
 
-                return Exp.Value(((MethodDefinition)methodObject).Invoke(parameterTypes, parameterValues, out returnType), returnType);
+			    case ConstructorInfo[] constructors:
+			    {
+			        MethodBase method = SmartBinder.SelectBestMethod(constructors, parameterTypes, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+
+			        if (method == null)
+			            throw new ExpressionEvaluationException("No match found for constructor " + constructors[0].Name, this);
+
+			        object value = SmartBinder.Invoke(method, parameterValues);
+
+			        //object value = ((ConstructorInfo)method).Invoke(parameterValues);
+
+			        return Exp.Value( value, method.DeclaringType);
+			    }
+
+			    case Delegate[] delegates:
+			    {
+			        MethodBase[] methods = delegates.ConvertAll<Delegate, MethodBase>(d => d.GetMethodInfo());
+
+			        MethodBase method = SmartBinder.SelectBestMethod(methods, parameterTypes, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+
+			        if (method == null)
+			            throw new ExpressionEvaluationException("No match found for delegate " + MethodExpression, this);
+
+			        object value = SmartBinder.Invoke(method, delegates[Array.IndexOf(methods, method)].Target, parameterValues);
+
+			        return Exp.Value(value, ((MethodInfo)method).ReturnType);
+			    }
+
+			    case Delegate method:
+			    {
+			        MethodInfo methodInfo = method.GetMethodInfo();
+
+			        object value = methodInfo.Invoke(method.Target, parameterValues);
+
+			        return Exp.Value(value, methodInfo.ReturnType);
+			    }
+
+			    case FunctionDefinitionExpression func:
+			    {
+			        var functionContext = context.CreateLocal();
+
+			        for (int i = 0; i < parameterValues.Length; i++)
+			        {
+			            functionContext.Set(func.ParameterNames[i], parameterValues[i]);
+			        }
+
+			        return func.Body.Evaluate(functionContext);
+			    }
 			}
-
-			if (methodObject is ConstructorInfo[])
-			{
-				ConstructorInfo[] constructors = (ConstructorInfo[]) methodObject;
-
-                MethodBase method = SmartBinder.SelectBestMethod(constructors, parameterTypes, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
-
-				if (method == null)
-					throw new ExpressionEvaluationException("No match found for constructor " + constructors[0].Name, this);
-
-			    object value = SmartBinder.Invoke(method, parameterValues);
-
-				//object value = ((ConstructorInfo)method).Invoke(parameterValues);
-
-                return Exp.Value( value, method.DeclaringType);
-			}
-
-			if (methodObject is Delegate[])
-			{
-				Delegate[] delegates = (Delegate[]) methodObject;
-                MethodBase[] methods = delegates.ConvertAll<Delegate, MethodBase>(d => d.GetMethodInfo());
-
-                MethodBase method = SmartBinder.SelectBestMethod(methods, parameterTypes, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
-
-				if (method == null)
-					throw new ExpressionEvaluationException("No match found for delegate " + MethodExpression, this);
-
-                object value = SmartBinder.Invoke(method, delegates[Array.IndexOf(methods, method)].Target, parameterValues);
-
-                return Exp.Value(value, ((MethodInfo)method).ReturnType);
-			}
-
-            if (methodObject is Delegate)
-            {
-                Delegate method = (Delegate) methodObject;
-                MethodInfo methodInfo = method.GetMethodInfo();
-
-                object value = methodInfo.Invoke(method.Target, parameterValues);
-
-                return Exp.Value(value, methodInfo.ReturnType);
-            }
-
-            if (methodObject is FunctionDefinitionExpression)
-            {
-                FunctionDefinitionExpression func = (FunctionDefinitionExpression) methodObject;
-
-                var functionContext = context.CreateLocal();
-
-                for (int i=0;i<parameterValues.Length;i++)
-                {
-                    functionContext.Set(func.ParameterNames[i],parameterValues[i]);
-                }
-
-                return func.Body.Evaluate(functionContext);
-            }
 
             throw new ExpressionEvaluationException(MethodExpression + " is not a function", this);
         }

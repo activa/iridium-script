@@ -1,4 +1,5 @@
 #region License
+
 //=============================================================================
 // VeloxDB Core - Portable .NET Productivity Library 
 //
@@ -22,6 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //=============================================================================
+
 #endregion
 
 using System;
@@ -34,34 +36,34 @@ using Iridium.Script.CSharp;
 
 namespace Iridium.Script
 {
-	public class TemplateParser<TConfig> : TemplateParser<TConfig, CSharpParser> where  TConfig:TemplateParserConfig,new()
-	{
-	}
+    public class TemplateParser<TConfig> : TemplateParser<TConfig, CSharpParser> where TConfig : TemplateParserConfig, new()
+    {
+    }
 
-	public class TemplateParser<TConfig,TParser> : TemplateParser where TParser:ExpressionParser,new() where  TConfig:TemplateParserConfig,new()
-	{
-		public TemplateParser() : base(new TConfig() , new TParser())
-		{
-		}
-	}
+    public class TemplateParser<TConfig, TParser> : TemplateParser where TParser : ExpressionParser, new() where TConfig : TemplateParserConfig, new()
+    {
+        public TemplateParser() : base(new TConfig(), new TParser())
+        {
+        }
+    }
 
-	public class TemplateParser
+    public class TemplateParser
     {
         public ExpressionParser Parser { get; }
         public TemplateParserConfig Config { get; }
 
         public TemplateParser(TemplateParserConfig config)
-		{
-			Config = config;
-		}
+        {
+            Config = config;
+        }
 
-		public TemplateParser(TemplateParserConfig config, ExpressionParser parser)
-		{
-			Config = config;
-			Parser = parser;
-		}
+        public TemplateParser(TemplateParserConfig config, ExpressionParser parser)
+        {
+            Config = config;
+            Parser = parser;
+        }
 
-	    public CompiledTemplate ParseFile(string fileName)
+        public CompiledTemplate ParseFile(string fileName)
         {
             CompiledTemplate template = Parse(FileIO.ReadAllText(fileName));
 
@@ -70,7 +72,7 @@ namespace Iridium.Script
             return template;
         }
 
-    	public CompiledTemplate Parse(string inputString)
+        public CompiledTemplate Parse(string inputString)
         {
             try
             {
@@ -78,7 +80,7 @@ namespace Iridium.Script
 
                 TemplateNode currentNode = new TemplateNode();
 
-                CompiledTemplate compiledTemplate = new CompiledTemplate(currentNode); 
+                CompiledTemplate compiledTemplate = new CompiledTemplate(currentNode);
 
                 TextTemplateNode lastTextNode = null;
                 bool checkEmptyLine = false;
@@ -106,100 +108,99 @@ namespace Iridium.Script
                     switch (token.TokenType)
                     {
                         case TemplateTokenType.MacroCall:
-                            {
-                                currentNode.Add(new MacroCallTemplateNode(token));
-                            }
+                        {
+                            currentNode.Add(new MacroCallTemplateNode(token));
+                        }
                             break;
 
                         case TemplateTokenType.ParseFile:
-                            {
-                                currentNode.Add(new ParseFileTemplateNode(token));
-                            }
+                        {
+                            currentNode.Add(new ParseFileTemplateNode(token));
+                        }
                             break;
 
                         case TemplateTokenType.IncludeFile:
-                            {
-                                currentNode.Add(new IncludeFileTemplateNode(token));
-                            }
+                        {
+                            currentNode.Add(new IncludeFileTemplateNode(token));
+                        }
                             break;
 
                         case TemplateTokenType.Statement:
                         case TemplateTokenType.Expression:
-                            {
-                                currentNode.Add(new ExpressionTemplateNode(token));
-                            }
+                        {
+                            currentNode.Add(new ExpressionTemplateNode(token));
+                        }
                             break;
 
                         case TemplateTokenType.MacroDefinition:
-                            {
-                                nodeStack.Push(currentNode);
+                        {
+                            nodeStack.Push(currentNode);
 
-                                currentNode = currentNode.Add(new MacroDefinitionTemplateNode(token));
+                            currentNode = currentNode.Add(new MacroDefinitionTemplateNode(token));
 
-                                string macroName = EvalMacroDefinition(token);
+                            string macroName = EvalMacroDefinition(token);
 
-                                compiledTemplate.Macros[macroName] = currentNode;
-                            }
+                            compiledTemplate.Macros[macroName] = currentNode;
+                        }
                             break;
 
                         case TemplateTokenType.ForEach:
-                            {
-                                nodeStack.Push(currentNode);
+                        {
+                            nodeStack.Push(currentNode);
 
-                                currentNode = currentNode.Add(new ForEachTemplateNode((ForeachTemplateToken) token));
-                            }
+                            currentNode = currentNode.Add(new ForEachTemplateNode((ForeachTemplateToken) token));
+                        }
                             break;
 
                         case TemplateTokenType.If:
-                            {
-                                nodeStack.Push(currentNode);
+                        {
+                            nodeStack.Push(currentNode);
 
-                                IfTemplateNode ifNode = (IfTemplateNode) currentNode.Add(new IfTemplateNode(token));
+                            IfTemplateNode ifNode = (IfTemplateNode) currentNode.Add(new IfTemplateNode(token));
 
-                                ifNode.TrueNode = new TemplateNode();
+                            ifNode.TrueNode = new TemplateNode();
 
-                                nodeStack.Push(ifNode);
+                            nodeStack.Push(ifNode);
 
-                                currentNode = ifNode.TrueNode;
-                            }
+                            currentNode = ifNode.TrueNode;
+                        }
                             break;
 
                         case TemplateTokenType.ElseIf:
-                            {
-                                IfTemplateNode ifNode = (IfTemplateNode) nodeStack.Peek();
+                        {
+                            IfTemplateNode ifNode = (IfTemplateNode) nodeStack.Peek();
 
-                                currentNode = ifNode.FalseNode = new TemplateNode();
+                            currentNode = ifNode.FalseNode = new TemplateNode();
 
-                                ifNode = (IfTemplateNode) currentNode.Add(new IfTemplateNode(token));
+                            ifNode = (IfTemplateNode) currentNode.Add(new IfTemplateNode(token));
 
-                                ifNode.TrueNode = new TemplateNode();
+                            ifNode.TrueNode = new TemplateNode();
 
-                                nodeStack.Push(ifNode);
+                            nodeStack.Push(ifNode);
 
-                                currentNode = ifNode.TrueNode;
-                            }
+                            currentNode = ifNode.TrueNode;
+                        }
                             break;
 
                         case TemplateTokenType.Else:
-                            {
-                                IfTemplateNode ifNode = (IfTemplateNode) nodeStack.Peek();
+                        {
+                            IfTemplateNode ifNode = (IfTemplateNode) nodeStack.Peek();
 
-                                currentNode = ifNode.FalseNode = new TemplateNode();
-                            }
+                            currentNode = ifNode.FalseNode = new TemplateNode();
+                        }
                             break;
 
                         case TemplateTokenType.EndBlock:
+                        {
+                            while (nodeStack.Peek() is IfTemplateNode)
                             {
-                                while (nodeStack.Peek() is IfTemplateNode)
-                                {
-                                    nodeStack.Pop();
-                                }
-
-                                currentNode = nodeStack.Pop();
+                                nodeStack.Pop();
                             }
+
+                            currentNode = nodeStack.Pop();
+                        }
                             break;
                     }
-
                 }
 
                 return compiledTemplate;
@@ -210,33 +211,33 @@ namespace Iridium.Script
             }
         }
 
-    	private static string CheckEmptyLine(TextTemplateNode lastTextNode, string text)
-    	{
-    		string prevText = lastTextNode == null ? "":lastTextNode.Text;
+        private static string CheckEmptyLine(TextTemplateNode lastTextNode, string text)
+        {
+            string prevText = lastTextNode == null ? "" : lastTextNode.Text;
 
-    		Match m1 = Regex.Match(prevText, @"\n[\x20\t]*$",RegexOptions.Singleline);
+            Match m1 = Regex.Match(prevText, @"\n[\x20\t]*$", RegexOptions.Singleline);
 
-    		if (m1.Success)
-    		{
-    			Match m2 = Regex.Match(text, @"^[\x20\t\r]*?\n", RegexOptions.Singleline);
+            if (m1.Success)
+            {
+                Match m2 = Regex.Match(text, @"^[\x20\t\r]*?\n", RegexOptions.Singleline);
 
-    			if (m2.Success)
-    			{
-    				if (lastTextNode != null)
-    					lastTextNode.Text = lastTextNode.Text.Substring(0,m1.Index+1);
+                if (m2.Success)
+                {
+                    if (lastTextNode != null)
+                        lastTextNode.Text = lastTextNode.Text.Substring(0, m1.Index + 1);
 
-    				text = text.Substring(m2.Length);
-    			}
-    		}
-    		return text;
-    	}
+                    text = text.Substring(m2.Length);
+                }
+            }
+            return text;
+        }
 
         public string RenderFile(string fileName, IParserContext context)
         {
             return Render(ParseFile(fileName), context);
         }
 
-    	public string Render(CompiledTemplate compiledTemplate, IParserContext context)
+        public string Render(CompiledTemplate compiledTemplate, IParserContext context)
         {
             try
             {
@@ -246,7 +247,7 @@ namespace Iridium.Script
 
                 StringBuilder outputBuffer = new StringBuilder();
 
-                Dictionary<string,TemplateNode> macros = new Dictionary<string, TemplateNode>(compiledTemplate.Macros, StringComparer.OrdinalIgnoreCase);
+                Dictionary<string, TemplateNode> macros = new Dictionary<string, TemplateNode>(compiledTemplate.Macros, StringComparer.OrdinalIgnoreCase);
 
                 BuildOutput(compiledTemplate, macros, compiledTemplate.Tree, outputBuffer, context);
 
@@ -270,128 +271,120 @@ namespace Iridium.Script
 
             foreach (TemplateNode node in rootNode.Children)
             {
-                if (node is ForEachTemplateNode)
+                switch (node)
                 {
-                    ForEachTemplateNode forEachNode = (ForEachTemplateNode)node;
-
-                	IEnumerable list = EvalForeach(forEachNode.TemplateToken, context);
-
-                    if (list != null)
+                    case ForEachTemplateNode forEachNode:
                     {
-                        IParserContext localContext = context.CreateLocal();
+                        IEnumerable list = EvalForeach(forEachNode.TemplateToken, context);
 
-                        int rowNum = 1;
-
-                        foreach (object listItem in list)
+                        if (list != null)
                         {
-                            localContext.Set(forEachNode.Iterator, listItem, listItem == null ? typeof(object) : listItem.GetType());
+                            IParserContext localContext = context.CreateLocal();
 
-							EvalIteration(forEachNode.Iterator, rowNum, listItem, localContext);
+                            int rowNum = 1;
 
-                            BuildOutput(compiledTemplate, macros, forEachNode, outputBuffer, localContext);
+                            foreach (object listItem in list)
+                            {
+                                localContext.Set(forEachNode.Iterator, listItem, listItem == null ? typeof(object) : listItem.GetType());
 
-                            rowNum++;
+                                EvalIteration(forEachNode.Iterator, rowNum, listItem, localContext);
+
+                                BuildOutput(compiledTemplate, macros, forEachNode, outputBuffer, localContext);
+
+                                rowNum++;
+                            }
                         }
+                        break;
                     }
-                }
 
-                else if (node is IfTemplateNode)
-                {
-                    IfTemplateNode ifNode = (IfTemplateNode)node;
-
-                	bool result = EvalIf(ifNode.TemplateToken, context);
-
-                    BuildOutput(compiledTemplate, macros, result ? ifNode.TrueNode : ifNode.FalseNode, outputBuffer, context);
-                }
-
-                else if (node is ExpressionTemplateNode)
-                {
-                    ExpressionTemplateNode exprNode = (ExpressionTemplateNode)node;
-
-                	string value = EvalExpression(exprNode.TemplateToken, context);
-
-                    if (value != null)
-                        outputBuffer.Append(value);
-                }
-
-                else if (node is ParseFileTemplateNode)
-                {
-                    ParseFileTemplateNode parseFileNode = (ParseFileTemplateNode) node;
-
-                    Dictionary<string, IValueWithType> parameters;
-
-                    CompiledTemplate template = EvalParseFile(this, compiledTemplate.FileName, parseFileNode.TemplateToken, context, out parameters);
-
-                    if (template != null)
+                    case IfTemplateNode ifNode:
                     {
-                        foreach (KeyValuePair<string, TemplateNode> macro in template.Macros)
-                            macros[macro.Key] = macro.Value;
+                        bool result = EvalIf(ifNode.TemplateToken, context);
+
+                        BuildOutput(compiledTemplate, macros, result ? ifNode.TrueNode : ifNode.FalseNode, outputBuffer, context);
+
+                        break;
+                    }
+
+                    case ExpressionTemplateNode exprNode:
+                    {
+                        string value = EvalExpression(exprNode.TemplateToken, context);
+
+                        if (value != null)
+                            outputBuffer.Append(value);
+
+                        break;
+                    }
+
+                    case ParseFileTemplateNode parseFileNode:
+                    {
+                        CompiledTemplate template = EvalParseFile(this, compiledTemplate.FileName, parseFileNode.TemplateToken, context, out var parameters);
+
+                        if (template != null)
+                        {
+                            foreach (KeyValuePair<string, TemplateNode> macro in template.Macros)
+                                macros[macro.Key] = macro.Value;
+
+                            IParserContext localContext = context.CreateLocal();
+
+                            foreach (var param in parameters)
+                                localContext.Set(param.Key, param.Value.Value, param.Value.Type);
+
+                            BuildOutput(compiledTemplate, macros, template.Tree, outputBuffer, localContext);
+                        }
+                        break;
+                    }
+
+                    case IncludeFileTemplateNode includeNode:
+                    {
+                        string value = EvalIncludeFile(compiledTemplate.FileName, includeNode.TemplateToken, context);
+
+                        if (value != null)
+                            outputBuffer.Append(value);
+
+                        break;
+                    }
+
+                    case MacroCallTemplateNode macroCallNode:
+                    {
+                        string macroName = EvalMacroCall(macroCallNode.TemplateToken, context, out var parameters);
+
+                        if (!macros.TryGetValue(macroName, out var macro))
+                            throw new TemplateRenderingException("Unknown macro " + macroName);
 
                         IParserContext localContext = context.CreateLocal();
 
-                        foreach (KeyValuePair<string, IValueWithType> var in parameters)
-                            localContext.Set(var.Key, var.Value.Value, var.Value.Type);
+                        foreach (var param in parameters)
+                        {
+                            localContext.Set(param.Key, param.Value.Value, param.Value.Type);
+                        }
 
-                        BuildOutput(compiledTemplate, macros, template.Tree, outputBuffer, localContext);
-                    }
-                }
+                        BuildOutput(compiledTemplate, macros, macro, outputBuffer, localContext);
 
-                else if (node is IncludeFileTemplateNode)
-                {
-                    IncludeFileTemplateNode includeNode = (IncludeFileTemplateNode) node;
-
-                    string value = EvalIncludeFile(compiledTemplate.FileName, includeNode.TemplateToken, context);
-
-                    if (value != null)
-                        outputBuffer.Append(value);
-                }
-
-                else if (node is MacroCallTemplateNode)
-                {
-                    MacroCallTemplateNode macroCallNode = (MacroCallTemplateNode) node;
-
-                    Dictionary<string, IValueWithType> parameters;
-
-                    string macroName = EvalMacroCall(macroCallNode.TemplateToken, context, out parameters);
-
-
-                    TemplateNode macro;
-                    
-                    if (!macros.TryGetValue(macroName, out macro))
-                        throw new TemplateRenderingException("Unknown macro " + macroName);
-
-                    IParserContext localContext = context.CreateLocal();
-
-                    foreach (KeyValuePair<string, IValueWithType> var in parameters)
-                    {
-                        localContext.Set(var.Key, var.Value.Value, var.Value.Type);
+                        break;
                     }
 
-                    BuildOutput(compiledTemplate, macros, macro, outputBuffer, localContext);
-                }
-
-                else if (node is TextTemplateNode)
-                {
-                    outputBuffer.Append(EvalText(((TextTemplateNode)node).Text));
+                    case TextTemplateNode textTemplateNode:
+                        outputBuffer.Append(EvalText(textTemplateNode.Text));
+                        break;
                 }
             }
-
         }
 
         private string EvalExpression(TemplateToken templateToken, IParserContext context)
-		{
-			string returnValue = OnEvalExpression(templateToken, context);
+        {
+            string returnValue = OnEvalExpression(templateToken, context);
 
             if (templateToken.TokenType != TemplateTokenType.Statement)
-    			return returnValue;
+                return returnValue;
 
             return "";
-		}
+        }
 
-		protected virtual string OnEvalExpression(TemplateToken templateToken, IParserContext context)
-		{
-		    return Config.EvalExpression(Parser, templateToken, context);
-		}
+        protected virtual string OnEvalExpression(TemplateToken templateToken, IParserContext context)
+        {
+            return Config.EvalExpression(Parser, templateToken, context);
+        }
 
         private CompiledTemplate EvalParseFile(TemplateParser templateParser, string fileName, TemplateToken templateToken, IParserContext context, out Dictionary<string, IValueWithType> parameters)
         {
@@ -424,7 +417,7 @@ namespace Iridium.Script
         }
 
 
-        private string EvalMacroCall(TemplateToken templateToken, IParserContext context, out Dictionary<string,IValueWithType> parameters)
+        private string EvalMacroCall(TemplateToken templateToken, IParserContext context, out Dictionary<string, IValueWithType> parameters)
         {
             return OnEvalMacroCall(templateToken, context, out parameters);
         }
@@ -435,43 +428,43 @@ namespace Iridium.Script
         }
 
         private bool EvalIf(TemplateToken templateToken, IParserContext context)
-		{
+        {
             return OnEvalIf(templateToken, context);
-		}
+        }
 
-		protected virtual bool OnEvalIf(TemplateToken templateToken, IParserContext context)
-		{
-		    return Config.EvalIf(Parser, templateToken, context);
-		}
+        protected virtual bool OnEvalIf(TemplateToken templateToken, IParserContext context)
+        {
+            return Config.EvalIf(Parser, templateToken, context);
+        }
 
-		private IEnumerable EvalForeach(ForeachTemplateToken templateToken, IParserContext context)
-		{
+        private IEnumerable EvalForeach(ForeachTemplateToken templateToken, IParserContext context)
+        {
             return OnEvalForeach(templateToken, context);
-		}
+        }
 
-		protected virtual IEnumerable OnEvalForeach(ForeachTemplateToken templateToken, IParserContext context)
-		{
-		    return Config.EvalForeach(Parser, templateToken, context);
-		}
+        protected virtual IEnumerable OnEvalForeach(ForeachTemplateToken templateToken, IParserContext context)
+        {
+            return Config.EvalForeach(Parser, templateToken, context);
+        }
 
         private void EvalIteration(string iteratorName, int rowNum, object obj, IParserContext localContext)
         {
             OnEvalIteration(iteratorName, rowNum, obj, localContext);
         }
 
-		protected virtual void OnEvalIteration(string iteratorName, int rowNum, object obj, IParserContext localContext)
-		{
-		    Config.EvalIteration(iteratorName, rowNum, obj, localContext);
-		}
+        protected virtual void OnEvalIteration(string iteratorName, int rowNum, object obj, IParserContext localContext)
+        {
+            Config.EvalIteration(iteratorName, rowNum, obj, localContext);
+        }
 
-		private string EvalText(string text)
-		{
-		    return OnEvalText(text);
-		}
+        private string EvalText(string text)
+        {
+            return OnEvalText(text);
+        }
 
-		protected virtual string OnEvalText(string text)
-		{
-		    return Config.EvalText(text);
-		}
+        protected virtual string OnEvalText(string text)
+        {
+            return Config.EvalText(text);
+        }
     }
 }

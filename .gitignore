@@ -2,19 +2,29 @@ bin/
 obj/
 Bin/
 Obj/
+BundleArtifacts/
+AppPackages/
 TestResults/
 *.user
 *.suo
 *.bak
 *.userprefs
 *.pidb
-Velox.DB.*.nupkg
-pushAll.cmd
+Resource.designer.cs
+
+.vs/
 
 _ReSharper*/
 *.[Rr]e[Ss]harper
 
+# NuGet
 *.nupkg
 **/packages/*
 !**/packages/build/
-!**/packages/repositories.config
+*.nuget.props
+*.nuget.targets
+
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
