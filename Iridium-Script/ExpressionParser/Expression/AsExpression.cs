@@ -40,7 +40,7 @@ namespace Iridium.Script
 
         public override ValueExpression Evaluate(IParserContext context)
         {
-            var className = TypeExpression.Evaluate(context).Value as ClassName;
+            var className = TypeExpression.Evaluate(context).Value as TypeName;
 
             if (className == null)
                 throw new IllegalOperandsException("as operator requires type. "  + TypeExpression + " is not a type",this);

@@ -33,7 +33,7 @@ namespace Iridium.Script
     {
         public static object CreateType(Type type)
         {
-            return new ClassName(type);
+            return new TypeName(type);
         }
 
         public static object CreateFunction(Type type, string methodName)

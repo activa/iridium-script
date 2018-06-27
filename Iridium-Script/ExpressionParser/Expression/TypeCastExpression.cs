@@ -39,12 +39,12 @@ namespace Iridium.Script
 
         public override ValueExpression Evaluate(IParserContext context)
         {
-            ClassName className = TypeExpression.Evaluate(context).Value as ClassName;
+            TypeName typeName = TypeExpression.Evaluate(context).Value as TypeName;
 
-            if (className == null)
+            if (typeName == null)
                 throw new ExpressionEvaluationException("type cast requires a type. " + TypeExpression + " is not a type", this);
 
-            return Exp.Value(Convert.ChangeType(TargetExpression.Evaluate(context).Value, className.Type, null), className.Type);
+            return Exp.Value(Convert.ChangeType(TargetExpression.Evaluate(context).Value, typeName.Type, null), typeName.Type);
         }
 
 #if DEBUG

@@ -2,7 +2,7 @@ using System;
 
 namespace Iridium.Script
 {
-    public class ProMeshTokenizer : TemplateTokenizer
+    public class HtmlDoubleCurlyTokenizer : TemplateTokenizer
     {
         private class ForeachTokenMatcher : WrappedExpressionMatcher
         {
@@ -24,7 +24,7 @@ namespace Iridium.Script
             }
         }
 
-        public ProMeshTokenizer()
+        public HtmlDoubleCurlyTokenizer()
         {
             AddTokenMatcher(TemplateTokenType.ForEach, new ForeachTokenMatcher("<!--{{", "foreach", "}}-->") ,true);
             AddTokenMatcher(TemplateTokenType.EndBlock, new WrappedExpressionMatcher(false, "<!--{{", "endfor", "}}-->"));

@@ -59,9 +59,7 @@ namespace Iridium.Script
 
         public void Apply(object obj)
         {
-            var dynamicObject = obj as DynamicObject;
-
-            if (dynamicObject != null)
+            if (obj is DynamicObject dynamicObject)
                 Apply(dynamicObject);
             else
                 _objects.AddLast(obj);
@@ -148,31 +146,26 @@ namespace Iridium.Script
             {
                 MemberInfo member = GetMember(dataObject.GetType(), propertyName);
 
-                if (member == null)
-                    continue;
-
-                if (member is PropertyInfo)
+                switch (member)
                 {
-                    value = ((PropertyInfo)member).GetValue(dataObject, null);
-                    type = ((PropertyInfo)member).PropertyType;
+                    case null:
+                        continue;
 
-                    return true;
-                }
+                    case PropertyInfo propertyInfo:
+                        value = propertyInfo.GetValue(dataObject, null);
+                        type = propertyInfo.PropertyType;
 
-                if (member is FieldInfo)
-                {
-                    value = ((FieldInfo)member).GetValue(dataObject);
-                    type = ((FieldInfo)member).FieldType;
+                        return true;
+                    case FieldInfo fieldInfo:
+                        value = fieldInfo.GetValue(dataObject);
+                        type = fieldInfo.FieldType;
 
-                    return true;
-                }
+                        return true;
+                    case MethodInfo _:
+                        value = new InstanceMethod(dataObject.GetType(), propertyName, dataObject);
+                        type = typeof(InstanceMethod);
 
-                if (member is MethodInfo)
-                {
-                    value = new InstanceMethod(dataObject.GetType(), propertyName, dataObject);
-                    type = typeof(InstanceMethod);
-
-                    return true;
+                        return true;
                 }
             }
 
@@ -183,9 +176,7 @@ namespace Iridium.Script
         {
             get
             {
-                object value;
-
-                if (TryGetValue(key, out value))
+                if (TryGetValue(key, out var value))
                     return value;
 
                 return null;

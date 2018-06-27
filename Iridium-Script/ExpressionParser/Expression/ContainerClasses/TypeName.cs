@@ -28,11 +28,11 @@ using System;
 
 namespace Iridium.Script
 {
-    internal class ClassName
+    internal class TypeName
     {
-        public Type Type { get; private set; }
+        public Type Type { get; }
 
-        public ClassName(Type type)
+        public TypeName(Type type)
         {
             Type = type;
         }

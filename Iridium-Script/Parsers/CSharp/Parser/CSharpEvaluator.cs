@@ -32,7 +32,7 @@ using Iridium.Core;
 
 namespace Iridium.Script.CSharp
 {
-    public static class CSharpEvaluator
+    internal static class CSharpEvaluator
     {
         private static readonly NumberFormatInfo _numberFormat;
 

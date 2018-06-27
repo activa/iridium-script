@@ -40,7 +40,7 @@ namespace Iridium.Script
 
         public override ValueExpression Evaluate(IParserContext context)
         {
-            ClassName className = TypeExpression.Evaluate(context).Value as ClassName;
+            TypeName typeName = TypeExpression.Evaluate(context).Value as TypeName;
             ValueExpression objectValue = ObjectExpression.Evaluate(context);
             Type objectType = objectValue.Type;
 
@@ -49,10 +49,10 @@ namespace Iridium.Script
 
             objectType = objectType.Inspector().RealType;
 
-            if (className == null)
+            if (typeName == null)
                 throw new ExpressionEvaluationException("is operator requires a type. " + TypeExpression + " is not a type", this);
             
-            Type checkType = className.Type;
+            Type checkType = typeName.Type;
 
             if (!objectType.Inspector().IsValueType)
                 return Exp.Value(checkType.Inspector().IsAssignableFrom(objectType));

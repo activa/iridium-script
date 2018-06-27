@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="iridium.core" Version="1.4.1.205" />
+    <PackageReference Include="iridium.core" Version="1.5.0.220" />
   </ItemGroup>
 
 </Project>

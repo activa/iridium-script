@@ -28,7 +28,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
+using Iridium.Core;
 
 namespace Iridium.Script
 {
@@ -36,16 +38,11 @@ namespace Iridium.Script
     {
         private readonly Dictionary<string, object> _variables;
         private readonly Dictionary<string, Type> _types;
-        private object _rootObject;
 
         private readonly IParserContext _parentContext;
 
         public ParserContextBehavior Behavior { get; }
 
-        private AssignmentPermissions _assignmentPermissions = AssignmentPermissions.None;
-        private StringComparison _stringComparison = StringComparison.Ordinal;
-        private IFormatProvider _formatProvider = NumberFormatInfo.InvariantInfo;
-        
         public ParserContext(ParserContextBehavior behavior)
         {
             Behavior = behavior;
@@ -69,12 +66,12 @@ namespace Iridium.Script
 
         public ParserContext(object rootObject, ParserContextBehavior behavior) : this(behavior)
         {
-            _rootObject = rootObject;
+            RootObject = rootObject;
         }
 
         public ParserContext(object rootObject) : this()
         {
-            _rootObject = rootObject;
+            RootObject = rootObject;
         }
 
         public ParserContext(IDictionary<string, object> dic) : this()
@@ -89,14 +86,14 @@ namespace Iridium.Script
 
         public ParserContext(object rootObject, IDictionary<string, object> dic) : this()
         {
-            _rootObject = rootObject;
+            RootObject = rootObject;
 
             AddDictionary(dic);
         }
 
         public ParserContext(object rootObject, IDictionary<string, object> dic, ParserContextBehavior behavior) : this(behavior)
         {
-            _rootObject = rootObject;
+            RootObject = rootObject;
 
             AddDictionary(dic);
         }
@@ -105,9 +102,9 @@ namespace Iridium.Script
         {
             _parentContext = parentContext;
 
-            _assignmentPermissions = parentContext._assignmentPermissions;
-            _stringComparison = parentContext._stringComparison;
-            _formatProvider = parentContext._formatProvider;
+            AssignmentPermissions = parentContext.AssignmentPermissions;
+            StringComparison = parentContext.StringComparison;
+            FormatProvider = parentContext.FormatProvider;
         }
 
         public void AddDictionary(IDictionary<string, object> dic)
@@ -118,10 +115,17 @@ namespace Iridium.Script
             foreach (var entry in dic)
             {
                 _variables[entry.Key] = entry.Value;
-                _types[entry.Key] = entry.Value == null ? typeof(object) : entry.GetType();
+                _types[entry.Key] = entry.Value == null ? typeof(object) : entry.Value.GetType();
             }
         }
 
+        public void AddJsonObject(JsonObject json)
+        {
+            if (json == null || !json.IsObject)
+                return;
+
+            AddDictionary((Dictionary<string,object>)ConvertJsonObject(json));
+        }
 
         public virtual IParserContext CreateLocal(object rootObject = null)
         {
@@ -133,23 +137,9 @@ namespace Iridium.Script
             return ((Behavior & behavior) == behavior);
         }
 
-        public AssignmentPermissions AssignmentPermissions
-        {
-            get { return _assignmentPermissions; }
-            set { _assignmentPermissions = value; }
-        }
-
-        public StringComparison StringComparison
-        {
-            get { return _stringComparison; }
-            set { _stringComparison = value; }
-        }
-
-        public IFormatProvider FormatProvider
-        {
-            get { return _formatProvider; }
-            set { _formatProvider = value; }
-        }
+        public AssignmentPermissions AssignmentPermissions { get; set; } = AssignmentPermissions.None;
+        public StringComparison StringComparison { get; set; } = StringComparison.Ordinal;
+        public IFormatProvider FormatProvider { get; set; } = NumberFormatInfo.InvariantInfo;
 
         public void SetLocal<T>(string name, T data)
         {
@@ -163,8 +153,36 @@ namespace Iridium.Script
 
         public void SetLocal(string name, object data, Type type)
         {
-            _variables[name] = data;
-            _types[name] = type;
+            if (data is JsonObject jsonObject)
+            {
+                var o = ConvertJsonObject(jsonObject);
+
+                _variables[name] = o;
+                _types[name] = o == null ? typeof(object) : o.GetType();
+            }
+            else
+            {
+                _variables[name] = data;
+                _types[name] = type;
+            }
+        }
+
+        public object this[string name]
+        {
+            set
+            {
+                if (value == null)
+                {
+                    Set(name, null, typeof(object));
+                }
+                else
+                {
+                    if (value is Type type)
+                        AddType(name, type);
+                    else
+                        Set(name, value, value.GetType());
+                }
+            }
         }
 
         public void Set(string name, object data, Type type)
@@ -210,14 +228,14 @@ namespace Iridium.Script
             Set(name, ContextFactory.CreateFunction(methodInfo, targetObject));
         }
 
-        public object RootObject { get { return _rootObject; } set { _rootObject = value; } }
+        public object RootObject { get; set; }
 
         public virtual bool Exists(string varName)
         {
             if (_variables.ContainsKey(varName))
                 return true;
 
-            if (_rootObject != null && PropertyHelper.Exists(_rootObject, varName))
+            if (RootObject != null && PropertyHelper.Exists(RootObject, varName))
                     return true;
             
             if (_parentContext == null || !_parentContext.Exists(varName))
@@ -233,7 +251,7 @@ namespace Iridium.Script
                 value = _variables[varName];
                 type = _types[varName];
             }
-            else if (_rootObject != null && PropertyHelper.TryGetValue(_rootObject,varName,out value, out type))
+            else if (RootObject != null && PropertyHelper.TryGetValue(RootObject,varName,out value, out type))
             {
                 return true;
             }
@@ -311,6 +329,33 @@ namespace Iridium.Script
                 throw new NullReferenceException();
             else
                 throw new ArgumentException("Type " + value.GetType().Name + " cannot be evaluated as boolean");
+        }
+
+        private object ConvertJsonObject(JsonObject json)
+        {
+            if (json.IsArray)
+            {
+                return json.Select(ConvertJsonObject).ToArray();
+            }
+
+            if (json.IsObject)
+            {
+                Dictionary<string,object> dic = new Dictionary<string, object>();
+
+                foreach (var jsonKey in json.Keys)
+                {
+                    dic[jsonKey] = ConvertJsonObject(json[jsonKey]);
+                }
+
+                return dic;
+            }
+
+            if (json.IsValue)
+            {
+                return json.Value;
+            }
+
+            return null;
         }
 
         public string Format(string formatString, params object[] parameters)

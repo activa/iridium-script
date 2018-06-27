@@ -33,6 +33,8 @@ namespace Iridium.Script
 
     public interface IParserContext
     {
+        object this[string name] { set; }
+
         bool Get(string varName, out object value, out Type type);
         bool Exists(string varName);
 

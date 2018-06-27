@@ -31,23 +31,23 @@ namespace Iridium.Script
 {
     public class ConstructorExpression : Expression
     {
-        public VariableExpression ClassName { get; }
+        public VariableExpression TypeName { get; }
         public Expression[] Parameters { get; }
 
-        public ConstructorExpression(VariableExpression className, Expression[] parameters)
+        public ConstructorExpression(VariableExpression typeName, Expression[] parameters)
         {
-            ClassName = className;
+            TypeName = typeName;
             Parameters = parameters;
         }
 
         public override ValueExpression Evaluate(IParserContext context)
         {
-            ClassName className = ClassName.Evaluate(context).Value as ClassName;
+            TypeName typeName = TypeName.Evaluate(context).Value as TypeName;
 
-            if (className == null)
-                throw new TypeInitializationException(ClassName.VarName,null);
+            if (typeName == null)
+                throw new TypeInitializationException(TypeName.VarName,null);
 
-            return Exp.Value(className.Type.Inspector().GetConstructors());
+            return Exp.Value(typeName.Type.Inspector().GetConstructors());
         }
 
 #if DEBUG
@@ -55,7 +55,7 @@ namespace Iridium.Script
         {
             string[] parameters = Parameters.ConvertAll(expr => expr.ToString());
 
-            return $"(new {ClassName}({String.Join(",", parameters)}))";
+            return $"(new {TypeName}({String.Join(",", parameters)}))";
         }
 #endif    
     }

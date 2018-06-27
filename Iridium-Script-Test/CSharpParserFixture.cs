@@ -36,7 +36,7 @@ using NUnit.Framework;
 
 namespace Iridium.Script.Test
 {
-    [TestFixture,Parallelizable(ParallelScope.Children)]
+    [TestFixture]
     public class CSharpParserFixture
     {
         private class DataClass
@@ -101,6 +101,7 @@ namespace Iridium.Script.Test
             context.Set("NullableValue5", 5, typeof(int?));
             context.Set("NullableValueNull", null, typeof(int?));
             context.Set("MyArray", new int[] { 1, 2, 4, 8, 16 });
+            context.Set("MyCollection", new List<int>(new int[] { 1, 2, 4, 8, 16 }));
             context.Set("MyArray2", new int[,] { { 1, 2 }, { 2, 4 }, { 4, 8 }, { 8, 16 }, { 16, 32 } });
 
             context.Set("f", new Func<int,int>(i => i*2));
@@ -336,6 +337,16 @@ namespace Iridium.Script.Test
             Assert.AreEqual(16, parser.Evaluate<int>("MyArray[Data.Method0()+2]"));
             Assert.AreEqual(8, parser.Evaluate<int>("MyArray2[Data.Method0()+1,0]"));
 
+        }
+
+        [Test]
+        public void ListIndexing()
+        {
+            var parser = CreateParserWithContext();
+
+            Assert.AreEqual(8, parser.Evaluate<int>("MyCollection[3]"));
+
+            Assert.AreEqual(16, parser.Evaluate<int>("MyCollection[Data.Method0()+2]"));
         }
 
         [Test]

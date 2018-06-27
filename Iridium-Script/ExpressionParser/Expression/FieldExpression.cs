@@ -52,9 +52,9 @@ namespace Iridium.Script
     		object targetObject;
     		Type targetType;
 
-    		if (targetValue.Value is ClassName)
+    		if (targetValue.Value is TypeName)
     		{
-    			targetType = ((ClassName) targetValue.Value).Type;
+    			targetType = ((TypeName) targetValue.Value).Type;
     			targetObject = null;
     		}
     		else
@@ -66,12 +66,9 @@ namespace Iridium.Script
                     return Exp.Value(null, targetType);
     		}
 
-            if (targetObject is IDynamicObject)
+            if (targetObject is IDynamicObject dynamicObject)
             {
-                object value;
-                Type type;
-
-                if (((IDynamicObject)targetObject).TryGetValue(Member, out value, out type))
+                if (dynamicObject.TryGetValue(Member, out var value, out var type))
                     return Exp.Value(value,type);
             }
 
@@ -106,22 +103,21 @@ namespace Iridium.Script
     					member = mi;
     		}
 
-			if (assign)
-			{
-				if (member is FieldInfo)
-					((FieldInfo) member).SetValue(targetObject, newValue);
+	        if (member is FieldInfo fieldInfo)
+	        {
+                if (assign)
+                    fieldInfo.SetValue(targetObject, newValue);
 
-				if (member is PropertyInfo)
-					((PropertyInfo) member).SetValue(targetObject, newValue, null);
+	            return Exp.Value(fieldInfo.GetValue(targetObject), fieldInfo.FieldType);
+	        }
 
-				// Fall through to get the new property/field value below
-			}
+	        if (member is PropertyInfo propertyInfo)
+	        {
+	            if (assign)
+	                propertyInfo.SetValue(targetObject, newValue, null);
 
-			if (member is FieldInfo)
-				return Exp.Value(((FieldInfo) member).GetValue(targetObject), ((FieldInfo) member).FieldType);
-
-			if (member is PropertyInfo)
-    			return Exp.Value(((PropertyInfo)member).GetValue(targetObject, null), ((PropertyInfo)member).PropertyType);
+	            return Exp.Value(propertyInfo.GetValue(targetObject, null), propertyInfo.PropertyType);
+	        }
 
     		throw new ExpressionEvaluationException(Member + " is not a field or property", this);
     	}

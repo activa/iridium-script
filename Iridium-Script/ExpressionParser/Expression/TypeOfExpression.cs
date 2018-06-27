@@ -31,14 +31,14 @@ namespace Iridium.Script
 {
     public class TypeOfExpression : Expression
     {
-        private static Type GetTypeOfClassName(ClassName className)
+        private static Type GetTypeOfClassName(TypeName typeName)
         {
-            return className.Type;
+            return typeName.Type;
         }
 
         public override ValueExpression Evaluate(IParserContext context)
         {
-            return Exp.Value(new Converter<ClassName, Type>(GetTypeOfClassName));
+            return Exp.Value(new Converter<TypeName, Type>(GetTypeOfClassName));
         }
 
 #if DEBUG

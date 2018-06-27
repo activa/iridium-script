@@ -37,8 +37,8 @@ namespace Iridium.Script
             value = null;
             type = typeof(object);
 
-            if (obj is IDynamicObject)
-                return ((IDynamicObject) obj).TryGetValue(propertyName, out value, out type);
+            if (obj is IDynamicObject dynamicObject)
+                return dynamicObject.TryGetValue(propertyName, out value, out type);
 
             Type targetType = obj.GetType();
 
@@ -71,25 +71,23 @@ namespace Iridium.Script
 
             if (members.Length > 1) // CoolStorage, ActiveRecord and Dynamic Proxy frameworks sometimes return > 1 member
             {
-                foreach (MemberInfo mi in members)
-                    if (mi.DeclaringType == obj.GetType())
-                        member = mi;
+                foreach (var memberInfo in members)
+                    if (memberInfo.DeclaringType == obj.GetType())
+                        member = memberInfo;
             }
 
-            if (member is FieldInfo)
+            switch (member)
             {
-                value = ((FieldInfo)member).GetValue(obj);
-                type = ((FieldInfo)member).FieldType;
+                case FieldInfo fieldInfo:
+                    value = fieldInfo.GetValue(obj);
+                    type = fieldInfo.FieldType;
 
-                return true;
-            }
+                    return true;
+                case PropertyInfo propertyInfo:
+                    value = propertyInfo.GetValue(obj, null);
+                    type = propertyInfo.PropertyType;
 
-            if (member is PropertyInfo)
-            {
-                value = ((PropertyInfo)member).GetValue(obj, null);
-                type = ((PropertyInfo)member).PropertyType;
-
-                return true;
+                    return true;
             }
 
             return false;
@@ -97,10 +95,7 @@ namespace Iridium.Script
 
         public static bool Exists(object obj, string propertyName)
         {
-            object value;
-            Type type;
-
-            return TryGetValue(obj, propertyName, out value, out type);
+            return TryGetValue(obj, propertyName, out object value, out var type);
         }
 
     }

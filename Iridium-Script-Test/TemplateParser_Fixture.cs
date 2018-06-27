@@ -33,7 +33,7 @@ namespace Iridium.Script.Test
 {
     public class VelocityTemplateParser : TemplateParser<Velocity> { }
 	public class CurlyTemplateParser : TemplateParser<DoubleCurly> { }
-    public class ProMeshTemplateParser : TemplateParser<ProMesh> {}
+    public class HtmlDoubleCurlyTemplateParser : TemplateParser<HtmlDoubleCurly> {}
 
     [TestFixture]
     public class TemplateParser_Fixture
@@ -41,7 +41,7 @@ namespace Iridium.Script.Test
         readonly TemplateParser curlyParser = new CurlyTemplateParser();
         readonly TemplateParser velocityParser = new VelocityTemplateParser();
         readonly TemplateParser xmlParser = new TemplateParser<Xml>();
-        readonly TemplateParser promeshParser = new ProMeshTemplateParser();
+        readonly TemplateParser htmlCurlyParser = new HtmlDoubleCurlyTemplateParser();
 
         readonly ParserContext context = new ParserContext();
 
@@ -113,7 +113,7 @@ namespace Iridium.Script.Test
         {
             string input = @"<!--{{foreach x in intList}}-->{{x}}/{{x*2}}/<!--{{end}}-->..";
 
-            string s = promeshParser.Render(input, context);
+            string s = htmlCurlyParser.Render(input, context);
 
             Assert.AreEqual("3/6/4/8/5/10/..", s);
         }
@@ -159,7 +159,7 @@ namespace Iridium.Script.Test
         {
             string input = @"<!--{{foreach x in intList}}-->{{x}}/{{x*2}}/<!--{{end}}-->.. <!--{{foreach x in intList}}-->{{x}}/{{x*2}}/<!--{{end}}-->";
 
-            string s = promeshParser.Render(input, context);
+            string s = htmlCurlyParser.Render(input, context);
 
             Assert.AreEqual("3/6/4/8/5/10/.. 3/6/4/8/5/10/", s);
         }
@@ -213,13 +213,13 @@ namespace Iridium.Script.Test
 
             newContext.Set("A", 5);
 
-            string s = promeshParser.Render(input, newContext);
+            string s = htmlCurlyParser.Render(input, newContext);
 
             Assert.AreEqual("X", s);
 
             newContext.Set("A", 6);
 
-            s = promeshParser.Render(input, newContext);
+            s = htmlCurlyParser.Render(input, newContext);
 
             Assert.AreEqual("Y", s);
         }
@@ -324,7 +324,7 @@ namespace Iridium.Script.Test
         {
             string input = @"{{doubleValue ` 0.00}}";
 
-            string s = promeshParser.Render(input, context);
+            string s = htmlCurlyParser.Render(input, context);
 
             Assert.AreEqual("20.50", s);
         }
@@ -344,7 +344,7 @@ namespace Iridium.Script.Test
         {
             string input = @"<!--{{macro TestMacro}}-->{{x*2}}<!--{{end}}--><!--{{call TestMacro @x=5}}-->,<!--{{ call TestMacro @x=7 }}-->";
 
-            string s = promeshParser.Render(input, context);
+            string s = htmlCurlyParser.Render(input, context);
 
             Assert.AreEqual("10,14", s);
         }
@@ -374,7 +374,7 @@ namespace Iridium.Script.Test
         {
             string inputString = @"";
 
-            string s = promeshParser.Render(inputString, context);
+            string s = htmlCurlyParser.Render(inputString, context);
 
             Assert.AreEqual("", s);
         }
