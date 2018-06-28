@@ -24,11 +24,12 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script.CSharp
 {
-    public enum OperatorAssociativity
-	{
-		Left,
-		Right
-	}
+    public class CScriptParser : CSharpParser
+    {
+        public CScriptParser() : base(true)
+        {
+        }
+    }
 }

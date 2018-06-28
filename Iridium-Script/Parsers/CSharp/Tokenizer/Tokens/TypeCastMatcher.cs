@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// VeloxDB Core - Portable .NET Productivity Library 
+// Iridium Script - Portable .NET Productivity Library 
 //
-// Copyright (c) 2008-2015 Philippe Leybaert
+// Copyright (c) 2008-2018 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -50,7 +50,6 @@ namespace Iridium.Script.CSharp
         {
             if (_sawEnd)
             {
-
                 return TokenizerState.Success;
             }
 
@@ -86,7 +85,6 @@ namespace Iridium.Script.CSharp
 
             if (c != ')')
                 return TokenizerState.Fail;
-
 
             for (int i = currentIndex + 1; i < fullExpression.Length;i++)
             {

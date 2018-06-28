@@ -1,7 +1,8 @@
+#region License
 //=============================================================================
-// VeloxDB Core - Portable .NET Productivity Library 
+// Iridium Script - Portable .NET Productivity Library 
 //
-// Copyright (c) 2008-2015 Philippe Leybaert
+// Copyright (c) 2008-2018 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -21,6 +22,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //=============================================================================
+#endregion
 
 using System.Linq;
 
@@ -28,14 +30,12 @@ namespace Iridium.Script
 {
     public class SequenceExpression : Expression
     {
-        private readonly Expression[] _expressions;
-
         public SequenceExpression(Expression[] expressions)
         {
-            _expressions = expressions;
+            Expressions = expressions;
         }
 
-        public Expression[] Expressions => _expressions;
+        public Expression[] Expressions { get; }
 
         public override ValueExpression Evaluate(IParserContext context)
         {
@@ -58,7 +58,7 @@ namespace Iridium.Script
 #if DEBUG
         public override string ToString()
         {
-            return string.Join(";", _expressions.Select(e => e.ToString()).ToArray());
+            return string.Join(";", Expressions.Select(e => e.ToString()).ToArray());
         }
 #endif
     }

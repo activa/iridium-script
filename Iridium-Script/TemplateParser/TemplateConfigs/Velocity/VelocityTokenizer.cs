@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// VeloxDB Core - Portable .NET Productivity Library 
+// Iridium Script - Portable .NET Productivity Library 
 //
-// Copyright (c) 2008-2015 Philippe Leybaert
+// Copyright (c) 2008-2018 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -85,7 +85,6 @@ namespace Iridium.Script
 
                 return iterator + '\0' + expr;
             }
-
         }
 
         private class VelocityTagMatcher : CompositeMatcher
@@ -105,7 +104,5 @@ namespace Iridium.Script
                 return originalToken.Substring(tokenProcessor.StartIndexes[2], tokenProcessor.StartIndexes[3] - tokenProcessor.StartIndexes[2]).Trim();
             }
         }
-
-
     }
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// VeloxDB Core - Portable .NET Productivity Library 
+// Iridium Script - Portable .NET Productivity Library 
 //
-// Copyright (c) 2008-2015 Philippe Leybaert
+// Copyright (c) 2008-2018 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -52,9 +52,9 @@ namespace Iridium.Script
     		object targetObject;
     		Type targetType;
 
-    		if (targetValue.Value is TypeName)
+    		if (targetValue.Value is TypeName typeName)
     		{
-    			targetType = ((TypeName) targetValue.Value).Type;
+    			targetType = typeName.Type;
     			targetObject = null;
     		}
     		else
@@ -69,10 +69,12 @@ namespace Iridium.Script
             if (targetObject is IDynamicObject dynamicObject)
             {
                 if (dynamicObject.TryGetValue(Member, out var value, out var type))
-                    return Exp.Value(value,type);
+                    return Exp.Value(value, type);
+                
+                return null;
             }
 
-		    MemberInfo[] members = FindMemberInHierarchy(targetType, Member);// targetType.GetMember(_member);
+		    MemberInfo[] members = FindMemberInHierarchy(targetType, Member);
 
     		if (members.Length == 0)
     		{

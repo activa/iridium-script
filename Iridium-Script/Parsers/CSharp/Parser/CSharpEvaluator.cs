@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// VeloxDB Core - Portable .NET Productivity Library 
+// Iridium Script - Portable .NET Productivity Library 
 //
-// Copyright (c) 2008-2015 Philippe Leybaert
+// Copyright (c) 2008-2018 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -187,9 +187,7 @@ namespace Iridium.Script.CSharp
 
         public static Expression VarName(string token, Expression[] terms)
         {
-            Expression exp;
-
-            if (_keywords.TryGetValue(token, out exp))
+            if (_keywords.TryGetValue(token, out var exp))
                 return exp;
 
             return new VariableExpression(token);
@@ -332,12 +330,10 @@ namespace Iridium.Script.CSharp
 
         public static Expression DotOperator(string token, Expression[] terms)
         {
-            VariableExpression varExpression = terms[1] as VariableExpression;
+            if (terms[1] is VariableExpression varExpression) 
+                return new FieldExpression(terms[0], varExpression.VarName);
 
-            if (varExpression == null)
-                throw new UnknownPropertyException("Unkown member " + terms[1], terms[1]);
-
-            return new FieldExpression(terms[0], varExpression.VarName);
+            throw new UnknownPropertyException("Unkown member " + terms[1], terms[1]);
         }
 
         public static Expression Constructor(string token, Expression[] terms)

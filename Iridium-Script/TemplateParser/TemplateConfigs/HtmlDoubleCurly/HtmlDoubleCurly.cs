@@ -26,9 +26,7 @@
 
 namespace Iridium.Script
 {
-    public enum OperatorAssociativity
-	{
-		Left,
-		Right
-	}
+    public class HtmlDoubleCurly : TemplateParserConfig<HtmlDoubleCurlyTokenizer>
+    {
+    }
 }

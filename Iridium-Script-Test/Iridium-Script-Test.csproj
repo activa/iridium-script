@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryExpressionTestCaseProvider.cs" />
     <Compile Include="CSharpParserFixture.cs" />
     <Compile Include="DynamicObjectTest.cs" />
     <Compile Include="ExpressionWithContext.cs" />

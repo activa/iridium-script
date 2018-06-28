@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// VeloxDB Core - Portable .NET Productivity Library 
+// Iridium Script - Portable .NET Productivity Library 
 //
-// Copyright (c) 2008-2015 Philippe Leybaert
+// Copyright (c) 2008-2018 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -34,10 +34,31 @@ using Iridium.Core;
 
 namespace Iridium.Script
 {
-    public class ParserContext : IParserContext
+    public class ParserContext : IParserContext, IEnumerable<KeyValuePair<string,IValueWithType>>
     {
-        private readonly Dictionary<string, object> _variables;
-        private readonly Dictionary<string, Type> _types;
+        private class ValueWithType : IValueWithType
+        {
+            public ValueWithType(object value)
+            {
+                Value = value;
+
+                if (value == null)
+                    Type = typeof(object);
+                else
+                    Type = value.GetType();
+            }
+
+            public ValueWithType(object value, Type type)
+            {
+                Value = value;
+                Type = type;
+            }
+
+            public object Value { get; set; }
+            public Type Type { get; set; }
+        }
+
+        private readonly Dictionary<string, IValueWithType> _variables;
 
         private readonly IParserContext _parentContext;
 
@@ -49,14 +70,11 @@ namespace Iridium.Script
 
             if ((behavior & ParserContextBehavior.CaseInsensitiveVariables) == ParserContextBehavior.CaseInsensitiveVariables)
             {
-                _variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                _types = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+                _variables = new Dictionary<string, IValueWithType>(StringComparer.OrdinalIgnoreCase);
             }
             else
             {
-                _variables = new Dictionary<string, object>();
-                _types = new Dictionary<string, Type>();
-
+                _variables = new Dictionary<string, IValueWithType>();
             }
         }
 
@@ -114,8 +132,7 @@ namespace Iridium.Script
 
             foreach (var entry in dic)
             {
-                _variables[entry.Key] = entry.Value;
-                _types[entry.Key] = entry.Value == null ? typeof(object) : entry.Value.GetType();
+                _variables[entry.Key] = new ValueWithType(entry.Value);
             }
         }
 
@@ -157,13 +174,11 @@ namespace Iridium.Script
             {
                 var o = ConvertJsonObject(jsonObject);
 
-                _variables[name] = o;
-                _types[name] = o == null ? typeof(object) : o.GetType();
+                _variables[name] = new ValueWithType(o);
             }
             else
             {
-                _variables[name] = data;
-                _types[name] = type;
+                _variables[name] = new ValueWithType(data,type);
             }
         }
 
@@ -193,12 +208,30 @@ namespace Iridium.Script
                 SetLocal(name, data, type);
         }
 
+        public void Add(string name, object data, Type type)
+        {
+            if (_parentContext != null && _parentContext.Exists(name))
+                _parentContext.Set(name, data, type);
+            else
+                SetLocal(name, data, type);
+        }
+
+        public void Add<T>(string name, T data)
+        {
+            Set(name, data, typeof (T));
+        }
+
         public void Set<T>(string name, T data)
         {
             Set(name, data, typeof (T));
         }
 
         public void Set(string name, IValueWithType data)
+        {
+            Set(name, data.Value, data.Type);
+        }
+
+        public void Add(string name, IValueWithType data)
         {
             Set(name, data.Value, data.Type);
         }
@@ -248,8 +281,8 @@ namespace Iridium.Script
         {
             if (_variables.ContainsKey(varName))
             {
-                value = _variables[varName];
-                type = _types[varName];
+                value = _variables[varName].Value;
+                type = _variables[varName].Type;
             }
             else if (RootObject != null && PropertyHelper.TryGetValue(RootObject,varName,out value, out type))
             {
@@ -276,16 +309,16 @@ namespace Iridium.Script
         {
             if (value != null)
             {
-                if (value is bool)
-                    return ((bool) value);
+                if (value is bool @bool)
+                    return @bool;
 
                 if (TestBehavior(ParserContextBehavior.ZeroIsFalse))
                 {
                     if (value is int || value is uint || value is short || value is ushort || value is long || value is ulong || value is byte || value is sbyte)
                         return Convert.ToInt64(value) != 0;
 
-                    if (value is decimal)
-                        return (decimal) value != 0m;
+                    if (value is decimal @decimal)
+                        return @decimal != 0m;
 
                     if (value is float || value is double)
                         return Convert.ToDouble(value) == 0.0;
@@ -340,14 +373,7 @@ namespace Iridium.Script
 
             if (json.IsObject)
             {
-                Dictionary<string,object> dic = new Dictionary<string, object>();
-
-                foreach (var jsonKey in json.Keys)
-                {
-                    dic[jsonKey] = ConvertJsonObject(json[jsonKey]);
-                }
-
-                return dic;
+                return json.Keys.ToDictionary(j => j, j => ConvertJsonObject(json[j]));
             }
 
             if (json.IsValue)
@@ -361,6 +387,16 @@ namespace Iridium.Script
         public string Format(string formatString, params object[] parameters)
         {
             return string.Format(FormatProvider, formatString, parameters);
+        }
+
+        public IEnumerator<KeyValuePair<string, IValueWithType>> GetEnumerator()
+        {
+            return _variables.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

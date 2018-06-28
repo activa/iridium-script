@@ -25,6 +25,5 @@ namespace Iridium.Script
         public static CoalesceExpression Coalesce(Expression value, Expression valueIfNull) { return new CoalesceExpression(value,valueIfNull);}
         public static ConditionalExpression Conditional(Expression condition, Expression trueValue, Expression falseValue) { return new ConditionalExpression(condition,trueValue,falseValue); }
         public static DefaultValueExpression DefaultValue(Expression value, Expression defaultValue) { return new DefaultValueExpression(value,defaultValue); }
-
     }
 }

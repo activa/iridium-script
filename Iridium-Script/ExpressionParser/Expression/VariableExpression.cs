@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// VeloxDB Core - Portable .NET Productivity Library 
+// Iridium Script - Portable .NET Productivity Library 
 //
-// Copyright (c) 2008-2015 Philippe Leybaert
+// Copyright (c) 2008-2018 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -39,13 +39,10 @@ namespace Iridium.Script
 
         public override ValueExpression Evaluate(IParserContext context)
         {
-            object value;
-            Type type;
+            if (context.Get(VarName, out var value, out var type)) 
+                return Exp.Value(value, type);
 
-            if (!context.Get(VarName, out value, out type))
-                return Exp.Value(null,typeof(object));
-
-            return Exp.Value(value, type);
+            return Exp.Value(null,typeof(object));
         }
 
 #if DEBUG

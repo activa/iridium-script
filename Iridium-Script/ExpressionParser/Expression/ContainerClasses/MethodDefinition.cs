@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// VeloxDB Core - Portable .NET Productivity Library 
+// Iridium Script - Portable .NET Productivity Library 
 //
-// Copyright (c) 2008-2015 Philippe Leybaert
+// Copyright (c) 2008-2018 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -66,9 +66,6 @@ namespace Iridium.Script
             }
 
             return null;
-
-
-            //return _methodInfo ?? _type.GetMethod(_methodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance, binder ?? SmartBinder.Default, parameterTypes, null);
         }
 
         public abstract object Invoke(Type[] types, object[] parameters, out Type returnType);
