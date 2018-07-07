@@ -2,29 +2,19 @@ bin/
 obj/
 Bin/
 Obj/
-BundleArtifacts/
-AppPackages/
 TestResults/
 *.user
 *.suo
 *.bak
 *.userprefs
 *.pidb
-Resource.designer.cs
-
-.vs/
 
 _ReSharper*/
 *.[Rr]e[Ss]harper
 
-# NuGet
+.vs/
+
 *.nupkg
 **/packages/*
 !**/packages/build/
-*.nuget.props
-*.nuget.targets
-
-project.lock.json
-project.fragment.lock.json
-artifacts/
-**/Properties/launchSettings.json
+!**/packages/repositories.config

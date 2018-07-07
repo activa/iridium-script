@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+    <metadata>
+        <id>iridium.script</id>
+        <version>2.3.0.7071</version>
+        <authors>Philippe Leybaert</authors>
+        <owners>Philippe Leybaert</owners>
+        <licenseUrl>https://raw.githubusercontent.com/activa/iridium-script/master/LICENSE</licenseUrl>
+        <projectUrl>http://github.com/activa/iridium-script</projectUrl>
+        <iconUrl>http://www.iridiumdb.com/img/IconPlain64.png</iconUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Portable and lightweight C# library for scripting, expression evaluation and template rendering. Compatible with mobile platforms where Reflection.Emit is not supported.</description>
+        <tags>iridium scripting c# expression templates mobile xamarin</tags>
+        <dependencies>
+            <dependency id="iridium.reflection" version="2.0.1.7071" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="src\Iridium.Script\bin\Release\netstandard1.0\*.dll" target="lib\netstandard1.0" />
+    </files>
+</package>
