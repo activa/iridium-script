@@ -72,12 +72,11 @@ namespace Iridium.Script
                     return Exp.Value(fieldValue, fieldType);
                 else
                     return Exp.Value(value, type);
-                
-
-                return null;
             }
 
-		    MemberInfo[] members = FindMemberInHierarchy(targetType, Member);
+            targetType = targetType.Inspector().RealType;
+
+            MemberInfo[] members = FindMemberInHierarchy(targetType, Member);
 
     		if (members.Length == 0)
     		{

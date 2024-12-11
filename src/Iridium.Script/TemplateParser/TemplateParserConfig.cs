@@ -63,8 +63,8 @@ namespace Iridium.Script
             if (templateToken.TokenType == TemplateTokenType.Expression && quoteIdx >= 0)
                 return context.Format("{0:" + templateToken.Text.Substring(quoteIdx+1).Trim() + "}", value);
 
-            if (value is string)
-                return (string) value;
+            if (value is string s)
+                return s;
 
             return value.ToString();
         }

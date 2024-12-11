@@ -42,15 +42,9 @@ namespace Iridium.Script
                 Type = Value.GetType();
         }
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            return this;
-        }
+        public override ValueExpression Evaluate(IParserContext context) => this;
 
-        public override string ToString()
-        {
-            return Value.ToString();
-        }
+        public override string ToString() => Value.ToString();
     }
 
     public class ValueExpression<T> : ValueExpression

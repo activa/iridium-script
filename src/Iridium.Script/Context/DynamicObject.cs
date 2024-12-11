@@ -100,8 +100,9 @@ namespace Iridium.Script
         }
 
         private static MemberInfo GetMember(Type type, string propertyName)
-        {
-            MemberInfo[] members = type.Inspector().GetMember(propertyName);
+        { 
+            MemberInfo[] members = type.GetMember(propertyName);
+            //MemberInfo[] members = type.Inspector().GetMember(propertyName);
 
             if (members.Length == 0)
                 return null;
@@ -118,7 +119,7 @@ namespace Iridium.Script
                         member = memberInfo;
             }
 
-            if (member is PropertyInfo || member is FieldInfo)
+            if (member is PropertyInfo or FieldInfo)
                 return member;
 
             return null;

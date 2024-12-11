@@ -25,7 +25,6 @@
 #endregion
 
 using Iridium.Reflection;
-using Iridium.Script;
 
 namespace Iridium.Script
 {

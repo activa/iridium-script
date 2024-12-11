@@ -28,6 +28,7 @@ using System;
 using System.Reflection;
 using Iridium.Reflection;
 using Iridium.Script;
+using BindingFlags = Iridium.Reflection.BindingFlags;
 
 namespace Iridium.Script
 {
@@ -47,7 +48,7 @@ namespace Iridium.Script
             object methodObject = MethodExpression.Evaluate(context).Value;
 
             ValueExpression[] parameters = EvaluateExpressionArray(Parameters, context);
-            Type[] parameterTypes = parameters.ConvertAll(expr => expr.Type);
+            Type[] parameterTypes = parameters.ConvertAll(expr => expr.Type.Inspector().RealType);
             object[] parameterValues = parameters.ConvertAll(expr => expr.Value);
 
 			switch (methodObject)

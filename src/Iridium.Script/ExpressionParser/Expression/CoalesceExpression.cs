@@ -26,12 +26,8 @@
 
 namespace Iridium.Script
 {
-    public class CoalesceExpression : BinaryExpression
+    public class CoalesceExpression(Expression value, Expression valueIfNull) : BinaryExpression(value, valueIfNull)
     {
-        public CoalesceExpression(Expression value, Expression valueIfNull) : base(value, valueIfNull)
-        {
-        }
-
         public Expression Value => Left;
         public Expression ValueIfNull => Right;
 

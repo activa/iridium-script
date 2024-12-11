@@ -26,12 +26,8 @@
 
 namespace Iridium.Script
 {
-    public class BitwiseComplementExpression : UnaryExpression
+    public class BitwiseComplementExpression(Expression value) : UnaryExpression(value)
     {
-        public BitwiseComplementExpression(Expression value) : base(value)
-        {
-        }
-
         public override ValueExpression Evaluate(IParserContext context)
         {
             ValueExpression value = Value.Evaluate(context);

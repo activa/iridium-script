@@ -59,6 +59,8 @@ namespace Iridium.Script.Test
             Assert.That(parser.Evaluate<bool>("obj.a != \"x\"", context), Is.False);
             Assert.That(parser.Evaluate<bool>("obj.b == 111", context), Is.True);
             Assert.That(parser.Evaluate<bool>("obj.b != 111", context), Is.False);
+
+            Assert.That(parser.Evaluate<bool>("x == 123", context), Is.False);
         }
 
 

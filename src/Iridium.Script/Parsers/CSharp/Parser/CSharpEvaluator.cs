@@ -48,7 +48,7 @@ namespace Iridium.Script.CSharp
 
         public static Expression TypeCast(string token, Expression[] terms)
         {
-            return new TypeCastExpression(VarName(token.Substring(1, token.Length - 2).Trim(),new Expression[0]), terms[0]);
+            return new TypeCastExpression(VarName(token.Substring(1, token.Length - 2).Trim(), []), terms[0]);
         }
 
         public static Expression IsAsOperator(string token, Expression[] terms)

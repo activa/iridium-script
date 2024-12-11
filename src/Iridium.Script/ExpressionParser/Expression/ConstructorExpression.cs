@@ -30,16 +30,10 @@ using Iridium.Script;
 
 namespace Iridium.Script
 {
-    public class ConstructorExpression : Expression
+    public class ConstructorExpression(VariableExpression typeName, Expression[] parameters) : Expression
     {
-        public VariableExpression TypeName { get; }
-        public Expression[] Parameters { get; }
-
-        public ConstructorExpression(VariableExpression typeName, Expression[] parameters)
-        {
-            TypeName = typeName;
-            Parameters = parameters;
-        }
+        public VariableExpression TypeName { get; } = typeName;
+        public Expression[] Parameters { get; } = parameters;
 
         public override ValueExpression Evaluate(IParserContext context)
         {

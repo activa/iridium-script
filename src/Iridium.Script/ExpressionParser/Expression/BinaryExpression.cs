@@ -26,15 +26,9 @@
 
 namespace Iridium.Script
 {
-    public abstract class BinaryExpression : Expression
+    public abstract class BinaryExpression(Expression left, Expression right) : Expression
     {
-        public Expression Left { get; }
-        public Expression Right { get; }
-
-        protected BinaryExpression(Expression left, Expression right)
-        {
-            Left = left;
-            Right = right;
-        }
+        public Expression Left { get; } = left;
+        public Expression Right { get; } = right;
     }
 }

@@ -26,12 +26,8 @@
 
 namespace Iridium.Script
 {
-    public class AndAlsoExpression : BinaryExpression
+    public class AndAlsoExpression(Expression left, Expression right) : BinaryExpression(left, right)
     {
-        public AndAlsoExpression(Expression left, Expression right) : base(left, right)
-        {
-        }
-
         public override ValueExpression Evaluate(IParserContext context)
         {
             object left = Left.Evaluate(context).Value;
@@ -39,9 +35,9 @@ namespace Iridium.Script
             if (!context.ToBoolean(left))
                 return Exp.Value(false);
 
-            object right = Right.Evaluate(context).Value;
+            object rightValue = Right.Evaluate(context).Value;
 
-            return Exp.Value(context.ToBoolean(right));
+            return Exp.Value(context.ToBoolean(rightValue));
         }
 
 #if DEBUG

@@ -25,8 +25,10 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Reflection;
 using Iridium.Reflection;
+using BindingFlags = Iridium.Reflection.BindingFlags;
 
 namespace Iridium.Script
 {
@@ -62,7 +64,7 @@ namespace Iridium.Script
                 if (methodInfo != null)
                     return methodInfo;
 
-                t = t.Inspector().BaseType;
+                t = t.BaseType;
             }
 
             return null;

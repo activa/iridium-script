@@ -26,14 +26,10 @@
 
 namespace Iridium.Script
 {
-    public class DefaultValueExpression : BinaryExpression
+    public class DefaultValueExpression(Expression value, Expression defaultValue) : BinaryExpression(value, defaultValue)
     {
         public Expression Value => Left;
         public Expression DefaultValue => Right;
-
-        public DefaultValueExpression(Expression value, Expression defaultValue) : base(value, defaultValue)
-        {
-        }
 
         public override ValueExpression Evaluate(IParserContext context)
         {

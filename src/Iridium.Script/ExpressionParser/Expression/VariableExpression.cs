@@ -28,14 +28,9 @@ using System;
 
 namespace Iridium.Script
 {
-    public class VariableExpression : Expression
+    public class VariableExpression(string varName) : Expression
     {
-        public VariableExpression(string varName)
-        {
-            VarName = varName;
-        }
-
-        public string VarName { get; }
+        public string VarName { get; } = varName;
 
         public override ValueExpression Evaluate(IParserContext context)
         {

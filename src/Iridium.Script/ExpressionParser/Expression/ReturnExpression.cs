@@ -26,12 +26,8 @@
 
 namespace Iridium.Script
 {
-    public class ReturnExpression : UnaryExpression
+    public class ReturnExpression(Expression expression) : UnaryExpression(expression)
     {
-        public ReturnExpression(Expression expression) : base(expression)
-        {
-        }
-
         public override ValueExpression Evaluate(IParserContext context)
         {
             var value = Value.Evaluate(context);

@@ -31,7 +31,6 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Iridium.Reflection;
-using Iridium.Script;
 
 namespace Iridium.Script
 {
@@ -326,10 +325,10 @@ namespace Iridium.Script
                     }
                 }
 
-                if (TestBehavior(ParserContextBehavior.NonEmptyStringIsTrue) && (value is string) && ((string) value).Length > 0)
+                if (TestBehavior(ParserContextBehavior.NonEmptyStringIsTrue) && (value is string { Length: > 0 }))
                     return true;
 
-                if (TestBehavior(ParserContextBehavior.EmptyStringIsFalse) && (value is string) && ((string) value).Length == 0)
+                if (TestBehavior(ParserContextBehavior.EmptyStringIsFalse) && (value is string { Length: 0 }))
                     return false;
 
                 if (TestBehavior(ParserContextBehavior.NotNullIsTrue))
@@ -370,11 +369,11 @@ namespace Iridium.Script
             value = null;
             type = typeof(object);
 
-            if (obj is IDynamicObject dynamicObject && dynamicObject.IsObject)
+            if (obj is IDynamicObject { IsObject: true } dynamicObject)
             {
                 if (dynamicObject.TryGetValue(propertyName, out value, out type))
                 {
-                    if (value is IDynamicObject dynField && dynField.IsValue && dynField.TryGetValue(out var fieldValue, out var fieldType))
+                    if (value is IDynamicObject { IsValue: true } dynField && dynField.TryGetValue(out var fieldValue, out var fieldType))
                     {
                         value = fieldValue;
                         type = fieldType;
@@ -390,15 +389,15 @@ namespace Iridium.Script
 
             Type targetType = obj.GetType();
 
-            MemberInfo[] members = targetType.Inspector().GetMember(propertyName);
+            MemberInfo[] members = targetType.GetMember(propertyName);
 
             if (members.Length == 0)
             {
-                PropertyInfo indexerPropInfo = targetType.Inspector().GetIndexer(new[] { typeof(string) });
+                PropertyInfo indexerPropInfo = targetType.Inspector().GetIndexer([typeof(string)]);
 
                 if (indexerPropInfo != null)
                 {
-                    value = indexerPropInfo.GetValue(obj, new object[] { propertyName });
+                    value = indexerPropInfo.GetValue(obj, [propertyName]);
                     type = (value != null && indexerPropInfo.PropertyType == typeof(object)) ? value.GetType() : typeof(object);
 
                     return true;

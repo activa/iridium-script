@@ -28,12 +28,7 @@ using System;
 
 namespace Iridium.Script
 {
-    public class ReturnValueExpression : ValueExpression
-    {
-        public ReturnValueExpression(object value, Type type) : base(value, type)
-        {
-        }
-    }
+    public class ReturnValueExpression(object value, Type type) : ValueExpression(value, type);
 
     public class BreakLoopExpression : NoValueExpression
     {

@@ -24,16 +24,12 @@
 
 namespace Iridium.Script
 {
-    public class IfExpression : Expression
+    public class IfExpression(Expression condition) : Expression
     {
-        public Expression Condition { get; }
+        public Expression Condition { get; } = condition;
+
         public Expression TrueExpression { get; set; }
         public Expression FalseExpression { get; set; }
-
-        public IfExpression(Expression condition)
-        {
-            Condition = condition;
-        }
 
         public override ValueExpression Evaluate(IParserContext context)
         {

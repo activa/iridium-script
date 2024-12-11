@@ -26,13 +26,8 @@
 
 namespace Iridium.Script
 {
-    public abstract class UnaryExpression : Expression
+    public abstract class UnaryExpression(Expression value) : Expression
     {
-        public Expression Value { get; }
-
-        protected UnaryExpression(Expression value)
-        {
-            Value = value;
-        }
+        public Expression Value { get; } = value;
     }
 }

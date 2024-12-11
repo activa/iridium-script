@@ -26,10 +26,5 @@
 
 namespace Iridium.Script
 {
-    public class DivideExpression : BinaryArithmicExpression
-    {
-        public DivideExpression(Expression left, Expression right) : base( "/" , left, right)
-        {
-        }
-    }
+    public class DivideExpression(Expression left, Expression right) : BinaryArithmicExpression("/", left, right);
 }

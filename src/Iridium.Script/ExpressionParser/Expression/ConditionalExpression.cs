@@ -26,18 +26,11 @@
 
 namespace Iridium.Script
 {
-    public class ConditionalExpression : Expression
+    public class ConditionalExpression(Expression condition, Expression trueValue, Expression falseValue) : Expression
     {
-        public Expression Condition { get; }
-        public Expression TrueValue { get; }
-        public Expression FalseValue { get; }
-
-        public ConditionalExpression(Expression condition, Expression trueValue, Expression falseValue)
-        {
-            Condition = condition;
-            TrueValue = trueValue;
-            FalseValue = falseValue;
-        }
+        public Expression Condition { get; } = condition;
+        public Expression TrueValue { get; } = trueValue;
+        public Expression FalseValue { get; } = falseValue;
 
         public override ValueExpression Evaluate(IParserContext context)
         {

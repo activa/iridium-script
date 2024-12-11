@@ -28,14 +28,9 @@ using System.Linq;
 
 namespace Iridium.Script
 {
-    public class SequenceExpression : Expression
+    public class SequenceExpression(Expression[] expressions) : Expression
     {
-        public SequenceExpression(Expression[] expressions)
-        {
-            Expressions = expressions;
-        }
-
-        public Expression[] Expressions { get; }
+        public Expression[] Expressions { get; } = expressions;
 
         public override ValueExpression Evaluate(IParserContext context)
         {
@@ -45,7 +40,7 @@ namespace Iridium.Script
             {
                 returnValue = expression.Evaluate(context);
 
-                if (returnValue is ReturnValueExpression || returnValue is BreakLoopExpression)
+                if (returnValue is ReturnValueExpression or BreakLoopExpression)
                     return returnValue;
             }
 

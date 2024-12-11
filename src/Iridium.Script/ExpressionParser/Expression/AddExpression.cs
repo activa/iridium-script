@@ -26,8 +26,5 @@
 
 namespace Iridium.Script
 {
-    public class AddExpression : BinaryArithmicExpression
-    {
-        public AddExpression(Expression left, Expression right) : base("+", left, right) { }
-    }
+    public class AddExpression(Expression left, Expression right) : BinaryArithmicExpression("+", left, right);
 }

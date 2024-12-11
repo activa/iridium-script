@@ -26,8 +26,5 @@
 
 namespace Iridium.Script
 {
-    public class SubtractExpression : BinaryArithmicExpression
-    {
-        public SubtractExpression(Expression left, Expression right) : base("-", left, right) { }
-    }
+    public class SubtractExpression(Expression left, Expression right) : BinaryArithmicExpression("-", left, right);
 }

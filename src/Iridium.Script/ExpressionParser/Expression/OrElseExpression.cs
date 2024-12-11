@@ -26,12 +26,8 @@
 
 namespace Iridium.Script
 {
-    public class OrElseExpression : BinaryExpression
+    public class OrElseExpression(Expression left, Expression right) : BinaryExpression(left, right)
     {
-        public OrElseExpression(Expression left, Expression right) : base(left, right)
-        {
-        }
-
         public override ValueExpression Evaluate(IParserContext context)
         {
             object left = Left.Evaluate(context).Value;

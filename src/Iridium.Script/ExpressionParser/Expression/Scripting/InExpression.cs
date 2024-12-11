@@ -24,21 +24,14 @@
 
 namespace Iridium.Script
 {
-    public class InExpression : Expression
+    public class InExpression(VariableExpression variable, Expression expression) : Expression
     {
-        public VariableExpression Variable { get; }
-        public Expression Expression { get; }
-
-        public InExpression(VariableExpression variable, Expression expression)
-        {
-            Variable = variable;
-            Expression = expression;
-        }
+        public VariableExpression Variable { get; } = variable;
+        public Expression Expression { get; } = expression;
 
         public override ValueExpression Evaluate(IParserContext context)
         {
             return Exp.NullValue();
         }
-
     }
 }

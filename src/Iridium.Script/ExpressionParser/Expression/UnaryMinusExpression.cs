@@ -26,12 +26,8 @@
 
 namespace Iridium.Script
 {
-    public class UnaryMinusExpression : UnaryExpression
+    public class UnaryMinusExpression(Expression value) : UnaryExpression(value)
     {
-        public UnaryMinusExpression(Expression value) : base(value)
-        {
-        }
-
         public override ValueExpression Evaluate(IParserContext context)
         {
             ValueExpression value = Value.Evaluate(context);

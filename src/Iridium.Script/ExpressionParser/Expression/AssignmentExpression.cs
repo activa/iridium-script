@@ -26,53 +26,47 @@
 
 namespace Iridium.Script
 {
-    public class AssignmentExpression : BinaryExpression
+    public class AssignmentExpression(Expression left, Expression right) : BinaryExpression(left, right)
     {
-        public AssignmentExpression(Expression left, Expression right) : base(left, right)
-        {
-        }
-
         public override ValueExpression Evaluate(IParserContext context)
         {
-            ValueExpression valueRight = Right.Evaluate(context);
+            var valueRight = Right.Evaluate(context);
 
-            if (Left is VariableExpression)
+            switch (Left)
             {
-                if ((context.AssignmentPermissions & AssignmentPermissions.Variable) == AssignmentPermissions.None)
-					throw new IllegalAssignmentException("Assignment to variable not allowed", this);
+                case VariableExpression when (context.AssignmentPermissions & AssignmentPermissions.Variable) == AssignmentPermissions.None:
+                    throw new IllegalAssignmentException("Assignment to variable not allowed", this);
 
-                VariableExpression varExpr = (VariableExpression)Left;
+                case VariableExpression variableExpression:
+                {
+                    bool exists = context.Exists(variableExpression.VarName);
 
-                bool exists = context.Exists(varExpr.VarName);
+                    if (exists && (context.AssignmentPermissions & AssignmentPermissions.ExistingVariable) == AssignmentPermissions.None)
+                        throw new IllegalAssignmentException("Assignment to existing variable not allowed", this);
 
-                if (exists && (context.AssignmentPermissions & AssignmentPermissions.ExistingVariable) == AssignmentPermissions.None)
-					throw new IllegalAssignmentException("Assignment to existing variable not allowed", this);
+                    if (!exists && (context.AssignmentPermissions & AssignmentPermissions.NewVariable) == AssignmentPermissions.None)
+                        throw new IllegalAssignmentException("Assignment to new variable not allowed", this);
 
-                if (!exists && (context.AssignmentPermissions & AssignmentPermissions.NewVariable) == AssignmentPermissions.None)
-					throw new IllegalAssignmentException("Assignment to new variable not allowed", this);
+                    context.Set(variableExpression.VarName, valueRight.Value, valueRight.Type);
 
-                context.Set(varExpr.VarName, valueRight.Value, valueRight.Type);
+                    return valueRight;
+                }
 
-                return valueRight;
-            }
-
-			if (Left is FieldExpression)
-			{
-				if ((context.AssignmentPermissions & AssignmentPermissions.Property) == AssignmentPermissions.None)
-					throw new IllegalAssignmentException("Assignment to property not allowed", this);
-
-				return ((FieldExpression)Left).Assign(context, valueRight.Value);
-			}
-
-            if (Left is IndexExpression)
-            {
-                if ((context.AssignmentPermissions & AssignmentPermissions.Indexer) == AssignmentPermissions.None)
+                case FieldExpression when (context.AssignmentPermissions & AssignmentPermissions.Property) == AssignmentPermissions.None:
+                    throw new IllegalAssignmentException("Assignment to property not allowed", this);
+                
+                case FieldExpression fieldExpression:
+                    return fieldExpression.Assign(context, valueRight.Value);
+                
+                case IndexExpression when (context.AssignmentPermissions & AssignmentPermissions.Indexer) == AssignmentPermissions.None:
                     throw new IllegalAssignmentException("Assignment to indexer not allowed", this);
-
-                return ((IndexExpression)Left).Assign(context, valueRight.Value);
+                
+                case IndexExpression indexExpression:
+                    return indexExpression.Assign(context, valueRight.Value);
+                
+                default:
+                    throw new IllegalAssignmentException(this);
             }
-
-            throw new IllegalAssignmentException(this);
         }
     }
 

@@ -26,12 +26,8 @@
 
 namespace Iridium.Script
 {
-    public class ValueOrNullExpression : BinaryExpression
+    public class ValueOrNullExpression(Expression condition, Expression value) : BinaryExpression(condition, value)
     {
-        public ValueOrNullExpression(Expression condition, Expression value) : base(condition, value)
-        {
-        }
-
         public Expression Condition => Left;
         public Expression Value => Right;
 

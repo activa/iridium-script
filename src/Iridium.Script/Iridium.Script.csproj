@@ -1,11 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard1.0</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+		<LangVersion>12.0</LangVersion>
+		<Version>2.4.0.12081</Version>
+		<Authors>Philippe Leybaert</Authors>
+		<PackageTags>iridium scripting c# expression templates mobile xamarin maui</PackageTags>
+		<RepositoryUrl>https://github.com/activa/iridium-script</RepositoryUrl>
+		<PackageIcon>icon.png</PackageIcon>
+		<Description>Portable and lightweight C# library for scripting, expression evaluation and template rendering. Compatible with mobile platforms where Reflection.Emit is not supported.</Description>
+		<PackageId>iridium.script</PackageId>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="iridium.reflection" Version="2.0.1.7071" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+
+	<ItemGroup>
+	  <PackageReference Include="iridium.reflection" Version="2.0.1.7071" />
+	</ItemGroup>
+
+  <!-- <ItemGroup> -->
+  <!--   <PackageReference Include="iridium.reflection" Version="2.0.1.7071" /> -->
+  <!-- </ItemGroup> -->
 
 </Project>

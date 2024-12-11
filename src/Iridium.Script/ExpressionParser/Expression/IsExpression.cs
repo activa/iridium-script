@@ -30,12 +30,8 @@ using Iridium.Script;
 
 namespace Iridium.Script
 {
-    public class IsExpression : BinaryExpression
+    public class IsExpression(Expression objectExpression, Expression typeExpression) : BinaryExpression(objectExpression, typeExpression)
     {
-        public IsExpression(Expression objectExpression, Expression typeExpression) : base(objectExpression, typeExpression)
-        {
-        }
-
         public Expression ObjectExpression => Left;
         public Expression TypeExpression => Right;
 

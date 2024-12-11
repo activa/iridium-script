@@ -26,10 +26,5 @@
 
 namespace Iridium.Script
 {
-    public class FunctionValueExpression : ValueExpression
-    {
-        public FunctionValueExpression(FunctionDefinitionExpression function) : base(function, typeof(FunctionDefinitionExpression))
-        {
-        }
-    }
+    public class FunctionValueExpression(FunctionDefinitionExpression function) : ValueExpression(function, typeof(FunctionDefinitionExpression));
 }

@@ -31,16 +31,10 @@ using Iridium.Script;
 
 namespace Iridium.Script
 {
-    public class IndexExpression : Expression
+    public class IndexExpression(Expression target, Expression[] parameters) : Expression
     {
-        public Expression Target { get; }
-        public Expression[] Parameters { get; }
-
-        public IndexExpression(Expression target, Expression[] parameters)
-        {
-            Target = target;
-            Parameters = parameters;
-        }
+        public Expression Target { get; } = target;
+        public Expression[] Parameters { get; } = parameters;
 
         public override ValueExpression Evaluate(IParserContext context)
         {
@@ -63,9 +57,9 @@ namespace Iridium.Script
                 if (targetType.GetArrayRank() != parameters.Length)
                     throw new Exception("Array has a different rank. Number of arguments is incorrect");
 
-                Type returnType = targetType.GetElementType();
+                var returnType = targetType.GetElementType();
 
-                foreach (Type t in parameterTypes)
+                foreach (var t in parameterTypes)
                 {
                     if (t != typeof(long) && t != typeof(long?) && t != typeof(int) && t != typeof(int?) && t != typeof(short) && t != typeof(short?) && t != typeof(ushort) && t != typeof(ushort?))
                         throw new BadArgumentException(t.Name + " is not a valid type for array indexers", this);
@@ -83,9 +77,9 @@ namespace Iridium.Script
             }
             else
             {
-                DefaultMemberAttribute[] att = targetType.Inspector().GetCustomAttributes<DefaultMemberAttribute>(true);
+                var attributes = targetType.Inspector().GetCustomAttributes<DefaultMemberAttribute>(true);
 
-                MethodInfo methodInfo = targetType.Inspector().GetPropertyGetter(att[0].MemberName, parameterTypes);
+                MethodInfo methodInfo = targetType.Inspector().GetPropertyGetter(attributes[0].MemberName, parameterTypes);
 
                 object value = methodInfo.Invoke(targetObject, parameterValues);
 

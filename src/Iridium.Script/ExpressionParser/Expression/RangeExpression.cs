@@ -29,19 +29,13 @@ using System.Collections.Generic;
 
 namespace Iridium.Script
 {
-    public class RangeExpression : BinaryExpression
+    public class RangeExpression(Expression from, Expression to, bool excludeFrom, bool excludeTo) : BinaryExpression(from, to)
     {
-		public bool ExcludeFrom { get; }
-		public bool ExcludeTo { get; }
+		public bool ExcludeFrom { get; } = excludeFrom;
+        public bool ExcludeTo { get; } = excludeTo;
 
         public Expression From => Left;
         public Expression To => Right;
-
-        public RangeExpression(Expression from, Expression to, bool excludeFrom, bool excludeTo) : base(from, to)
-        {
-			ExcludeFrom = excludeFrom;
-			ExcludeTo = excludeTo;
-        }
 
         public override ValueExpression Evaluate(IParserContext context)
         {

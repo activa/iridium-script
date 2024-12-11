@@ -26,12 +26,8 @@
 
 namespace Iridium.Script
 {
-    public class NegationExpression : UnaryExpression
+    public class NegationExpression(Expression value) : UnaryExpression(value)
     {
-        public NegationExpression(Expression value) : base(value)
-        {
-        }
-
         public override ValueExpression Evaluate(IParserContext context)
         {
             ValueExpression value = Value.Evaluate(context);

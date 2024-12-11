@@ -26,8 +26,5 @@
 
 namespace Iridium.Script
 {
-    public class MultiplyExpression : BinaryArithmicExpression
-    {
-        public MultiplyExpression(Expression left, Expression right) : base("*", left, right) { }
-    }
+    public class MultiplyExpression(Expression left, Expression right) : BinaryArithmicExpression("*", left, right);
 }

@@ -28,12 +28,8 @@ using System;
 
 namespace Iridium.Script
 {
-    public class TypeCastExpression : BinaryExpression
+    public class TypeCastExpression(Expression typeExpression, Expression targetExpression) : BinaryExpression(typeExpression, targetExpression)
     {
-        public TypeCastExpression(Expression typeExpression, Expression targetExpression) : base(typeExpression, targetExpression)
-        {
-        }
-
         public Expression TypeExpression => Left;
         public Expression TargetExpression => Right;
 

@@ -7,6 +7,32 @@ using NUnit.Framework;
 namespace Iridium.Script.Test
 {
     [TestFixture]
+    public class NullableTests
+    {
+        struct Item
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+        }
+
+        [Test]
+        public void TestFieldOnNullableObject()
+        {
+
+            FlexContext context = new FlexContext(new
+            {
+                item = (Item?)new Item { X = 1, Y = 2 }
+
+            });
+
+            var x = new CSharpParser().Parse("item.X").Evaluate<int>(context);
+
+            Assert.That(x, Is.EqualTo(1));
+
+        }
+    }
+
+    [TestFixture]
     public class ParserContextTests
     {
         [Test]
