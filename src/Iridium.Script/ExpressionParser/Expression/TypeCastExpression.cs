@@ -40,7 +40,7 @@ namespace Iridium.Script
             if (typeName == null)
                 throw new ExpressionEvaluationException("type cast requires a type. " + TypeExpression + " is not a type", this);
 
-            return Exp.Value(Convert.ChangeType(TargetExpression.Evaluate(context).Value, typeName.Type, null), typeName.Type);
+            return Exp.Value(System.Convert.ChangeType(TargetExpression.Evaluate(context).Value, typeName.Type, null), typeName.Type);
         }
 
 #if DEBUG

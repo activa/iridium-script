@@ -25,9 +25,8 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Reflection;
-using Iridium.Reflection;
-using Iridium.Script;
 
 namespace Iridium.Script
 {
@@ -68,7 +67,7 @@ namespace Iridium.Script
                 int[] indexes = new int[parameters.Length];
 
                 for (int i = 0; i < parameters.Length; i++)
-                    indexes[i] = Convert.ToInt32(parameterValues[i]);
+                    indexes[i] = System.Convert.ToInt32(parameterValues[i]);
 
                 if (assign)
                     ((Array)targetObject).SetValue(newValue,indexes);
@@ -77,9 +76,9 @@ namespace Iridium.Script
             }
             else
             {
-                var attributes = targetType.Inspector().GetCustomAttributes<DefaultMemberAttribute>(true);
+                var attributes = targetType.GetCustomAttributes<DefaultMemberAttribute>(true);
 
-                MethodInfo methodInfo = targetType.Inspector().GetPropertyGetter(attributes[0].MemberName, parameterTypes);
+                MethodInfo methodInfo = targetType.GetMethod("get_" + attributes.First().MemberName, parameterTypes);
 
                 object value = methodInfo.Invoke(targetObject, parameterValues);
 

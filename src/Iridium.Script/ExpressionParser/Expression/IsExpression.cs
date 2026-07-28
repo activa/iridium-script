@@ -25,7 +25,6 @@
 #endregion
 
 using System;
-using Iridium.Reflection;
 using Iridium.Script;
 
 namespace Iridium.Script
@@ -44,15 +43,15 @@ namespace Iridium.Script
             if (objectValue.Value == null)
                 return Exp.Value(false);
 
-            objectType = objectType.Inspector().RealType;
+            objectType = objectType.RealType();
 
             if (typeName == null)
                 throw new ExpressionEvaluationException("is operator requires a type. " + TypeExpression + " is not a type", this);
             
             Type checkType = typeName.Type;
 
-            if (!objectType.Inspector().IsValueType)
-                return Exp.Value(checkType.Inspector().IsAssignableFrom(objectType));
+            if (!objectType.IsValueType)
+                return Exp.Value(checkType.IsAssignableFrom(objectType));
 
             checkType = Nullable.GetUnderlyingType(checkType) ?? checkType;
 

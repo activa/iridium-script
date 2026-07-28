@@ -26,9 +26,6 @@
 
 using System;
 using System.Reflection;
-using Iridium.Reflection;
-using Iridium.Script;
-using BindingFlags = Iridium.Reflection.BindingFlags;
 
 namespace Iridium.Script
 {
@@ -48,38 +45,41 @@ namespace Iridium.Script
             object methodObject = MethodExpression.Evaluate(context).Value;
 
             ValueExpression[] parameters = EvaluateExpressionArray(Parameters, context);
-            Type[] parameterTypes = parameters.ConvertAll(expr => expr.Type.Inspector().RealType);
+            Type[] parameterTypes = parameters.ConvertAll(expr => expr.Type.RealType());
             object[] parameterValues = parameters.ConvertAll(expr => expr.Value);
 
 			switch (methodObject)
 			{
 			    case MethodDefinition methodDefinition:
-			        return Exp.Value((methodDefinition).Invoke(parameterTypes, parameterValues, out var returnType), returnType);
+			        return Exp.Value(methodDefinition.Invoke(parameterTypes, parameterValues, out var returnType), returnType);
 
-			    case ConstructorInfo[] constructors:
-			    {
-			        MethodBase method = SmartBinder.SelectBestMethod(constructors, parameterTypes, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+                case ConstructorInfo[] constructors:
+                {
+                    MethodBase method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, constructors, parameterTypes, null);
 
-			        if (method == null)
-			            throw new ExpressionEvaluationException("No match found for constructor " + constructors[0].Name, this);
+                    if (method == null)
+                        throw new ExpressionEvaluationException("No match found for constructor " + constructors[0].Name, this);
 
-			        object value = SmartBinder.Invoke(method, parameterValues);
+                    object value;
 
-			        //object value = ((ConstructorInfo)method).Invoke(parameterValues);
+                    if (method is ConstructorInfo constructorInfo)
+                        value = constructorInfo.Invoke(parameterValues);
+                    else
+                        throw new ExpressionEvaluationException($"{method.Name} is not a constructor", this);
 
-			        return Exp.Value( value, method.DeclaringType);
-			    }
+                    return Exp.Value(value, method.DeclaringType);
+                }
 
-			    case Delegate[] delegates:
+                case Delegate[] delegates:
 			    {
 			        MethodBase[] methods = delegates.ConvertAll<Delegate, MethodBase>(d => d.GetMethodInfo());
 
-			        MethodBase method = SmartBinder.SelectBestMethod(methods, parameterTypes, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+                    MethodBase method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, methods, parameterTypes, null);
 
 			        if (method == null)
 			            throw new ExpressionEvaluationException("No match found for delegate " + MethodExpression, this);
 
-			        object value = SmartBinder.Invoke(method, delegates[Array.IndexOf(methods, method)].Target, parameterValues);
+			        object value = method.Invoke(delegates[Array.IndexOf(methods, method)].Target, parameterValues);
 
 			        return Exp.Value(value, ((MethodInfo)method).ReturnType);
 			    }

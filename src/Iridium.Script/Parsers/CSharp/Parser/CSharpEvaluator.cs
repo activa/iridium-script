@@ -110,7 +110,7 @@ namespace Iridium.Script.CSharp
             }
             else
             {
-                return (char)Convert.ToUInt16(s.Substring(2), 16);
+                return (char)System.Convert.ToUInt16(s.Substring(2), 16);
             }
         }
 
@@ -168,17 +168,17 @@ namespace Iridium.Script.CSharp
             }
 
             if (type != null)
-                return Exp.Value(Convert.ChangeType(s, type, _numberFormat), type);
+                return Exp.Value(System.Convert.ChangeType(s, type, _numberFormat), type);
 
             if (s.LastIndexOf('.') >= 0)
             {
-                return Exp.Value(Convert.ToDouble(s, _numberFormat));
+                return Exp.Value(System.Convert.ToDouble(s, _numberFormat));
             }
             else
             {
-                long n = Convert.ToInt64(s);
+                long n = System.Convert.ToInt64(s);
 
-                if (n > Int32.MaxValue || n < Int32.MinValue)
+                if (n is > Int32.MaxValue or < Int32.MinValue)
                     return Exp.Value(n);
                 else
                     return Exp.Value((int)n);

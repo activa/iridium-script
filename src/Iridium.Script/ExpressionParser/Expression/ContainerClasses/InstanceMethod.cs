@@ -25,8 +25,9 @@
 #endregion
 
 using System;
+using System.Globalization;
 using System.Reflection;
-using Iridium.Reflection;
+using Iridium.Script.Reflection;
 
 namespace Iridium.Script
 {

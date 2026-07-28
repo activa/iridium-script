@@ -59,7 +59,7 @@ namespace Iridium.Script.Test
         {
             bool hasRun = false;
 
-            ParserContext ctx = new ParserContext
+            var ctx = new ParserContext
             {
                 ["f"] = new Action(() => hasRun = true)
             };
@@ -67,7 +67,7 @@ namespace Iridium.Script.Test
             Assert.True(ctx.Get("f", out var value, out var type));
 
             Assert.False(hasRun);
-            new CSharpParser().Evaluate("f()", ctx);
+            CSharpParser.Default.Evaluate("f()", ctx);
             Assert.True(hasRun);
         }
 

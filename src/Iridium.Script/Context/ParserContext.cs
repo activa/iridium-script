@@ -30,7 +30,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using Iridium.Reflection;
+//using Iridium.Reflection;
 
 namespace Iridium.Script
 {
@@ -299,14 +299,14 @@ namespace Iridium.Script
 
                 if (TestBehavior(ParserContextBehavior.ZeroIsFalse))
                 {
-                    if (value is int || value is uint || value is short || value is ushort || value is long || value is ulong || value is byte || value is sbyte)
-                        return Convert.ToInt64(value) != 0;
+                    if (value is int or uint or short or ushort or long or ulong or byte or sbyte)
+                        return System.Convert.ToInt64(value) != 0;
 
                     if (value is decimal @decimal)
                         return @decimal != 0m;
 
-                    if (value is float || value is double)
-                        return Convert.ToDouble(value) == 0.0;
+                    if (value is float or double)
+                        return System.Convert.ToDouble(value) == 0.0;
                 }
 
                 if (TestBehavior(ParserContextBehavior.EmptyCollectionIsFalse))
@@ -393,7 +393,7 @@ namespace Iridium.Script
 
             if (members.Length == 0)
             {
-                PropertyInfo indexerPropInfo = targetType.Inspector().GetIndexer([typeof(string)]);
+                PropertyInfo indexerPropInfo = targetType.FindIndexer([typeof(string)]);
 
                 if (indexerPropInfo != null)
                 {
@@ -423,10 +423,20 @@ namespace Iridium.Script
                         member = memberInfo;
             }
 
-            var memberInspector = member.Inspector();
-
-            value = memberInspector.GetValue(obj);
-            type = memberInspector.Type;
+            if (member is FieldInfo fieldInfo)
+            {
+                value = fieldInfo.GetValue(obj);
+                type = fieldInfo.FieldType;
+            }
+            else if (member is PropertyInfo propertyInfo)
+            {
+                value = propertyInfo.GetValue(obj);
+                type = propertyInfo.PropertyType;
+            }
+            else
+            {
+                return false;
+            }
 
             return true;
         }

@@ -49,9 +49,9 @@ namespace Iridium.Script
                 throw new ExpressionEvaluationException("Expression " + from + " does not evaluate to int or long", from);
 
             if (from.Type == typeof(long) || to.Type == typeof(long))
-                return Exp.Value(Range((long)Convert.ChangeType(from.Value, typeof(long), null), (long)Convert.ChangeType(to.Value, typeof(long), null)));
+                return Exp.Value(Range((long)System.Convert.ChangeType(from.Value, typeof(long), null), (long)System.Convert.ChangeType(to.Value, typeof(long), null)));
             else
-                return Exp.Value(Range((int)Convert.ChangeType(from.Value, typeof(int), null), (int)Convert.ChangeType(to.Value, typeof(int), null)));
+                return Exp.Value(Range((int)System.Convert.ChangeType(from.Value, typeof(int), null), (int)System.Convert.ChangeType(to.Value, typeof(int), null)));
         }
 
         private IEnumerable<int> Range(int from, int to)

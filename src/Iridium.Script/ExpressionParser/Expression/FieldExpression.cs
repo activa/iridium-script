@@ -25,8 +25,8 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Reflection;
-using Iridium.Reflection;
 
 namespace Iridium.Script
 {
@@ -74,17 +74,17 @@ namespace Iridium.Script
                     return Exp.Value(value, type);
             }
 
-            targetType = targetType.Inspector().RealType;
+            targetType = targetType.RealType();
 
-            MemberInfo[] members = FindMemberInHierarchy(targetType, Member);
+            MemberInfo[] members = FindMemberInHierarchy(targetType, Member, (context.Behavior & ParserContextBehavior.CaseInsensitiveMembers) == ParserContextBehavior.CaseInsensitiveMembers);
 
     		if (members.Length == 0)
     		{
-                PropertyInfo indexerPropInfo = targetType.Inspector().GetIndexer(new[] { typeof(string) });
+                PropertyInfo indexerPropInfo = targetType.FindIndexer([typeof(string)]);
 
                 if (indexerPropInfo != null)
                 {
-                    return Exp.Value(indexerPropInfo.GetValue(targetObject, new object[] { Member }), indexerPropInfo.PropertyType);
+                    return Exp.Value(indexerPropInfo.GetValue(targetObject, [Member]), indexerPropInfo.PropertyType);
                 }
 
     			throw new UnknownPropertyException("Unknown property " + Member + " for object " + Target + " (type " + targetType.Name + ")", this);
@@ -126,21 +126,23 @@ namespace Iridium.Script
     		throw new ExpressionEvaluationException(Member + " is not a field or property", this);
     	}
 
-        private static MemberInfo[] FindMemberInHierarchy(Type type, string name)
+        private static MemberInfo[] FindMemberInHierarchy(Type type, string name, bool caseInsensitive = false)
         {
             Type t = type;
 
+            var stringComparison = caseInsensitive ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture;
+
             while (t != null)
             {
-                MemberInfo[] members = t.Inspector().GetMember(name);
+                MemberInfo[] members = t.GetMembers().Where(m => string.Equals(m.Name, name, stringComparison)).ToArray();
 
                 if (members.Length > 0)
                     return members;
 
-                t = t.Inspector().BaseType;
+                t = t.BaseType;
             }
 
-            return new MemberInfo[0];
+            return [];
         }
 
 #if DEBUG

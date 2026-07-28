@@ -24,7 +24,7 @@
 //=============================================================================
 #endregion
 
-using Iridium.Reflection;
+using Iridium.Convert;
 
 namespace Iridium.Script
 {
@@ -47,7 +47,6 @@ namespace Iridium.Script
 	        var value = Evaluate(context).Value;
 
 	        return value.Convert<T>();
-	        //return (T) Evaluate(context).Value;
 	    }
     }
 }

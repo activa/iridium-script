@@ -2,7 +2,7 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-  <LangVersion>11.0</LangVersion>
+    <LangVersion>11.0</LangVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{DADEF747-14BA-4680-857E-FDBEE81CDA09}</ProjectGuid>
@@ -43,7 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryExpressionTestCaseProvider.cs" />
-    <Compile Include="Class1.cs" />
     <Compile Include="CSharpParserFixture.cs" />
     <Compile Include="DynamicObjectTest.cs" />
     <Compile Include="ExpressionWithContext.cs" />

@@ -28,15 +28,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Iridium.Reflection;
-using Iridium.Script;
+//using Iridium.Reflection;
 
 namespace Iridium.Script
 {
     public class DynamicObject : IDynamicObject
     {
-        private readonly Dictionary<string, object> _dic = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-        private readonly LinkedList<object> _objects = new LinkedList<object>();
+        private readonly Dictionary<string, object> _dic = new(StringComparer.OrdinalIgnoreCase);
+        private readonly LinkedList<object> _objects = new();
 
         public DynamicObject()
         {
@@ -102,7 +101,6 @@ namespace Iridium.Script
         private static MemberInfo GetMember(Type type, string propertyName)
         { 
             MemberInfo[] members = type.GetMember(propertyName);
-            //MemberInfo[] members = type.Inspector().GetMember(propertyName);
 
             if (members.Length == 0)
                 return null;

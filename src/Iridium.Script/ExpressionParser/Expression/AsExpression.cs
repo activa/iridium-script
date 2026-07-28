@@ -25,8 +25,6 @@
 #endregion
 
 using System;
-using Iridium.Reflection;
-using Iridium.Script;
 
 namespace Iridium.Script
 {
@@ -49,9 +47,9 @@ namespace Iridium.Script
             if (objectValue.Value == null)
                 return Exp.Value(null, checkType);
 
-            objectType = objectType.Inspector().RealType;
+            objectType = objectType.RealType();
 
-            if (!objectType.Inspector().IsValueType)
+            if (!objectType.IsValueType)
                 return Exp.Value(objectValue.Value, checkType);
 
             if ((Nullable.GetUnderlyingType(checkType) ?? checkType) == objectType)

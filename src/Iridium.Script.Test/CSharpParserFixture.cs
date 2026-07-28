@@ -65,7 +65,7 @@ namespace Iridium.Script.Test
             public int this[int i] => i * 2;
             public int this[int x, int y] => x + y;
         }
-        
+
         private ExpressionParser CreateParserWithContext()
         {
             var parser = new CSharpParser();
@@ -75,7 +75,7 @@ namespace Iridium.Script.Test
 
             return parser;
         }
-        
+
         private ParserContext CreateTestContext()
         {
             DataClass dataObject = new DataClass
@@ -99,7 +99,14 @@ namespace Iridium.Script.Test
             context.Set("MyCollection", new List<int>(new int[] { 1, 2, 4, 8, 16 }));
             context.Set("MyArray2", new int[,] { { 1, 2 }, { 2, 4 }, { 4, 8 }, { 8, 16 }, { 16, 32 } });
 
-            context.Set("f", new Func<int,int>(i => i*2));
+            context.Set("f", new Func<int, int>(i => i * 2));
+
+            context.Set("g",
+                new Delegate[]
+                {
+                    new Func<string, bool>(s => s == "test"),
+                    new Func<string, string, bool>((a, b) => a == "a" && b == "b")
+                });
 
             return context;
         }
@@ -121,15 +128,27 @@ namespace Iridium.Script.Test
         }
 
         [Test]
+        public void DelegateList()
+        {
+            var parser = CreateParserWithContext();
+
+            Assert.AreEqual(true, parser.Evaluate<bool>("g(\"test\")"));
+            Assert.AreEqual(false, parser.Evaluate<bool>("g(\"test1\")"));
+            Assert.AreEqual(true, parser.Evaluate<bool>("g(\"a\",\"b\")"));
+            Assert.AreEqual(false, parser.Evaluate<bool>("g(\"a\",\"b2\")"));
+
+        }
+
+        [Test]
         public void DefaultValueExpression()
         {
             var context = new FlexContext
             {
-                {"a", ""}, 
+                {"a", ""},
                 {"b", "z"}
             };
 
-            Assert.AreEqual("x", new CSharpParser().Evaluate<string>("a ?: \"x\"",context));
+            Assert.AreEqual("x", new CSharpParser().Evaluate<string>("a ?: \"x\"", context));
             Assert.AreEqual("z", new CSharpParser().Evaluate<string>("b ?: \"x\"", context));
         }
 
@@ -155,8 +174,8 @@ namespace Iridium.Script.Test
 
             var parser = new CSharpParser();
 
-            Assert.That(parser.Evaluate<bool>($"\"{s1}\" == \"{s2}\"",context), Is.EqualTo(equal));
-            Assert.That(parser.Evaluate<bool>($"\"{s1}\" != \"{s2}\"",context), Is.Not.EqualTo(equal));
+            Assert.That(parser.Evaluate<bool>($"\"{s1}\" == \"{s2}\"", context), Is.EqualTo(equal));
+            Assert.That(parser.Evaluate<bool>($"\"{s1}\" != \"{s2}\"", context), Is.Not.EqualTo(equal));
         }
 
         [Test]
@@ -191,24 +210,24 @@ namespace Iridium.Script.Test
 
         [TestCase("123", ExpectedResult = 123)]
         [TestCase("123L", ExpectedResult = 123L)]
-        [TestCase("123l", ExpectedResult = 123l)]
+        [TestCase("123l", ExpectedResult = 123L)]
         [TestCase("123u", ExpectedResult = 123u)]
         [TestCase("123U", ExpectedResult = 123U)]
         [TestCase("123LU", ExpectedResult = 123LU)]
-        [TestCase("123lU", ExpectedResult = 123lU)]
+        [TestCase("123lU", ExpectedResult = 123LU)]
         [TestCase("123Lu", ExpectedResult = 123Lu)]
-        [TestCase("123lu", ExpectedResult = 123lu)]
+        [TestCase("123lu", ExpectedResult = 123Lu)]
         public object NumericLiterals(string expr)
         {
             return new CSharpParser().EvaluateToObject(expr);
         }
-        
+
 
         [Test]
         public void StringLiterals()
         {
             var parser = new CSharpParser();
-            
+
             Assert.AreEqual("xyz", parser.Evaluate<string>("\"xyz\""));
             Assert.AreEqual("\n", parser.Evaluate<string>(@"""\n"""));
             Assert.AreEqual("\f", parser.Evaluate<string>(@"""\f"""));
@@ -401,7 +420,7 @@ namespace Iridium.Script.Test
 
             context.Set("NullString", null, typeof(string));
             context.Set("ShortValue", 4, typeof(short));
-            context.Set("NullableValue5",5,typeof(int?));
+            context.Set("NullableValue5", 5, typeof(int?));
 
             Assert.IsTrue(parser.Evaluate<bool>("NullString == null", context));
             Assert.IsTrue(parser.Evaluate<bool>("NullableValue5 == 5", context));
@@ -486,8 +505,8 @@ namespace Iridium.Script.Test
             }
             catch (IllegalAssignmentException)
             {
-                
-                
+
+
             }
         }
 
@@ -501,7 +520,7 @@ namespace Iridium.Script.Test
 
             Assert.AreEqual(123, parser.Evaluate<int>("Data.Int1 = 123"));
 
-            Assert.AreEqual(123,parser.Evaluate<int>("Data.Int1"));
+            Assert.AreEqual(123, parser.Evaluate<int>("Data.Int1"));
         }
 
         public class XElement
@@ -540,7 +559,7 @@ namespace Iridium.Script.Test
             var parser = CreateParserWithContext();
 
             parser.DefaultContext.Set("xEl", xEl);
-
+            
             Assert.AreEqual("attr[Test]", parser.Evaluate<string>("xEl.Attribute(\"Test\")"));
         }
 
@@ -550,12 +569,12 @@ namespace Iridium.Script.Test
             var parser = CreateParserWithContext();
 
             parser.DefaultContext.Set("date1", DateTime.Now);
-            parser.DefaultContext.Set("date2",DateTime.Now.AddHours(1));
+            parser.DefaultContext.Set("date2", DateTime.Now.AddHours(1));
 
             Assert.IsTrue(parser.Evaluate<bool>("date1 < date2"));
             Assert.IsFalse(parser.Evaluate<bool>("date1 > date2"));
             Assert.IsFalse(parser.Evaluate<bool>("date1 == date2"));
-            Assert.AreEqual(1,(int)parser.Evaluate<TimeSpan>("date2 - date1").TotalHours);
+            Assert.AreEqual(1, (int)parser.Evaluate<TimeSpan>("date2 - date1").TotalHours);
 
         }
 
@@ -569,12 +588,12 @@ namespace Iridium.Script.Test
             Assert.AreEqual(9, expr.Evaluate().Value);
             Assert.AreEqual(typeof(int), expr.Evaluate().Type);
 
-            expr = new ExpressionWithContext(context,Exp.Add(Exp.Add(Exp.Value(4), Exp.Value((long)5)), Exp.Value(6)));
+            expr = new ExpressionWithContext(context, Exp.Add(Exp.Add(Exp.Value(4), Exp.Value((long)5)), Exp.Value(6)));
 
             Assert.AreEqual(15L, expr.Evaluate().Value);
             Assert.AreEqual(typeof(long), expr.Evaluate().Type);
 
-            expr = new ExpressionWithContext(context,Exp.Op("<<", Exp.Value((long)4), Exp.Value(2)));
+            expr = new ExpressionWithContext(context, Exp.Op("<<", Exp.Value((long)4), Exp.Value(2)));
 
             Assert.AreEqual(16L, expr.Evaluate().Value);
         }
@@ -590,11 +609,11 @@ namespace Iridium.Script.Test
 
             ParserContext context = new ParserContext(dynObj);
 
-            Assert.AreEqual(2, parser.Evaluate<int>("Method0()",context));
+            Assert.AreEqual(2, parser.Evaluate<int>("Method0()", context));
             Assert.AreEqual(21, parser.Evaluate<int>("Method0() + Method1(5) + Method2(Int1,4)", context));
 
 
-            
+
         }
 
         private static ParserContext SetupFalsyContext(ParserContextBehavior behavior)
@@ -602,11 +621,11 @@ namespace Iridium.Script.Test
             ParserContext context = new ParserContext(behavior);
 
             context.Set<object>("NullValue", null);
-            context.Set<object>("RandomObject",new object());
+            context.Set<object>("RandomObject", new object());
             context.Set("EmptyString", "");
             context.Set("NonEmptyString", "x");
-            context.Set("ZeroNumber",0);
-            context.Set("NonZeroNumber",111);
+            context.Set("ZeroNumber", 0);
+            context.Set("NonZeroNumber", 111);
             context.Set("EmptyList", new int[0]);
             context.Set("NonEmptyList", new int[1]);
 
@@ -627,7 +646,7 @@ namespace Iridium.Script.Test
 
                 Assert.Fail();
             }
-            catch(NullReferenceException)
+            catch (NullReferenceException)
             {
             }
         }
@@ -638,15 +657,15 @@ namespace Iridium.Script.Test
         {
             try
             {
-                var parser=new CSharpParser();
-                
+                var parser = new CSharpParser();
+
                 ParserContext context = SetupFalsyContext(ParserContextBehavior.Default);
 
                 parser.Evaluate<bool>("!!EmptyString", context);
 
                 Assert.Fail();
             }
-            catch(ArgumentException)
+            catch (ArgumentException)
             {
             }
         }
@@ -665,9 +684,9 @@ namespace Iridium.Script.Test
 
                 Assert.Fail();
             }
-            catch(ArgumentException)
+            catch (ArgumentException)
             {
-                
+
             }
         }
 
@@ -678,7 +697,7 @@ namespace Iridium.Script.Test
 
             ParserContext context = SetupFalsyContext(ParserContextBehavior.EmptyStringIsFalse);
 
-            Assert.IsFalse(parser.Evaluate<bool>("!!EmptyString",context));
+            Assert.IsFalse(parser.Evaluate<bool>("!!EmptyString", context));
         }
 
         [Test]
@@ -719,7 +738,7 @@ namespace Iridium.Script.Test
         {
             var parser = new CSharpParser();
 
-            Assert.That(parser.Evaluate<IEnumerable<int>>("1" + op + "5").Sum(n => n),Is.EqualTo(expectedResult));
+            Assert.That(parser.Evaluate<IEnumerable<int>>("1" + op + "5").Sum(n => n), Is.EqualTo(expectedResult));
         }
 
         [TestCase("...", 1 + 2 + 3 + 4 + 5)]
@@ -730,7 +749,7 @@ namespace Iridium.Script.Test
         {
             var parser = new CSharpParser();
 
-            Assert.That(parser.Evaluate<IEnumerable<long>>("1L " + op + " 5L").Sum(n => n),Is.EqualTo((long)expectedResult));
+            Assert.That(parser.Evaluate<IEnumerable<long>>("1L " + op + " 5L").Sum(n => n), Is.EqualTo((long)expectedResult));
         }
 
         private ExpressionParser CreateScriptParser(StringBuilder output)
@@ -746,7 +765,7 @@ namespace Iridium.Script.Test
             return parser;
         }
 
-        [TestCase("print(1);return 5;print(2);","1", ExpectedResult = 5, TestName = "Return.Within.Sequence")]
+        [TestCase("print(1);return 5;print(2);", "1", ExpectedResult = 5, TestName = "Return.Within.Sequence")]
         [TestCase("print(1);print(2);return 5;", "12", ExpectedResult = 5, TestName = "Return.After.Sequence")]
         public int ScriptWithReturnValue(string script, string expectedOutput)
         {
@@ -755,7 +774,7 @@ namespace Iridium.Script.Test
 
             int returnValue = parser.Evaluate<int>(script);
 
-            Assert.That(output.ToString(),Is.EqualTo(expectedOutput));
+            Assert.That(output.ToString(), Is.EqualTo(expectedOutput));
 
             return returnValue;
         }
@@ -765,9 +784,9 @@ namespace Iridium.Script.Test
         [TestCase("foreach (x in [1...9]) { print(x); if (x>=5) break; }", ExpectedResult = "12345", TestName = "ForEach.With.Break")]
         [TestCase("x = 1; while (x<10) { print(x); x = x + 1; }", ExpectedResult = "123456789", TestName = "While.Simple")]
         [TestCase("x = 1; while (x<10) { print(x); x = x + 1; if (x > 5) break; }", ExpectedResult = "12345", TestName = "While.With.Break")]
-        [TestCase("if(1==1) print(1); else print(3); print(2)",ExpectedResult = "12", TestName = "If.True.Else")]
+        [TestCase("if(1==1) print(1); else print(3); print(2)", ExpectedResult = "12", TestName = "If.True.Else")]
         [TestCase("if(1==0) print(1); else print(3); print(2)", ExpectedResult = "32", TestName = "If.False.Else")]
-        [TestCase("if(1==0) print(1); else if(1==1) print(3); print(2)",ExpectedResult = "32",TestName = "If.False.Else.If")]
+        [TestCase("if(1==0) print(1); else if(1==1) print(3); print(2)", ExpectedResult = "32", TestName = "If.False.Else.If")]
         [TestCase("if(1==1) print(1);print(2)", ExpectedResult = "12", TestName = "If.True")]
         [TestCase("if(1==0) print(1);print(2)", ExpectedResult = "2", TestName = "If.False")]
         [TestCase("function x(a,b) { print(a); print(b); } x(1,2);", ExpectedResult = "12", TestName = "Function.Definition.Void")]
@@ -795,7 +814,7 @@ namespace Iridium.Script.Test
             };
 
 
-            Assert.AreEqual(5,parser.Evaluate<int>("if(1==1) { f(1); return 5; } f(2);", context));
+            Assert.AreEqual(5, parser.Evaluate<int>("if(1==1) { f(1); return 5; } f(2);", context));
 
             Assert.AreEqual("1", output);
         }
@@ -839,11 +858,11 @@ foreach (i in [0...<array.Length-1])
    }
 }
 ";
-            Assert.That(array,Is.Not.Ordered);
+            Assert.That(array, Is.Not.Ordered);
 
             new CScriptParser().Evaluate(script, context);
 
-            Assert.That(array,Is.Ordered);
+            Assert.That(array, Is.Ordered);
         }
 
 
@@ -881,7 +900,7 @@ f(5);
 
             parser.Evaluate(script);
 
-            Assert.That(output.ToString(),Is.EqualTo("54321"));
+            Assert.That(output.ToString(), Is.EqualTo("54321"));
         }
 
 
@@ -890,7 +909,7 @@ f(5);
         {
             var veloxResult = parser.EvaluateToObject(expr);
 
-            Assert.That(veloxResult,Is.TypeOf(expectedResult.GetType()).And.EqualTo(expectedResult));
+            Assert.That(veloxResult, Is.TypeOf(expectedResult.GetType()).And.EqualTo(expectedResult));
 
             Assert.Pass($"{expr} = {veloxResult.GetType().Name}");
         }
@@ -904,30 +923,30 @@ f(5);
 
                 var testCaseProvider = new BinaryExpressionTestCaseProvider()
                 {
-                    byteA = (byte) rand.Next(3, 4),
-                    byteB = (byte) rand.Next(2, 3),
-                    sbyteA = (sbyte) rand.Next(3, 4),
-                    sbyteB = (sbyte) rand.Next(2, 3),
-                    charA = (char) rand.Next(3, 4),
-                    charB = (char) rand.Next(2, 3),
-                    shortA = (short) rand.Next(1000, 2000),
-                    shortB = (short) rand.Next(2, 3),
-                    ushortA = (ushort) rand.Next(1000, 2000),
-                    ushortB = (ushort) rand.Next(2, 3),
+                    byteA = (byte)rand.Next(3, 4),
+                    byteB = (byte)rand.Next(2, 3),
+                    sbyteA = (sbyte)rand.Next(3, 4),
+                    sbyteB = (sbyte)rand.Next(2, 3),
+                    charA = (char)rand.Next(3, 4),
+                    charB = (char)rand.Next(2, 3),
+                    shortA = (short)rand.Next(1000, 2000),
+                    shortB = (short)rand.Next(2, 3),
+                    ushortA = (ushort)rand.Next(1000, 2000),
+                    ushortB = (ushort)rand.Next(2, 3),
                     intA = rand.Next(1000, 2000),
                     intB = rand.Next(5, 10),
-                    uintA = (uint) rand.Next(1000, 2000),
-                    uintB = (uint) rand.Next(5, 10),
+                    uintA = (uint)rand.Next(1000, 2000),
+                    uintB = (uint)rand.Next(5, 10),
                     longA = rand.Next(10000, 20000),
                     longB = rand.Next(30, 40),
-                    ulongA = (ulong) rand.Next(10000, 20000),
-                    ulongB = (ulong) rand.Next(30, 40),
-                    doubleA = rand.NextDouble()*1000 + 2000,
-                    doubleB = rand.NextDouble()*10 + 30,
-                    floatA = (float) rand.NextDouble()*1000 + 2000,
-                    floatB = (float) rand.NextDouble()*10 + 30,
-                    decA = (decimal) rand.NextDouble()*1000 + 2000,
-                    decB = (decimal) rand.NextDouble()*10 + 30,
+                    ulongA = (ulong)rand.Next(10000, 20000),
+                    ulongB = (ulong)rand.Next(30, 40),
+                    doubleA = rand.NextDouble() * 1000 + 2000,
+                    doubleB = rand.NextDouble() * 10 + 30,
+                    floatA = (float)rand.NextDouble() * 1000 + 2000,
+                    floatB = (float)rand.NextDouble() * 10 + 30,
+                    decA = (decimal)rand.NextDouble() * 1000 + 2000,
+                    decB = (decimal)rand.NextDouble() * 10 + 30,
                     strA = "ABC",
                     strB = "XYZ",
                     boolA = true,
@@ -936,13 +955,30 @@ f(5);
 
                 var testCases = testCaseProvider.GenerateTestCases();
 
-                CSharpParser parser = new CSharpParser() { DefaultContext = new ParserContext(testCaseProvider)};
+                CSharpParser parser = new CSharpParser() { DefaultContext = new ParserContext(testCaseProvider) };
 
                 foreach (var expr in testCases.Keys)
                 {
-                    yield return new TestCaseData(expr,testCases[expr],parser).SetName(expr);
+                    yield return new TestCaseData(expr, testCases[expr], parser).SetName(expr);
                 }
             }
+        }
+
+        [Test]
+        public void TestCaseInsensitiveVariables()
+        {
+            var context = new ParserContext(ParserContextBehavior.Easy | ParserContextBehavior.CaseInsensitiveVariables | ParserContextBehavior.CaseInsensitiveMembers);
+
+            context["a"] = 123;
+            context["s"] = "123";
+
+            var parser = new CSharpParser();
+
+            Assert.That(parser.Evaluate<int>("A", context), Is.EqualTo(123));
+            Assert.That(parser.Evaluate<string>("S", context), Is.EqualTo("123"));
+            Assert.That(parser.Evaluate<string>("s", context), Is.EqualTo("123"));
+            Assert.That(parser.Evaluate<int>("s.Length", context), Is.EqualTo(3));
+            Assert.That(parser.Evaluate<int>("s.length", context), Is.EqualTo(3));
         }
 
     }

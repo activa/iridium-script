@@ -27,8 +27,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using Iridium.Reflection;
-using BindingFlags = Iridium.Reflection.BindingFlags;
+using Iridium.Script.Reflection;
 
 namespace Iridium.Script
 {
@@ -59,7 +58,15 @@ namespace Iridium.Script
 
             while (t != null)
             {
-                MethodInfo methodInfo = t.Inspector().GetMethod(MethodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance, parameterTypes);
+                
+                //t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+
+                MethodInfo methodInfo = t.GetMember(MethodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                                            .OfType<MethodInfo>()
+                                            .FirstOrDefault(m => SmartBinder.MatchParameters(parameterTypes, m.GetParameters())
+                                            );
+
+                //MethodInfo methodInfo = t.GetMethod(MethodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance, new CustomBinder(), parameterTypes, null);
 
                 if (methodInfo != null)
                     return methodInfo;

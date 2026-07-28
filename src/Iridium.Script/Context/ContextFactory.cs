@@ -25,6 +25,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Reflection;
 
 namespace Iridium.Script

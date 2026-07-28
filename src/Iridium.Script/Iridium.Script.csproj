@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
-		<LangVersion>12.0</LangVersion>
-		<Version>2.4.0.12081</Version>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0</TargetFrameworks>
+		<LangVersion>13.0</LangVersion>
+		<Version>2.5.0.7211</Version>
 		<Authors>Philippe Leybaert</Authors>
 		<PackageTags>iridium scripting c# expression templates mobile xamarin maui</PackageTags>
 		<RepositoryUrl>https://github.com/activa/iridium-script</RepositoryUrl>
@@ -23,11 +23,7 @@
 
 
 	<ItemGroup>
-	  <PackageReference Include="iridium.reflection" Version="2.0.1.7071" />
+	  <PackageReference Include="iridium.convert" Version="2.8.0.7281" />
 	</ItemGroup>
-
-  <!-- <ItemGroup> -->
-  <!--   <PackageReference Include="iridium.reflection" Version="2.0.1.7071" /> -->
-  <!-- </ItemGroup> -->
 
 </Project>

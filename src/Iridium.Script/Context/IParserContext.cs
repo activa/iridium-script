@@ -53,5 +53,7 @@ namespace Iridium.Script
         StringComparison StringComparison { get; }
 
         string Format(string formatString, params object[] parameters);
+
+        ParserContextBehavior Behavior { get; }
     }
 }

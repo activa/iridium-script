@@ -47,6 +47,7 @@ namespace Iridium.Script
 
         Easy = Falsy|ReturnNullWhenNullReference,
         
-        CaseInsensitiveVariables = 0x8000
+        CaseInsensitiveVariables = 0x8000,
+        CaseInsensitiveMembers = 0x10000,
     }
 }

@@ -47,7 +47,7 @@ namespace Iridium.Script
         public static object CalcInt64_Int32(string op, object p1, object p2, StringComparison stringComparison, Expression expr)
         {
             long? v1 = (long?)p1;
-            int? v2 = p2 == null ? (int?)null : Convert.ToInt32(p2);
+            int? v2 = p2 == null ? (int?)null : System.Convert.ToInt32(p2);
 
             switch (op)
             {

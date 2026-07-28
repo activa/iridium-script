@@ -27,7 +27,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Iridium.Reflection;
 
 namespace Iridium.Script
 {
@@ -247,11 +246,11 @@ namespace Iridium.Script
             var type1 = values[0].Type;
             var type2 = values[1].Type;
 
-            bool nullable1 = type1.Inspector().IsNullable;
-            bool nullable2 = type2.Inspector().IsNullable;
+            bool nullable1 = Nullable.GetUnderlyingType(type1) != null;
+            bool nullable2 = Nullable.GetUnderlyingType(type2) != null;
 
-            type1 = type1.Inspector().RealType;
-            type2 = type2.Inspector().RealType;
+            type1 = type1.RealType();
+            type2 = type2.RealType();
 
             bool isNullable = (nullable1 || nullable2);
 
@@ -259,7 +258,7 @@ namespace Iridium.Script
 
             if (operatorMethod == null)
             {
-                MethodInfo customOperatorMethod = type1.Inspector().GetMethod(_operatorOverloadNames[Operator], [type1, type2]);
+                MethodInfo customOperatorMethod = type1.GetMethod(_operatorOverloadNames[Operator], [type1, type2]);
 
                 if (customOperatorMethod != null)
                 {
@@ -282,8 +281,8 @@ namespace Iridium.Script
                     return Exp.Value(null, returnType);
             }
 
-            object value1 = operatorMethod.Type1.Inspector().Cast(values[0].Value);
-            object value2 = operatorMethod.Type2.Inspector().Cast(values[1].Value);
+            object value1 = operatorMethod.Type1.Cast(values[0].Value);
+            object value2 = operatorMethod.Type2.Cast(values[1].Value);
 
             return Exp.Value(operatorMethod.Function(Operator, value1, value2, context?.StringComparison ?? StringComparison.Ordinal, this), returnType);
         }
@@ -294,7 +293,7 @@ namespace Iridium.Script
 
             HashSet<string> promotableOperators = [..new[] { "+", "-", "*", "/", "%", "&", "|", "^", "==", "!=", ">", "<", ">=", "<=" }];
 
-            if (type1.Inspector().Is(TypeFlags.Numeric) && type2.Inspector().Is(TypeFlags.Numeric))
+            if (type1.Is(TypeTraitFlags.Numeric) && type2.Is(TypeTraitFlags.Numeric))
             {
                 if (promotableOperators.Contains(Operator))
                 {
@@ -341,9 +340,9 @@ namespace Iridium.Script
 
                     type1 = type2 = promotionType;
                 }
-                else if (Operator is "<<" or ">>" && type1.Inspector().Is(TypeFlags.Integer))
+                else if (Operator is "<<" or ">>" && type1.Is(TypeTraitFlags.Integer))
                 {
-                    if (type1.Inspector().Is(TypeFlags.Integer16|TypeFlags.Integer8))
+                    if (type1.Is(TypeTraitFlags.Integer16|TypeTraitFlags.Integer8))
                         type1 = typeof(int);
 
                     type2 = typeof(int);
@@ -355,8 +354,8 @@ namespace Iridium.Script
                 bool sameType1 = type1 == operatorMethod.Type1;
                 bool sameType2 = type2 == operatorMethod.Type2;
 
-                bool canConvert1 = operatorMethod.Type1.Inspector().IsAssignableFrom(type1);
-                bool canConvert2 = operatorMethod.Type2.Inspector().IsAssignableFrom(type2);
+                bool canConvert1 = operatorMethod.Type1.IsAssignableFrom(type1);
+                bool canConvert2 = operatorMethod.Type2.IsAssignableFrom(type2);
 
                 if ((sameType1 || canConvert1) && (sameType2 || canConvert2))
                 {

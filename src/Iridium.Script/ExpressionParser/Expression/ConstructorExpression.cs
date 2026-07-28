@@ -25,7 +25,6 @@
 #endregion
 
 using System;
-using Iridium.Reflection;
 using Iridium.Script;
 
 namespace Iridium.Script
@@ -42,7 +41,7 @@ namespace Iridium.Script
             if (typeName == null)
                 throw new TypeInitializationException(TypeName.VarName,null);
 
-            return Exp.Value(typeName.Type.Inspector().GetConstructors());
+            return Exp.Value(typeName.Type.GetConstructors());
         }
 
 #if DEBUG
