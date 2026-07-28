@@ -2,17 +2,21 @@
 
 **A portable, lightweight C#-style expression evaluator, mini scripting engine, and template renderer for .NET.**
 
-Iridium.Script lets you take a *string* like `"order.Total > 100 ? order.Total * 0.9m : order.Total"` and turn it into a real, evaluated value at runtime — using your own .NET objects, methods, and types as first-class citizens. It does this **without `Reflection.Emit` or runtime code generation**, so it runs anywhere .NET runs, including AOT-compiled and mobile targets (Xamarin / MAUI / iOS) where dynamic IL is not allowed.
+Iridium.Script lets you take a *string* like `"order.Total > 100 ? order.Total * 0.9m : order.Total"` and turn it into a real, evaluated value at runtime — using your own .NET objects, methods, and types as first-class citizens. It does this **without** `Reflection.Emit` **or runtime code generation**, so it runs anywhere .NET runs, including AOT-compiled and mobile targets (Xamarin / MAUI / iOS) where dynamic IL is not allowed.
 
 It ships three complementary engines in a single small assembly:
 
-| Engine | What it does |
-| --- | --- |
-| **Expression evaluator** | Parses and evaluates a single C#-like expression against a set of variables/objects. |
-| **Script runner** | Runs lightweight, C#-flavored scripts with `if`/`while`/`foreach`, blocks, `return`, and user-defined `function`s. |
-| **Template renderer** | Renders text/HTML/XML templates with embedded expressions, loops, conditionals, and macros in several syntaxes (Velocity, `{{ }}`, HTML-comment, XML). |
+
+| Engine                   | What it does                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Expression evaluator** | Parses and evaluates a single C#-like expression against a set of variables/objects.                                                                   |
+| **Script runner**        | Runs lightweight, C#-flavored scripts with `if`/`while`/`foreach`, blocks, `return`, and user-defined `function`s.                                     |
+| **Template renderer**    | Renders text/HTML/XML templates with embedded expressions, loops, conditionals, and macros in several syntaxes (Velocity, `{{ }}`, HTML-comment, XML). |
+
 
 ---
+
+
 
 ## A taste of what it can do
 
@@ -65,6 +69,8 @@ context.Set("order", order);
 decimal amountToCharge = new CSharpParser().Evaluate<decimal>(rule, context);
 ```
 
+
+
 ### 2. Decide eligibility with a dynamic filter
 
 Feature flags, promotion targeting, segmentation — all as editable boolean expressions:
@@ -75,6 +81,8 @@ var parser = new CSharpParser { DefaultContext = context };
 bool eligibleForPromo = parser.Evaluate<bool>(
     "customer.Country == \"BE\" && customer.Orders.Count > 3 && !customer.IsBlocked");
 ```
+
+
 
 ### 3. Run a small script over an order
 
@@ -91,7 +99,7 @@ decimal grandTotal = new CScriptParser().Evaluate<decimal>(@"
     subtotal = 0.0m;
 
     foreach (line in order.Lines)
-        subtotal = subtotal + line.Quantity * line.UnitPrice;
+        subtotal += line.Quantity * line.UnitPrice;
 
     // Free shipping over 50, otherwise a flat rate:
     shipping = subtotal >= 50 ? 0.0m : 4.95m;
@@ -99,6 +107,8 @@ decimal grandTotal = new CScriptParser().Evaluate<decimal>(@"
     return subtotal + shipping;
 ", context);
 ```
+
+
 
 ### 4. Define reusable functions (with recursion)
 
@@ -118,6 +128,8 @@ double projected = new CScriptParser().Evaluate<double>(@"
 // => 1157.625
 ```
 
+
+
 ### 5. Render an order-confirmation email from a template
 
 ```csharp
@@ -135,6 +147,8 @@ Order total: {{order.Total ` 0.00}}
 {{if order.Total >= 50}}Good news — shipping is on us!{{end}}
 ", context);
 ```
+
+
 
 ### 6. Run rules straight against an incoming JSON payload
 
@@ -155,6 +169,8 @@ If any of that looks useful, read on.
 
 ---
 
+
+
 ## Table of contents
 
 - [Installation & requirements](#installation--requirements)
@@ -170,9 +186,11 @@ If any of that looks useful, read on.
 
 ---
 
+
+
 ## Installation & requirements
 
-Iridium.Script is distributed as the NuGet package **`iridium.script`**.
+Iridium.Script is distributed as the NuGet package `iridium.script`.
 
 ```
 dotnet add package iridium.script
@@ -191,6 +209,8 @@ using Iridium.Script.CSharp;  // CSharpParser / CScriptParser
 ```
 
 ---
+
+
 
 ## Core concepts
 
@@ -225,6 +245,8 @@ There is also a ready-made shared instance for one-off, context-light use:
 CSharpParser.Default.Evaluate("customer.IsPremium", context);
 ```
 
+
+
 ### Parse once, evaluate many
 
 `Evaluate(...)` parses every time. For hot paths — e.g. applying the same formula to every row of a report — parse once and re-evaluate against changing contexts:
@@ -245,6 +267,8 @@ foreach (var line in lines)
 
 ---
 
+
+
 ## The expression language
 
 The expression syntax closely mirrors C#. The following are all evaluated exactly as they would be in C#.
@@ -258,6 +282,8 @@ new CSharpParser().EvaluateToObject("123");            // int
 new CSharpParser().EvaluateToObject("123L");           // long   (suffixes L/l/U/u and combinations)
 new CSharpParser().EvaluateToObject("123LU");          // ulong
 ```
+
+
 
 ### Arithmetic & operator precedence
 
@@ -276,6 +302,8 @@ new CSharpParser().Evaluate<bool>("!!true");     // true (logical not)
 new CSharpParser().Evaluate<int>("~2");          // ~2   (bitwise complement)
 new CSharpParser().Evaluate<int>("5+~2");        // bitwise, &, |, ^, <<, >> all supported
 ```
+
+
 
 ### Comparisons, booleans & nullable lifting
 
@@ -296,6 +324,8 @@ parser.Evaluate<bool>("shipDate < dueDate");                  // shipped on time
 parser.Evaluate<double>("(dueDate - shipDate).TotalDays");    // days of slack
 ```
 
+
+
 ### Ternary, coalescing and null-aware operators
 
 ```csharp
@@ -312,6 +342,8 @@ parser.Evaluate<string>("customer.Name ?: \"Valued customer\"");
 parser.EvaluateToObject("order.IsPaid :: order.Total");   // Total if paid, otherwise null
 ```
 
+
+
 ### Type operators: `is`, `as`, `typeof`, casts
 
 ```csharp
@@ -320,6 +352,8 @@ new CSharpParser().Evaluate<string>("5 as string");      // null
 new CSharpParser().Evaluate<Type>("typeof(int)");        // typeof(int) — incl. all built-in aliases
 new CSharpParser().EvaluateToObject("(long)5");          // 5L — explicit casts, incl. custom implicit conversions
 ```
+
+
 
 ### Member access, methods, indexers & construction
 
@@ -357,16 +391,20 @@ parser.Evaluate<decimal>("discount(order.Total)");         // picks the 1-arg ov
 parser.Evaluate<decimal>("discount(order.Total, true)");   // picks the 2-arg overload
 ```
 
+
+
 ### Numeric ranges
 
 A distinctive feature: inclusive/exclusive integer ranges that evaluate to `IEnumerable<int>` (or `<long>`), and can run forward or backward — handy for generating months, installments, page numbers, or driving loops.
 
-| Operator | `1 op 5` yields | Meaning |
-| --- | --- | --- |
-| `...`   | `1,2,3,4,5` | both endpoints inclusive |
-| `>...`  | `2,3,4,5`   | exclude the start |
-| `...<`  | `1,2,3,4`   | exclude the end |
-| `>...<` | `2,3,4`     | exclude both |
+
+| Operator | `1 op 5` yields | Meaning                  |
+| -------- | --------------- | ------------------------ |
+| `...`    | `1,2,3,4,5`     | both endpoints inclusive |
+| `>...`   | `2,3,4,5`       | exclude the start        |
+| `...<`   | `1,2,3,4`       | exclude the end          |
+| `>...<`  | `2,3,4`         | exclude both             |
+
 
 ```csharp
 new CSharpParser().Evaluate<IEnumerable<int>>("1...12");        // month numbers Jan..Dec
@@ -378,9 +416,11 @@ Ranges are also what power `foreach` loops and template loops (`[0...<n]`, `[5..
 
 ---
 
+
+
 ## The scripting language
 
-Use **`CScriptParser`** (which is `CSharpParser` with scripting enabled) to run multi-statement scripts. On top of everything in the expression language, scripts add:
+Use `CScriptParser` (which is `CSharpParser` with scripting enabled) to run multi-statement scripts. On top of everything in the expression language, scripts add:
 
 - `;`-separated statements and `{ ... }` blocks
 - `if` / `else` / `else if`
@@ -416,6 +456,8 @@ parser.Evaluate("i = 0; spent = 0.0m; while (spent + order.Lines[i].LineTotal <=
 parser.Evaluate("if (order.Total >= 100) tier = \"free\"; else if (order.Total >= 50) tier = \"reduced\"; else tier = \"standard\";", ctx);
 ```
 
+
+
 ### Return values
 
 `return` stops execution and produces the script's value — even from inside a block or loop. It's ideal for guard clauses:
@@ -427,6 +469,8 @@ string status = parser.Evaluate<string>(@"
     return ""ok"";
 ", ctx);
 ```
+
+
 
 ### User-defined functions
 
@@ -450,6 +494,8 @@ parser.Evaluate<decimal>("shippingFor(order.Total)");   // reuses the definition
 > **Note:** Assignment (`x = ...`) requires the context to grant permission — see [AssignmentPermissions](#controlling-assignment). Scripts typically use `ParserContextBehavior.Easy` and `AssignmentPermissions.All`.
 
 ---
+
+
 
 ## Contexts: variables, types, functions & objects
 
@@ -478,6 +524,8 @@ context.Set("shippedDate", order.ShippedDate, typeof(DateTime?));  // may be nul
 context.Set("couponCode",  null, typeof(string));
 ```
 
+
+
 ### Root objects — evaluate directly against a POCO
 
 Set a **root object** and its members become top-level names (no prefix needed) — great when each evaluation targets a single entity:
@@ -489,6 +537,8 @@ parser.Evaluate<bool>("IsPremium && !IsBlocked", context);
 parser.Evaluate<int>("Orders.Count", context);
 ```
 
+
+
 ### `FlexContext` — the "just make it work" context
 
 `FlexContext` is a `ParserContext` preconfigured with `ParserContextBehavior.Easy` (null-safe member access + truthy/falsy coercion). It also has handy constructors for wrapping objects, dictionaries, anonymous types, and JSON:
@@ -497,6 +547,8 @@ parser.Evaluate<int>("Orders.Count", context);
 var ctx  = new FlexContext(new { order, customer });   // expose several objects at once
 var ctx2 = new FlexContext(jsonPayload);               // wrap parsed JSON as the root
 ```
+
+
 
 ### `DynamicObject` — aggregate many objects into one
 
@@ -513,6 +565,8 @@ var context = new ParserContext(viewData);
 parser.Evaluate<string>("Name + \" owes \" + Total", context);  // resolves across all backing objects
 ```
 
+
+
 ### Local (nested) scopes
 
 `CreateLocal()` produces a child context. Reads fall through to the parent; `SetLocal` shadows a name only in the child; `Set` writes through to the parent if the name already exists there. This is exactly how loops, macros, and included templates get their own variable scope.
@@ -528,22 +582,26 @@ ctx.Get("taxRate",   out var global, out _);   // 21  (parent unchanged)
 local.Get("taxRate", out var scoped, out _);   // 6   (shadowed in child)
 ```
 
+
+
 ### Truthy/falsy behavior (`ParserContextBehavior`)
 
 By default, only real `bool` values are valid in boolean positions — anything else throws. You opt into looser, "scripting-friendly" coercions with `[Flags] ParserContextBehavior`:
 
-| Flag | Effect |
-| --- | --- |
-| `Default` | Strict: only `bool` is boolean; non-bool throws. |
-| `NullIsFalse` / `NotNullIsTrue` | `null` ⇒ false / non-null ⇒ true. |
-| `ZeroIsFalse` / `NotZeroIsTrue` | numeric zero ⇒ false / non-zero ⇒ true. |
-| `EmptyStringIsFalse` / `NonEmptyStringIsTrue` | string emptiness ⇒ boolean. |
-| `EmptyCollectionIsFalse` | empty `ICollection`/`IEnumerable` ⇒ false. |
-| `Falsy` | all of the coercions above combined. |
-| `ReturnNullWhenNullReference` | null-safe member access (like `?.`) instead of throwing. |
-| `Easy` | `Falsy` + `ReturnNullWhenNullReference` — the recommended scripting default. |
-| `CaseInsensitiveVariables` | variable names are case-insensitive. |
-| `CaseInsensitiveMembers` | member/property lookups are case-insensitive. |
+
+| Flag                                          | Effect                                                                       |
+| --------------------------------------------- | ---------------------------------------------------------------------------- |
+| `Default`                                     | Strict: only `bool` is boolean; non-bool throws.                             |
+| `NullIsFalse` / `NotNullIsTrue`               | `null` ⇒ false / non-null ⇒ true.                                            |
+| `ZeroIsFalse` / `NotZeroIsTrue`               | numeric zero ⇒ false / non-zero ⇒ true.                                      |
+| `EmptyStringIsFalse` / `NonEmptyStringIsTrue` | string emptiness ⇒ boolean.                                                  |
+| `EmptyCollectionIsFalse`                      | empty `ICollection`/`IEnumerable` ⇒ false.                                   |
+| `Falsy`                                       | all of the coercions above combined.                                         |
+| `ReturnNullWhenNullReference`                 | null-safe member access (like `?.`) instead of throwing.                     |
+| `Easy`                                        | `Falsy` + `ReturnNullWhenNullReference` — the recommended scripting default. |
+| `CaseInsensitiveVariables`                    | variable names are case-insensitive.                                         |
+| `CaseInsensitiveMembers`                      | member/property lookups are case-insensitive.                                |
+
 
 ```csharp
 var strict = new ParserContext(ParserContextBehavior.Default);
@@ -563,19 +621,23 @@ ci["customer"] = customer;
 parser.Evaluate<string>("CUSTOMER.name", ci);   // resolves 'customer.Name'
 ```
 
+
+
 ### Controlling assignment
 
 Assignment inside expressions/scripts is disabled unless explicitly allowed via `[Flags] AssignmentPermissions`:
 
-| Flag | Allows |
-| --- | --- |
-| `None` | nothing (default). |
-| `NewVariable` | creating new variables. |
-| `ExistingVariable` | reassigning existing variables. |
-| `Variable` | both of the above. |
-| `Property` | assigning to object properties/fields. |
-| `Indexer` | assigning through indexers. |
-| `All` | everything. |
+
+| Flag               | Allows                                 |
+| ------------------ | -------------------------------------- |
+| `None`             | nothing (default).                     |
+| `NewVariable`      | creating new variables.                |
+| `ExistingVariable` | reassigning existing variables.        |
+| `Variable`         | both of the above.                     |
+| `Property`         | assigning to object properties/fields. |
+| `Indexer`          | assigning through indexers.            |
+| `All`              | everything.                            |
+
 
 ```csharp
 var ctx = new ParserContext { AssignmentPermissions = AssignmentPermissions.NewVariable };
@@ -591,6 +653,8 @@ parser.Evaluate<string>("order.Status = \"shipped\"", ctx);   // writes back to 
 // so read-only rule evaluation can never mutate your data by accident.
 ```
 
+
+
 ### String comparison & formatting
 
 Contexts also control how string `==`/`!=` behave and how numbers/dates are formatted:
@@ -605,18 +669,22 @@ ctx.FormatProvider = CultureInfo.GetCultureInfo("nl-BE");   // used by template 
 
 ---
 
+
+
 ## Template rendering
 
 `TemplateParser<TConfig>` renders a text template by evaluating embedded expressions, loops, conditionals and macros. Pick a `TConfig` for the syntax you want; all of them use the same underlying expression/scripting engine and the same `ParserContext`.
 
 ### Available syntaxes
 
-| Config | Expression | Loop | Conditional | Notes |
-| --- | --- | --- | --- | --- |
-| `DoubleCurly` | `{{ expr }}` | `{{foreach x in list}}…{{end}}` | `{{if c}}…{{else}}…{{end}}` | General-purpose. |
-| `HtmlDoubleCurly` | `<!--{{ expr }}-->` (also `{{ expr }}`) | `<!--{{foreach …}}-->…<!--{{end}}-->` | `<!--{{if …}}-->…<!--{{end}}-->` | Directives hidden in HTML comments, so the raw template is still valid HTML. |
-| `Velocity` | `$var`, `${ expr }` | `#foreach(x in list)…#end` (or `#{foreach}(…)…#{end}`) | — | Apache-Velocity-like. |
-| `Xml` | `$var`, `${ expr }` | `<foreach var='x' in='list'>…</foreach>` | `<if condition='…'>…<else/>…</if>` | Output is XML-escaped automatically. |
+
+| Config            | Expression                              | Loop                                                   | Conditional                        | Notes                                                                        |
+| ----------------- | --------------------------------------- | ------------------------------------------------------ | ---------------------------------- | ---------------------------------------------------------------------------- |
+| `DoubleCurly`     | `{{ expr }}`                            | `{{foreach x in list}}…{{end}}`                        | `{{if c}}…{{else}}…{{end}}`        | General-purpose.                                                             |
+| `HtmlDoubleCurly` | `<!--{{ expr }}-->` (also `{{ expr }}`) | `<!--{{foreach …}}-->…<!--{{end}}-->`                  | `<!--{{if …}}-->…<!--{{end}}-->`   | Directives hidden in HTML comments, so the raw template is still valid HTML. |
+| `Velocity`        | `$var`, `${ expr }`                     | `#foreach(x in list)…#end` (or `#{foreach}(…)…#{end}`) | —                                  | Apache-Velocity-like.                                                        |
+| `Xml`             | `$var`, `${ expr }`                     | `<foreach var='x' in='list'>…</foreach>`               | `<if condition='…'>…<else/>…</if>` | Output is XML-escaped automatically.                                         |
+
 
 ```csharp
 var curly    = new TemplateParser<DoubleCurly>();
@@ -630,6 +698,8 @@ You can also give a template parser its own subclass name for convenience:
 ```csharp
 public class CurlyTemplateParser : TemplateParser<DoubleCurly> { }
 ```
+
+
 
 ### Expressions & formatting
 
@@ -667,6 +737,8 @@ curly.Render("{{if order.Total >= 50}}Free shipping!{{else}}Add more to qualify.
 xml.Render("<if condition='customer.IsPremium'>VIP<else/>Standard</if>", context);
 ```
 
+
+
 ### Macros
 
 Define reusable fragments and call them with named `@parameters`. Macros may call other macros and are resolved regardless of definition order — perfect for shared snippets like a money formatter or a line-item row:
@@ -688,6 +760,8 @@ curly.Render(
 // "Widget: EUR 9.50"
 ```
 
+
+
 ### Files, includes and reuse
 
 - `Parse(input)` returns a reusable `CompiledTemplate`; `Render(compiled, context)` runs it repeatedly.
@@ -696,6 +770,8 @@ curly.Render(
 Each render runs in its own local scope with `AssignmentPermissions.Variable` granted, so templates can define working variables without mutating your outer context.
 
 ---
+
+
 
 ## Building expression trees by hand
 
@@ -724,28 +800,34 @@ overThreshold.Evaluate<bool>();   // true
 
 ---
 
+
+
 ## Error handling
 
 Parsing and evaluation raise specific exception types so you can react precisely:
 
 **Expression/scripting** (`Iridium.Script`):
 
-| Exception | Raised when |
-| --- | --- |
-| `LexerException` | the input can't be tokenized / has invalid syntax. |
-| `ParserException` | the token stream can't be assembled into a valid expression. |
+
+| Exception                       | Raised when                                                                  |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| `LexerException`                | the input can't be tokenized / has invalid syntax.                           |
+| `ParserException`               | the token stream can't be assembled into a valid expression.                 |
 | `ExpressionEvaluationException` | an error occurs while evaluating (e.g. a range endpoint isn't `int`/`long`). |
-| `IllegalAssignmentException` | an assignment isn't permitted by the context's `AssignmentPermissions`. |
-| `IllegalOperandsException` | an operator is applied to incompatible operand types. |
-| `BadArgumentException` | a method/function is called with unmatched arguments. |
-| `UnknownPropertyException` | a member can't be resolved on the target. |
-| `LiteralException` | a literal is malformed. |
+| `IllegalAssignmentException`    | an assignment isn't permitted by the context's `AssignmentPermissions`.      |
+| `IllegalOperandsException`      | an operator is applied to incompatible operand types.                        |
+| `BadArgumentException`          | a method/function is called with unmatched arguments.                        |
+| `UnknownPropertyException`      | a member can't be resolved on the target.                                    |
+| `LiteralException`              | a literal is malformed.                                                      |
+
 
 Under `ParserContextBehavior.Default`, using a non-`bool` in a boolean position throws `NullReferenceException` (for `null`) or `ArgumentException` (for other types); enable the `Falsy`/`Easy` behaviors to coerce instead.
 
 **Templates** (`Iridium.Script`): `TemplateParsingException` (during `Parse`) and `TemplateRenderingException` (during `Render`) wrap the underlying cause in `InnerException`.
 
 ---
+
+
 
 ## How it works (architecture)
 
@@ -769,35 +851,41 @@ Evaluate(IParserContext) → ValueExpression / IValueWithType  (value + static t
 
 Key design points:
 
-- **No `Reflection.Emit`.** Member access, method calls and operators are resolved at evaluation time via reflection and a `SmartBinder` that performs C#-like overload resolution and argument conversion (leaning on `iridium.convert`). This is why it runs under AOT and on iOS/mobile.
+- **No** `Reflection.Emit`**.** Member access, method calls and operators are resolved at evaluation time via reflection and a `SmartBinder` that performs C#-like overload resolution and argument conversion (leaning on `iridium.convert`). This is why it runs under AOT and on iOS/mobile.
 - **Types flow through evaluation.** Every node yields an `IValueWithType`, so numeric promotion, nullable lifting, and operator overload selection behave like real C#.
 - **Pluggable tokenizers.** `CSharpTokenizer` builds the C# operator set (and enables the scripting keywords when constructed with `allowScripting: true`, which is what `CScriptParser` does). Template tokenizers (`DoubleCurlyTokenizer`, `VelocityTokenizer`, `XmlTokenizer`, `HtmlDoubleCurlyTokenizer`) reuse the same matcher framework.
 - **Extensible template engine.** `TemplateParserConfig` exposes `virtual` hooks (`OnEvalExpression`, `OnEvalIf`, `OnEvalForeach`, `OnEvalText`, `OnEvalMacroCall`, …). The `Xml` config, for example, overrides `OnEvalExpression` purely to XML-escape output.
+
+
 
 ### Operator precedence (high → low)
 
 Derived from `CSharpTokenizer`:
 
-| Level | Operators |
-| --- | --- |
-| Member access | `.`  `?.` |
-| Unary / cast | `!`  `-`  `~`  `(cast)` |
-| Multiplicative | `*`  `/`  `%` |
-| Additive | `+`  `-` |
-| Shift | `<<`  `>>` |
-| Relational / type-test | `<`  `<=`  `>`  `>=`  `is`  `as` |
-| Equality | `==`  `!=` |
-| Bitwise AND/OR | `&`  `\|` |
-| Bitwise XOR | `^` |
-| Conditional AND | `&&` |
-| Conditional OR | `\|\|` |
-| Null/default | `??`  `?:`  `::` |
-| Ternary | `? :` |
-| Assignment | `=` |
-| `in` (scripting) | `in` |
-| Range | `...`  `...<`  `>...`  `>...<` |
+
+| Level                  | Operators                   |
+| ---------------------- | --------------------------- |
+| Member access          | `.` `?.`                    |
+| Unary / cast           | `!` `-` `~` `(cast)`        |
+| Multiplicative         | `*` `/` `%`                 |
+| Additive               | `+` `-`                     |
+| Shift                  | `<<` `>>`                   |
+| Relational / type-test | `<` `<=` `>` `>=` `is` `as` |
+| Equality               | `==` `!=`                   |
+| Bitwise AND/OR         | `&` `|`                     |
+| Bitwise XOR            | `^`                         |
+| Conditional AND        | `&&`                        |
+| Conditional OR         | `||`                        |
+| Null/default           | `??` `?:` `::`              |
+| Ternary                | `? :`                       |
+| Assignment             | `=`                         |
+| `in` (scripting)       | `in`                        |
+| Range                  | `...` `...<` `>...` `>...<` |
+
 
 ---
+
+
 
 ## API cheat-sheet
 
@@ -810,7 +898,7 @@ new CScriptParser()                // = CSharpParser(true)
 CSharpParser.Default               // shared instance
 ```
 
-**Evaluate (all have a `..., IParserContext context` overload; without it the parser's `DefaultContext` is used)**
+**Evaluate (all have a** `..., IParserContext context` **overload; without it the parser's** `DefaultContext` **is used)**
 
 ```csharp
 T        Evaluate<T>(string s)

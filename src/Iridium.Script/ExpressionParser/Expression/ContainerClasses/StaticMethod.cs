@@ -26,6 +26,7 @@
 
 using System;
 using System.Reflection;
+using Iridium.Script.Reflection;
 
 namespace Iridium.Script
 {
@@ -48,7 +49,11 @@ namespace Iridium.Script
 
             returnType = methodInfo.ReturnType;
 
-            return methodInfo.Invoke(null, parameters);
+            // Convert the arguments to the selected overload's parameter types
+            // (consistent with InstanceMethod), so e.g. an int argument bound to a
+            // method that only exposes a wider numeric parameter is converted rather
+            // than causing a reflection ArgumentException.
+            return SmartBinder.Invoke(methodInfo, parameters);
         }
     }
 }

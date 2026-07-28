@@ -43,7 +43,7 @@ namespace Iridium.Script
 						if (_waiting.Root == token.Root)
 							base.Enqueue(new ExpressionToken(token.Root,_waiting.Text+token.Text));
 						else 
-							throw new LexerException("Mismatched ternary operators", token.Text);
+							throw new LexerException("Mismatched ternary operators", token.Text, token.Position);
 
 						_waiting = null;
 					}
@@ -163,7 +163,7 @@ namespace Iridium.Script
                     return;
                 }
 
-                throw new LexerException("Misplaced operator " + token.Text, token.Text);
+                throw new LexerException("Misplaced operator " + token.Text, token.Text, token.Position);
             }
 
 			// When we get here, it certainly is an operator or function call

@@ -32,9 +32,19 @@ namespace Iridium.Script
         {
         }
 
+        public UnknownTokenException(string token, SourcePosition position) : base(token, position)
+        {
+        }
+
         public override string Message
         {
-            get { return "Unknown token " + Token; }
+            get
+            {
+                if (Position.IsKnown)
+                    return $"Unknown token '{Token}' at {Position}";
+
+                return "Unknown token " + Token;
+            }
         }
     }
 }

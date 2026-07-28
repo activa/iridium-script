@@ -32,15 +32,24 @@ namespace Iridium.Script
     {
         private readonly string _token;
 
-        protected TokenizerException(string token)
+        protected TokenizerException(string token) : this(token, SourcePosition.Unknown)
+        {
+        }
+
+        protected TokenizerException(string token, SourcePosition position)
         {
             _token = token;
+            Position = position;
         }
 
         public string Token
         {
             get { return _token; }
         }
-        
+
+        /// <summary>
+        /// The location in the source script where the offending token was found.
+        /// </summary>
+        public SourcePosition Position { get; }
     }
 }

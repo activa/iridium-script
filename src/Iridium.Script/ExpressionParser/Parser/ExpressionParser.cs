@@ -77,6 +77,9 @@ namespace Iridium.Script
 
                 rpn.Start();
 
+                ExpressionToken firstToken = CurrentToken;
+                ExpressionToken lastConsumedToken = null;
+
                 while (CurrentToken != null && CurrentIndex <= lastToken)
                 {
                     if (CurrentToken.IsStatementSeperator)
@@ -85,6 +88,8 @@ namespace Iridium.Script
                         break;
                     }
 
+                    lastConsumedToken = CurrentToken;
+
                     rpn.ApplyToken(CurrentToken);
 
                     MoveNext();
@@ -92,7 +97,62 @@ namespace Iridium.Script
 
                 rpn.Finish();
 
-                return rpn.Compile();
+                Expression expression = rpn.Compile();
+
+                if (expression != null)
+                    SetSourceSpan(expression, firstToken, lastConsumedToken ?? firstToken);
+
+                return expression;
+            }
+
+            /// <summary>
+            /// Annotates an expression with the source region spanned by the given
+            /// start and end tokens (unless it already carries a more specific span).
+            /// </summary>
+            private static void SetSourceSpan(Expression expression, ExpressionToken startToken, ExpressionToken endToken)
+            {
+                if (expression == null || startToken == null || expression.SourceSpan.IsKnown)
+                    return;
+
+                expression.SourceSpan = SpanOf(startToken, endToken);
+            }
+
+            private static SourceSpan SpanOf(ExpressionToken startToken, ExpressionToken endToken)
+            {
+                if (startToken == null)
+                    return SourceSpan.Unknown;
+
+                if (endToken == null)
+                    endToken = startToken;
+
+                SourcePosition start = startToken.Position;
+                SourcePosition endStart = endToken.Position;
+
+                SourcePosition end = SourcePosition.Unknown;
+
+                if (endStart.IsKnown)
+                {
+                    int length = endToken.Text?.Length ?? 0;
+
+                    end = new SourcePosition(endStart.Index + length, endStart.Line, endStart.Column + length);
+                }
+
+                return new SourceSpan(start, end);
+            }
+
+            /// <summary>
+            /// Builds a span starting at a keyword/statement token and extending to the
+            /// end of a child expression (e.g. a loop or if body), so control-flow
+            /// constructs report the full region they cover.
+            /// </summary>
+            private static SourceSpan SpanFromTokenToExpression(ExpressionToken startToken, Expression endExpression)
+            {
+                SourceSpan keywordSpan = SpanOf(startToken, startToken);
+
+                if (endExpression != null && endExpression.SourceSpan.IsKnown)
+                    return new SourceSpan(keywordSpan.Start, endExpression.SourceSpan.End);
+
+                return keywordSpan;
             }
 
             private Expression CompileBracketed()
@@ -100,7 +160,9 @@ namespace Iridium.Script
                 int level = 0;
 
                 if (!CurrentToken.IsLeftParen)
-                    throw new LexerException("Expected (", CurrentToken.Text);
+                    throw new LexerException("Expected (", CurrentToken.Text, CurrentToken.Position);
+
+                SourcePosition openParenPosition = CurrentToken.Position;
 
                 MoveNext();
 
@@ -133,7 +195,7 @@ namespace Iridium.Script
                     MoveNext();
                 }
 
-                throw new LexerException("Unterminated foreach() expression", null);
+                throw new LexerException("Unterminated bracketed expression", null, openParenPosition);
             }
 
             private Expression Compile(bool multiple)
@@ -162,7 +224,7 @@ namespace Iridium.Script
                         case TokenType.CloseBrace:
                         {
                             if (!braced)
-                                throw new LexerException(token.Text);
+                                throw new LexerException("Unexpected '" + token.Text + "'", token.Text, token.Position);
 
                             MoveNext();
                             multiple = false;
@@ -177,7 +239,7 @@ namespace Iridium.Script
                             InExpression expression = CompileBracketed() as InExpression;
 
                             if (expression == null)
-                                throw new LexerException("foreach syntax error", token.Text);
+                                throw new LexerException("foreach syntax error", token.Text, token.Position);
 
                             ForEachExpression forEach = new ForEachExpression
                             {
@@ -185,6 +247,8 @@ namespace Iridium.Script
                                 Expression = expression.Expression,
                                 Body = Compile(false)
                             };
+
+                            forEach.SourceSpan = SpanFromTokenToExpression(token, forEach.Body);
 
                             expressions.Add(forEach);
 
@@ -197,11 +261,13 @@ namespace Iridium.Script
 
                             var conditionExpression = CompileBracketed();
 
-                            Expression whileExpression = new WhileExpression
+                            WhileExpression whileExpression = new WhileExpression
                             {
                                 ConditionExpression = conditionExpression,
                                 Body = Compile(false)
                             };
+
+                            whileExpression.SourceSpan = SpanFromTokenToExpression(token, whileExpression.Body);
 
                             expressions.Add(whileExpression);
 
@@ -220,6 +286,7 @@ namespace Iridium.Script
                                 TrueExpression = Compile(false)
                             };
 
+                            ifExpression.SourceSpan = SpanFromTokenToExpression(token, ifExpression.TrueExpression);
 
                             expressions.Add(ifExpression);
 
@@ -245,7 +312,11 @@ namespace Iridium.Script
 
                                 Expression expression = Compile(multiple: false);
 
-                                expressions.Add(new ReturnExpression(expression));
+                                ReturnExpression returnExpression = new ReturnExpression(expression);
+
+                                returnExpression.SourceSpan = SpanFromTokenToExpression(token, expression);
+
+                                expressions.Add(returnExpression);
 
                                 break;
                             }
@@ -254,7 +325,11 @@ namespace Iridium.Script
                             {
                                 MoveNext();
 
-                                expressions.Add(new BreakLoopExpression());
+                                BreakLoopExpression breakExpression = new BreakLoopExpression();
+
+                                breakExpression.SourceSpan = SpanOf(token, token);
+
+                                expressions.Add(breakExpression);
 
                                 break;
 
@@ -266,7 +341,7 @@ namespace Iridium.Script
                                 var functionExpression = new FunctionDefinitionExpression();
 
                                 if (CurrentToken.TokenType != TokenType.Term)
-                                    throw new LexerException("function name expected",CurrentToken.Text);
+                                    throw new LexerException("function name expected", CurrentToken.Text, CurrentToken.Position);
 
                                 functionExpression.Name = CurrentToken.Text;
 
@@ -306,6 +381,8 @@ namespace Iridium.Script
 
                                 functionExpression.Body = Compile(false);
 
+                                functionExpression.SourceSpan = SpanFromTokenToExpression(token, functionExpression.Body);
+
                                 expressions.Add(functionExpression);
                             }
                             break;
@@ -325,7 +402,17 @@ namespace Iridium.Script
                 }
 
                 if (expressions.Count > 1)
-                    return new SequenceExpression(expressions.ToArray());
+                {
+                    SequenceExpression sequence = new SequenceExpression(expressions.ToArray());
+
+                    SourceSpan first = expressions[0].SourceSpan;
+                    SourceSpan last = expressions[expressions.Count - 1].SourceSpan;
+
+                    if (first.IsKnown)
+                        sequence.SourceSpan = new SourceSpan(first.Start, last.IsKnown ? last.End : first.End);
+
+                    return sequence;
+                }
 
                 if (expressions.Count == 1)
                     return expressions[0];

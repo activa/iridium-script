@@ -70,6 +70,12 @@ namespace Iridium.Script
         {
             List<T> tokens = new List<T>();
 
+            // Precompute the offset of the first character of every line so we can
+            // translate an arbitrary character index into a line/column position. This
+            // has to be a lookup table rather than an incremental counter because the
+            // tokenizer freely moves the read index backwards while backtracking.
+            int[] lineStarts = BuildLineStarts(s);
+
             TokenMatcher[] tokenMatchers = new TokenMatcher[_tokenMatchers.Count];
 
             for(int i=0;i<tokenMatchers.Length;i++)
@@ -147,14 +153,16 @@ namespace Iridium.Script
                         else
                             badToken = s.Substring(lastSavedIndex + 1, firstValidIndex - lastSavedIndex);
 
-                        throw new UnknownTokenException(badToken);
+                        throw new UnknownTokenException(badToken, PositionFromIndex(lineStarts, lastSavedIndex + 1));
                     }
                 }
 
                 if (filler.Length > 0)
                 {
                     T fillerToken = CreateToken(null,filler.ToString());
-                    
+
+                    fillerToken.Position = PositionFromIndex(lineStarts, lastSavedIndex - filler.Length + 1);
+
                     tokens.Add(fillerToken);
 
                     filler.Length = 0;
@@ -162,9 +170,13 @@ namespace Iridium.Script
 
                 T token = CreateToken(successMatch.Matches[0].Matcher, successMatch.Token);
 
+                token.Position = PositionFromIndex(lineStarts, successMatch.StartIndex);
+
                 for (int i = 1; i < successMatch.Matches.Count; i++)
                 {
                     T alternateToken = CreateToken(successMatch.Matches[i].Matcher, successMatch.Token);
+
+                    alternateToken.Position = token.Position;
 
                     token.AddAlternate(alternateToken);
                 }
@@ -189,6 +201,8 @@ namespace Iridium.Script
             {
                 T fillerToken = CreateToken(null, filler.ToString());
 
+                fillerToken.Position = PositionFromIndex(lineStarts, s.Length - filler.Length);
+
                 tokens.Add(fillerToken);
             }
 
@@ -200,13 +214,71 @@ namespace Iridium.Script
 
                 T token = CreateToken(successfulTokens[0].Matcher, tokenText);
 
+                token.Position = PositionFromIndex(lineStarts, firstValidIndex);
+
                 for (int i = 1; i < successfulTokens.Count; i++)
-                    token.AddAlternate(CreateToken(successfulTokens[i].Matcher, tokenText));
+                {
+                    T alternateToken = CreateToken(successfulTokens[i].Matcher, tokenText);
+
+                    alternateToken.Position = token.Position;
+
+                    token.AddAlternate(alternateToken);
+                }
 
                 tokens.Add(token);
             }
 
             return tokens.ToArray();
+        }
+
+        /// <summary>
+        /// Builds a table containing the character offset of the first character of
+        /// each line. Index 0 corresponds to line 1. Both '\n' and '\r\n' line endings
+        /// are supported (the position after the '\n' starts the next line).
+        /// </summary>
+        private static int[] BuildLineStarts(string s)
+        {
+            List<int> lineStarts = new List<int> { 0 };
+
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (s[i] == '\n')
+                    lineStarts.Add(i + 1);
+            }
+
+            return lineStarts.ToArray();
+        }
+
+        /// <summary>
+        /// Translates a zero-based character index into a one-based line/column position
+        /// using the precomputed line-start table.
+        /// </summary>
+        private static SourcePosition PositionFromIndex(int[] lineStarts, int index)
+        {
+            if (index < 0)
+                return SourcePosition.Unknown;
+
+            // Binary search for the greatest line start that is <= index.
+            int low = 0;
+            int high = lineStarts.Length - 1;
+            int line = 0;
+
+            while (low <= high)
+            {
+                int mid = low + ((high - low) >> 1);
+
+                if (lineStarts[mid] <= index)
+                {
+                    line = mid;
+                    low = mid + 1;
+                }
+                else
+                {
+                    high = mid - 1;
+                }
+            }
+
+            return new SourcePosition(index, line + 1, index - lineStarts[line] + 1);
         }
 
         private void Reset(TokenMatcher[] matchers)

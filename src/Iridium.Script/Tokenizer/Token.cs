@@ -49,6 +49,12 @@ namespace Iridium.Script
 
         public ITokenMatcher TokenMatcher { get; set; }
 
+        /// <summary>
+        /// The location in the source script where this token starts. Populated by
+        /// the tokenizer. Used for error reporting and (in the future) debugging.
+        /// </summary>
+        public SourcePosition Position { get; set; } = SourcePosition.Unknown;
+
         public IEnumerable<Token> Alternates => _alternates;
 
         public void AddAlternate(Token token)

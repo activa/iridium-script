@@ -58,15 +58,14 @@ namespace Iridium.Script
 
             while (t != null)
             {
-                
-                //t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+                var candidates = t.GetMember(MethodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                                    .OfType<MethodInfo>();
 
-                MethodInfo methodInfo = t.GetMember(MethodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
-                                            .OfType<MethodInfo>()
-                                            .FirstOrDefault(m => SmartBinder.MatchParameters(parameterTypes, m.GetParameters())
-                                            );
-
-                //MethodInfo methodInfo = t.GetMethod(MethodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance, new CustomBinder(), parameterTypes, null);
+                // Pick the best matching overload (preferring exact matches) rather
+                // than the first one that matches under any rule. The latter is
+                // order-dependent and can incorrectly select, for example, an
+                // overload only reachable through an implicit numeric conversion.
+                MethodInfo methodInfo = SmartBinder.SelectBestMethod(candidates, parameterTypes);
 
                 if (methodInfo != null)
                     return methodInfo;

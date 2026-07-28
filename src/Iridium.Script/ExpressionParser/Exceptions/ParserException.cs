@@ -42,5 +42,10 @@ namespace Iridium.Script
         {
         }
 
+        /// <summary>
+        /// The location in the source script where the error occurred, or
+        /// <see cref="SourcePosition.Unknown"/> when it could not be determined.
+        /// </summary>
+        public SourcePosition Position { get; protected set; } = SourcePosition.Unknown;
     }
 }

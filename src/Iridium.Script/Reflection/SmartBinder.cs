@@ -56,10 +56,18 @@ namespace Iridium.Script.Reflection
 
         public static T SelectBestMethod<T>(IEnumerable<T> methods, Type[] parameterTypes) where T : MethodBase
         {
-            var compareTypes = new[] { ParameterCompareType.Exact, ParameterCompareType.Assignable, ParameterCompareType.Implicit };
+            // Evaluate the candidates against increasingly permissive matching rules,
+            // so a better (e.g. exact) overload is always preferred over a weaker one
+            // (e.g. one only reachable through an implicit conversion). This makes
+            // overload resolution independent of the order in which reflection happens
+            // to return the members, which is not guaranteed and differs between
+            // runtimes.
+            var compareTypes = new[] { ParameterCompareType.Exact, ParameterCompareType.Assignable, ParameterCompareType.Implicit, ParameterCompareType.Convertable };
+
+            var candidates = methods as T[] ?? methods.ToArray();
 
             return compareTypes
-                    .Select(compareType => methods.FirstOrDefault(m => MatchParameters(parameterTypes, m.GetParameters(), compareType)))
+                    .Select(compareType => candidates.FirstOrDefault(m => MatchParameters(parameterTypes, m.GetParameters(), compareType)))
                     .FirstOrDefault(match => match != null);
         }
 

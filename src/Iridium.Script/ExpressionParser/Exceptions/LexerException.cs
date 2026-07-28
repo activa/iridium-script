@@ -32,19 +32,39 @@ namespace Iridium.Script
     {
         public string Token { get; private set; }
 
-        public LexerException(string token)
+        public LexerException(string token) : this(null, token, SourcePosition.Unknown)
         {
-            Token = token;
         }
 
-        public LexerException(string message, string token) : base(message)
+        public LexerException(string message, string token) : this(message, token, SourcePosition.Unknown)
         {
-            Token = token;
         }
 
-        public LexerException(string message, string token, Exception innerException) : base(message, innerException)
+        public LexerException(string message, string token, SourcePosition position) : base(BuildMessage(message, position))
         {
             Token = token;
+            Position = position;
+        }
+
+        public LexerException(string message, string token, Exception innerException) : this(message, token, SourcePosition.Unknown, innerException)
+        {
+        }
+
+        public LexerException(string message, string token, SourcePosition position, Exception innerException) : base(BuildMessage(message, position), innerException)
+        {
+            Token = token;
+            Position = position;
+        }
+
+        private static string BuildMessage(string message, SourcePosition position)
+        {
+            if (!position.IsKnown)
+                return message;
+
+            if (string.IsNullOrEmpty(message))
+                return $"Syntax error at {position}";
+
+            return $"{message} (at {position})";
         }
     }
 }

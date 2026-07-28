@@ -30,6 +30,16 @@ namespace Iridium.Script
 {
     public abstract class Expression
     {
+        /// <summary>
+        /// The region of source script this expression was compiled from, or
+        /// <see cref="SourceSpan.Unknown"/> when unavailable.
+        /// <para/>
+        /// The parser populates this for statements and control-flow constructs. It
+        /// provides the mapping from the AST back to the source that a debugger needs
+        /// to support breakpoints, stepping and variable evaluation.
+        /// </summary>
+        public SourceSpan SourceSpan { get; set; } = SourceSpan.Unknown;
+
         public abstract ValueExpression Evaluate(IParserContext context);
 
         protected static ValueExpression[] EvaluateExpressionArray(Expression[] expressions, IParserContext context)
