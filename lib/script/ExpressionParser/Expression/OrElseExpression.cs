@@ -30,12 +30,12 @@ namespace Iridium.Script
     {
         public override ValueExpression Evaluate(IParserContext context)
         {
-            object left = Left.Evaluate(context).Value;
+            object? left = Left.Evaluate(context).Value;
 
             if (context.ToBoolean(left))
                 return Exp.Value(true);
 
-            object right = Right.Evaluate(context).Value;
+            object? right = Right.Evaluate(context).Value;
 
             return Exp.Value(context.ToBoolean(right));
         }

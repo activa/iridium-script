@@ -38,7 +38,7 @@ namespace Iridium.Script
 
         public override ValueExpression Evaluate(IParserContext context)
         {
-            ValueExpression returnValue = null;
+            ValueExpression? returnValue = null;
 
             foreach (var expression in Expressions)
             {
@@ -51,7 +51,7 @@ namespace Iridium.Script
             if (returnValue != null)
                 return returnValue;
 
-            return Exp.Value(null, typeof (object));
+            return Exp.Value(null);
         }
 
 #if DEBUG

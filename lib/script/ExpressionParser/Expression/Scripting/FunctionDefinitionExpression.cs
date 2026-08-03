@@ -26,7 +26,7 @@ namespace Iridium.Script
 {
     public class FunctionDefinitionExpression : Expression
     {
-        public string Name { get; set; }
+        public required string Name { get; init; }
         public Expression Body { get; set; }
         public string[] ParameterNames { get; set; }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Iridium.Json;
 using Iridium.Script.CSharp;
+using Iridium.Script.Json;
 using NUnit.Framework;
 
 using Json = Iridium.Json.Json;
@@ -23,7 +24,9 @@ namespace Iridium.Script.Test
 
             var jsonObject = Iridium.Json.Json.Parse(json);
 
-            context["json"] = jsonObject;
+            context["json"] = jsonObject.ToDictionary();
+
+            //context.AddJson("json", jsonObject);
 
             Assert.That(parser.Evaluate<int>("json.n", context), Is.EqualTo(123));
             Assert.That(parser.Evaluate<int>("json.arr[1]", context), Is.EqualTo(2));
@@ -48,7 +51,7 @@ namespace Iridium.Script.Test
             
             var jsonObject = Iridium.Json.Json.Parse(json);
 
-            var context = new FlexContext(jsonObject);
+            var context = new FlexContext(jsonObject.ToDictionary());
 
             //context.Add(jsonObject);
 

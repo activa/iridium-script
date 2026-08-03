@@ -25,12 +25,13 @@
 #endregion
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Iridium.Script
 {
     public interface IValueWithType
     {
         object? Value { get; }
-        Type? Type { get; }
+        [NotNull] Type Type { get; }
     }
 }

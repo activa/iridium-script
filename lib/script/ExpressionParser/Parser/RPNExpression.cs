@@ -203,11 +203,11 @@ namespace Iridium.Script
 			_tokenQueue.Clear();
 		}
 
-        public Expression Compile()
+        public Expression? Compile()
         {
             Stack<Expression> resultStack = new Stack<Expression>();
 
-            Expression currentExpression = null;
+            Expression? currentExpression = null;
 
             foreach (ExpressionToken token in _tokenList)
             {

@@ -9,9 +9,9 @@ namespace Iridium.Script
         public static MultiplyExpression Multiply(Expression left, Expression right) => new(left, right);
         public static DivideExpression Divide(Expression left, Expression right) => new(left, right);
         public static ValueExpression<T> Value<T>(T value) { return new ValueExpression<T>(value); }
-        public static ValueExpression Value(object? value, Type? type) => new(value, type);
-        public static ValueExpression Value(object? value) => new(value, value?.GetType());
-        public static ValueExpression Null() => new ValueExpression(null,null);
+        public static ValueExpression Value(object? value, Type type) => new(value, type);
+        public static ValueExpression Value(object? value) => new(value, value?.GetType() ?? typeof(object));
+        public static ValueExpression Null() => new ValueExpression(null,typeof(object));
         public static ReturnValueExpression ReturnValue(object value, Type type) { return new ReturnValueExpression(value, type); }
         public static BinaryArithmicExpression Op(string op, Expression left, Expression right) { return new BinaryArithmicExpression(op, left, right); }
         public static AndAlsoExpression AndAlso(Expression left, Expression right) { return new AndAlsoExpression(left, right); }

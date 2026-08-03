@@ -82,7 +82,7 @@ namespace Iridium.Script
 
     		if (members.Length == 0)
     		{
-                PropertyInfo indexerPropInfo = targetType.FindIndexer([typeof(string)]);
+                PropertyInfo? indexerPropInfo = targetType.FindIndexer([typeof(string)]);
 
                 if (indexerPropInfo != null)
                 {

@@ -34,7 +34,7 @@ using System.Reflection;
 
 namespace Iridium.Script
 {
-    public class ParserContext : IParserContext, IDebuggableContext, IEnumerable<KeyValuePair<string, IValueWithType>>
+    public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimitedContext, IEnumerable<KeyValuePair<string, IValueWithType>>
     {
         private class ValueWithType : IValueWithType
         {
@@ -59,6 +59,9 @@ namespace Iridium.Script
         private readonly List<object> _objects = new List<object>();
 
         private readonly IParserContext? _parentContext;
+
+        private ExecutionLimits _executionLimits = ExecutionLimits.Default;
+        private ExecutionMonitor? _executionMonitor;
 
         public ParserContextBehavior Behavior { get; }
 
@@ -125,6 +128,12 @@ namespace Iridium.Script
             StringComparison = parentContext.StringComparison;
             FormatProvider = parentContext.FormatProvider;
             Debugger = parentContext.Debugger;
+
+            _executionLimits = parentContext._executionLimits;
+
+            // Local scopes share the outer scope's monitor: the limits apply to the
+            // execution as a whole, not to each scope separately.
+            _executionMonitor = parentContext.ExecutionMonitor;
         }
 
         /// <summary>
@@ -133,6 +142,29 @@ namespace Iridium.Script
         /// propagates to local (child) scopes created during evaluation.
         /// </summary>
         public IScriptDebugger Debugger { get; set; }
+
+        /// <summary>
+        /// The limits enforced while evaluating with this context. Set this before
+        /// evaluating a script; changing it during evaluation has no effect on the
+        /// scopes already created. Defaults to <see cref="ExecutionLimits.Default"/>;
+        /// assign <see cref="ExecutionLimits.None"/> to disable all limits.
+        /// </summary>
+        public ExecutionLimits ExecutionLimits
+        {
+            get => _executionLimits;
+            set
+            {
+                _executionLimits = value;
+
+                _executionMonitor = value.CreateMonitor();
+            }
+        }
+
+        /// <summary>
+        /// Tracks the execution running in this scope, or <c>null</c> when nothing is
+        /// limited.
+        /// </summary>
+        public ExecutionMonitor? ExecutionMonitor => _executionMonitor ??= _executionLimits.CreateMonitor();
 
         public void Merge(ParserContext other)
         {

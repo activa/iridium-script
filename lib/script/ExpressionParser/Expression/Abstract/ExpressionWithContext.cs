@@ -37,7 +37,7 @@ namespace Iridium.Script
 			Context = context;
 		}
 
-	    public object EvaluateToObject()
+	    public object? EvaluateToObject()
 		{
 			return Expression.EvaluateStatementToObject(Context);
 		}
@@ -47,7 +47,7 @@ namespace Iridium.Script
 			return Expression.EvaluateStatement(Context);
 		}
 
-		public T Evaluate<T>()
+		public T? Evaluate<T>()
 		{
 			return Expression.EvaluateStatement<T>(Context);
 		}

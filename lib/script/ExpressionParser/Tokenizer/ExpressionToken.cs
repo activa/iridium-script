@@ -34,7 +34,7 @@ namespace Iridium.Script
     {
         internal int NumTerms { get; set; }
 
-        public new ExpressionTokenMatcher TokenMatcher => (ExpressionTokenMatcher)base.TokenMatcher;
+        public new ExpressionTokenMatcher? TokenMatcher => (ExpressionTokenMatcher?)base.TokenMatcher;
 
         public ExpressionToken()
         {
@@ -76,10 +76,10 @@ namespace Iridium.Script
         internal bool IsLeftParen => (TokenType == TokenType.LeftParen);
         internal bool IsRightParen => (TokenType == TokenType.RightParen);
         internal bool IsArgumentSeparator => TokenType == TokenType.ArgumentSeparator;
-        public bool IsPartial => TokenMatcher != null && TokenMatcher.IsPartial;
+        public bool IsPartial => TokenMatcher is { IsPartial: true };
         public bool IsStatementSeperator => TokenType == TokenType.StatementSeparator;
 
-        public ExpressionToken Alternate => (ExpressionToken) Alternates?.FirstOrDefault();
+        public ExpressionToken? Alternate => (ExpressionToken?) Alternates?.FirstOrDefault();
         public ExpressionTokenMatcher Root => TokenMatcher.Root;
         public bool IsOpenBrace => TokenType == TokenType.OpenBrace;
         public bool IsCloseBrace => TokenType == TokenType.CloseBrace;

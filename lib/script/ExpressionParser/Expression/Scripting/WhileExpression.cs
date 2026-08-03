@@ -7,8 +7,12 @@
 
         public override ValueExpression Evaluate(IParserContext context)
         {
+            var monitor = ExecutionMonitor.For(context);
+
             while (true)
             {
+                monitor?.CheckExecutionTime(this);
+
                 bool loop = context.ToBoolean(ConditionExpression.Evaluate(context).Value);
 
                 if (!loop)

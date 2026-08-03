@@ -977,5 +977,21 @@ f(5);
             Assert.That(parser.Evaluate<int>("s.length", context), Is.EqualTo(3));
         }
 
+        [Test]
+        public void NullArithmic()
+        {
+            var parser = new CSharpParser();
+            var context = new ParserContext();
+
+            context["a"] = null;
+
+            Assert.That(parser.EvaluateToObject("a + 5", context), Is.Null);
+
+            var y = 5 + null;
+
+
+
+        }
+
     }
 }

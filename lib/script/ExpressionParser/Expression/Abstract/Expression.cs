@@ -51,13 +51,37 @@ namespace Iridium.Script
         protected internal virtual bool IsDebugTransparent => false;
 
         /// <summary>
-        /// Evaluates this expression as a statement, giving an attached debugger the
-        /// chance to pause before it runs. This is an internal detail of the execution
-        /// engine: statement-executing nodes call it on their children instead of
-        /// <see cref="Evaluate"/>. When no debugger is attached (or this node isn't a
-        /// real statement) it is exactly equivalent to <see cref="Evaluate"/>.
+        /// Evaluates this expression as a statement: enforces the context's
+        /// <see cref="ExecutionLimits"/> and gives an attached debugger the chance to
+        /// pause before it runs. This is an internal detail of the execution engine:
+        /// statement-executing nodes call it on their children instead of
+        /// <see cref="Evaluate"/>. With no limits and no debugger attached (or when
+        /// this node isn't a real statement) it is equivalent to <see cref="Evaluate"/>.
         /// </summary>
         internal ValueExpression EvaluateStatement(IParserContext context)
+        {
+            var monitor = ExecutionMonitor.For(context);
+
+            if (monitor == null)
+                return EvaluateStatementCore(context);
+
+            // The outermost statement delimits the run, so every top-level evaluation
+            // starts with a fresh time budget.
+            monitor.EnterScope();
+
+            try
+            {
+                monitor.CheckExecutionTime(this);
+
+                return EvaluateStatementCore(context);
+            }
+            finally
+            {
+                monitor.ExitScope();
+            }
+        }
+
+        private ValueExpression EvaluateStatementCore(IParserContext context)
         {
             if (IsDebugTransparent || !SourceSpan.IsKnown)
                 return Evaluate(context);

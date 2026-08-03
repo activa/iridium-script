@@ -36,8 +36,12 @@ namespace Iridium.Script
         {
             if (Expression.Evaluate(context).Value is IEnumerable enumerable)
             {
+                var monitor = ExecutionMonitor.For(context);
+
                 foreach (var item in enumerable)
                 {
+                    monitor?.CheckExecutionTime(this);
+
                     var localContext = context.CreateLocal();
 
                     localContext.Set(Iterator.VarName, item);

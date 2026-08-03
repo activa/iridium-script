@@ -33,9 +33,8 @@ namespace Iridium.Script.CSharp
 
         }
 
-        public CSharpParser(bool allowScripting) : base(new CSharpTokenizer(allowScripting))
+        public CSharpParser(bool allowScripting) : base(new CSharpTokenizer(allowScripting), CSharpEvaluator.Function)
         {
-            FunctionEvaluator = CSharpEvaluator.Function;
         }
 
         public static CSharpParser Default = new();

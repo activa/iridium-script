@@ -130,15 +130,15 @@ namespace Iridium.Script.CSharp
 
             Type type = null;
 
-            if (!char.IsDigit(s[s.Length - 1]))
+            if (!char.IsDigit(s[^1]))
             {
-                string suffix = "" + char.ToUpper(s[s.Length - 1]);
+                string suffix = "" + char.ToUpper(s[^1]);
 
                 s = s.Remove(s.Length - 1);
 
-                if (!char.IsDigit(s[s.Length - 1]))
+                if (!char.IsDigit(s[^1]))
                 {
-                    suffix = char.ToUpper(s[s.Length - 1]) + suffix;
+                    suffix = char.ToUpper(s[^1]) + suffix;
 
                     s = s.Remove(s.Length - 1);
                 }
@@ -232,7 +232,7 @@ namespace Iridium.Script.CSharp
             if (token == "||")
                 return new OrElseExpression(terms[0], terms[1]);
 
-            return null;
+            throw new LexerException("Invalid shortcut operator: " + token);
         }
 
         public static Expression Unary(string token, Expression[] terms)
@@ -274,7 +274,7 @@ namespace Iridium.Script.CSharp
             StringBuilder output = new StringBuilder(token.Length);
 
             bool inEscape = false;
-            string hexString = null;
+            string? hexString = null;
 
             for (int i = 0; i < s.Length; i++)
             {

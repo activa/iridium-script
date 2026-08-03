@@ -42,6 +42,10 @@ namespace Iridium.Script
 
         public override ValueExpression Evaluate(IParserContext context)
         {
+            var monitor = ExecutionMonitor.For(context);
+
+            monitor?.CheckExecutionTime(this);
+
             object? methodObject = MethodExpression.Evaluate(context).Value;
 
             ValueExpression[] parameters = EvaluateExpressionArray(Parameters, context);
@@ -102,7 +106,20 @@ namespace Iridium.Script
 			            functionContext.Set(func.ParameterNames[i], parameterValues[i]);
 			        }
 
-			        return func.Body.EvaluateStatement(functionContext);
+			        if (monitor == null)
+			            return func.Body.EvaluateStatement(functionContext);
+
+			        // Calling a script function is the only way a script can recurse.
+			        monitor.EnterCall(this);
+
+			        try
+			        {
+			            return func.Body.EvaluateStatement(functionContext);
+			        }
+			        finally
+			        {
+			            monitor.ExitCall();
+			        }
 			    }
 			}
 

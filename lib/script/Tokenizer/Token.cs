@@ -30,7 +30,7 @@ namespace Iridium.Script
 {
     public class Token
     {
-        private LinkedList<Token> _alternates;
+        private LinkedList<Token>? _alternates;
 
         public Token()
         {
@@ -41,13 +41,13 @@ namespace Iridium.Script
             TokenMatcher = tokenMatcher;
         }
 
-        protected Token(ITokenMatcher tokenMatcher, string text)
+        protected Token(ITokenMatcher? tokenMatcher, string text)
         {
             TokenMatcher = tokenMatcher;
             Text = text;
         }
 
-        public ITokenMatcher TokenMatcher { get; set; }
+        public ITokenMatcher? TokenMatcher { get; set; }
 
         /// <summary>
         /// The location in the source script where this token starts. Populated by
@@ -55,7 +55,7 @@ namespace Iridium.Script
         /// </summary>
         public SourcePosition Position { get; set; } = SourcePosition.Unknown;
 
-        public IEnumerable<Token> Alternates => _alternates;
+        public IEnumerable<Token>? Alternates => _alternates;
 
         public void AddAlternate(Token token)
         {

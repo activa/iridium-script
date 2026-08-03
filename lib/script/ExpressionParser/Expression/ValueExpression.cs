@@ -30,10 +30,10 @@ namespace Iridium.Script
 {
     public class ValueExpression : Expression , IValueWithType
     {
-        public Type? Type { get; }
+        public Type Type { get; }
         public object? Value { get; }
 
-        public ValueExpression(object? value, Type? type)
+        public ValueExpression(object? value, Type type)
         {
             Value = value;
             Type = type;
@@ -52,5 +52,5 @@ namespace Iridium.Script
         public new T? Value => (T?)base.Value;
     }
 
-    public class NoValueExpression() : ValueExpression(null, null);
+    public class NoValueExpression() : ValueExpression(null, typeof(object));
 }
