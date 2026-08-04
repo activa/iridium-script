@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,90 +26,89 @@
 
 using Iridium.Script;
 
-namespace Iridium.Script.CSharp
+namespace Iridium.Script.CSharp;
+
+public class IntegerLiteralMatcher : ITokenMatcher, ITokenProcessor
 {
-    public class IntegerLiteralMatcher : ITokenMatcher, ITokenProcessor
+    private enum Stage
     {
-        private enum Stage
-        {
-            Num1,
-            Num2,
-            Suffix,
-            Done
-        }
-
-        private const string SUFFIXES = "FfDdMmUuLl";
-
-        private Stage _stage;
-        private char _suffix;
-
-        public ITokenProcessor CreateTokenProcessor()
-        {
-            return new IntegerLiteralMatcher();
-        }
-
-        public void ResetState()
-        {
-            _stage = Stage.Num1;
-        }
-
-        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            bool isDigit = (c >= '0' && c <= '9');
-
-            switch (_stage)
-            {
-                case Stage.Num1:
-                    {
-                        if (!isDigit)
-                            return TokenizerState.Fail;
-
-                        _stage = Stage.Num2;
-                    }
-                    break;
-
-                case Stage.Num2:
-                    {
-                        if (SUFFIXES.IndexOf(c) >= 0)
-                        {
-                            _stage = Stage.Suffix;
-                            _suffix = c;
-                        }
-                        else if (!isDigit)
-                        {
-                            return TokenizerState.Success;
-                        }
-                    }
-                    break;
-
-                case Stage.Suffix:
-                    {
-                        if ((_suffix == 'l' || _suffix == 'L') && (c == 'U' || c == 'u'))
-                        {
-                            _stage = Stage.Done;
-                        }
-                        else if ((_suffix == 'u' || _suffix == 'U') && (c == 'L' || c == 'l'))
-                        {
-                            _stage = Stage.Done;
-                        }
-                        else
-                        {
-                            return TokenizerState.Success;
-                        }
-                    }
-                    break;
-
-                case Stage.Done:
-                    return TokenizerState.Success;
-            }
-
-            return TokenizerState.Valid;
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
-        
+        Num1,
+        Num2,
+        Suffix,
+        Done
     }
+
+    private const string SUFFIXES = "FfDdMmUuLl";
+
+    private Stage _stage;
+    private char _suffix;
+
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        return new IntegerLiteralMatcher();
+    }
+
+    public void ResetState()
+    {
+        _stage = Stage.Num1;
+    }
+
+    public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        bool isDigit = (c >= '0' && c <= '9');
+
+        switch (_stage)
+        {
+            case Stage.Num1:
+            {
+                if (!isDigit)
+                    return TokenizerState.Fail;
+
+                _stage = Stage.Num2;
+            }
+                break;
+
+            case Stage.Num2:
+            {
+                if (SUFFIXES.IndexOf(c) >= 0)
+                {
+                    _stage = Stage.Suffix;
+                    _suffix = c;
+                }
+                else if (!isDigit)
+                {
+                    return TokenizerState.Success;
+                }
+            }
+                break;
+
+            case Stage.Suffix:
+            {
+                if ((_suffix == 'l' || _suffix == 'L') && (c == 'U' || c == 'u'))
+                {
+                    _stage = Stage.Done;
+                }
+                else if ((_suffix == 'u' || _suffix == 'U') && (c == 'L' || c == 'l'))
+                {
+                    _stage = Stage.Done;
+                }
+                else
+                {
+                    return TokenizerState.Success;
+                }
+            }
+                break;
+
+            case Stage.Done:
+                return TokenizerState.Success;
+        }
+
+        return TokenizerState.Valid;
+    }
+
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
+    }
+        
 }

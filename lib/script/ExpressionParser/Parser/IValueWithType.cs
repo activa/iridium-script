@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,11 +27,10 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public interface IValueWithType
 {
-    public interface IValueWithType
-    {
-        object? Value { get; }
-        [NotNull] Type Type { get; }
-    }
+    object? Value { get; }
+    [NotNull] Type Type { get; }
 }

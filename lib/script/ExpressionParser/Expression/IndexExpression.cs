@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -28,91 +28,88 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class IndexExpression(Expression target, Expression[] parameters) : Expression
 {
-    public class IndexExpression(Expression target, Expression[] parameters) : Expression
+    public Expression Target { get; } = target;
+    public Expression[] Parameters { get; } = parameters;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public Expression Target { get; } = target;
-        public Expression[] Parameters { get; } = parameters;
-
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            return Evaluate(context, false, null);
-        }
-
-        public ValueExpression Evaluate(IParserContext context, bool assign, object? newValue)
-        {
-            ValueExpression targetValue = Target.Evaluate(context);
-
-            if (targetValue.Value == null)
-            {
-                if (context.Behavior.HasBehavior(ParserContextBehavior.ReturnNullWhenNullReference))
-                {
-                    return Exp.Null();
-                }
-
-                throw new ExpressionEvaluationException("Target object is null", this);
-            }
-
-            Type targetType = targetValue.Type!;
-            object targetObject = targetValue.Value!;
-
-            ValueExpression[] parameters = EvaluateExpressionArray(Parameters, context);
-            Type[] parameterTypes = parameters.ConvertAll(expr => expr.Type!);
-            object[] parameterValues = parameters.ConvertAll(expr => expr.Value!);
-
-            if (targetType.IsArray)
-            {
-                if (targetType.GetArrayRank() != parameters.Length)
-                    throw new ExpressionEvaluationException("Array has a different rank. Number of arguments is incorrect", this);
-
-                var returnType = targetType.GetElementType();
-
-                foreach (var t in parameterTypes)
-                {
-                    if (t != typeof(long) && t != typeof(long?) && t != typeof(int) && t != typeof(int?) && t != typeof(short) && t != typeof(short?) && t != typeof(ushort) && t != typeof(ushort?))
-                        throw new BadArgumentException(t.Name + " is not a valid type for array indexers", this);
-                }
-
-                int[] indexes = new int[parameters.Length];
-
-                for (int i = 0; i < parameters.Length; i++)
-                    indexes[i] = System.Convert.ToInt32(parameterValues[i]);
-
-                if (assign)
-                    ((Array)targetObject).SetValue(newValue,indexes);
-
-                return Exp.Value(((Array)targetObject).GetValue(indexes), returnType);
-            }
-            else
-            {
-                var attributes = targetType.GetCustomAttributes<DefaultMemberAttribute>(true);
-
-                MethodInfo? methodInfo = targetType.GetMethod("get_" + attributes.First().MemberName, parameterTypes);
-
-                if (methodInfo == null)
-                    throw new ExpressionEvaluationException("No matching indexer found for " + targetType.Name, this);
-
-                object value = methodInfo.Invoke(targetObject, parameterValues);
-
-                return Exp.Value(value, methodInfo.ReturnType);
-            }
-        }
-
-        public ValueExpression Assign(IParserContext context, object newValue)
-        {
-            return Evaluate(context, true, newValue);
-        }
-
-#if DEBUG
-        public override string ToString()
-        {
-            string[] parameters = Parameters.ConvertAll(expr => expr.ToString());
-
-            return $"({Target}[{String.Join(",", parameters)}])";
-        }
-#endif
+        return Evaluate(context, false, null);
     }
 
+    public ValueExpression Evaluate(IParserContext context, bool assign, object? newValue)
+    {
+        ValueExpression targetValue = Target.Evaluate(context);
 
+        if (targetValue.Value == null)
+        {
+            if (context.Behavior.HasBehavior(ParserContextBehavior.ReturnNullWhenNullReference))
+            {
+                return Exp.Null();
+            }
+
+            throw new ExpressionEvaluationException("Target object is null", this);
+        }
+
+        Type targetType = targetValue.Type!;
+        object targetObject = targetValue.Value!;
+
+        ValueExpression[] parameters = EvaluateExpressionArray(Parameters, context);
+        Type[] parameterTypes = parameters.ConvertAll(expr => expr.Type!);
+        object[] parameterValues = parameters.ConvertAll(expr => expr.Value!);
+
+        if (targetType.IsArray)
+        {
+            if (targetType.GetArrayRank() != parameters.Length)
+                throw new ExpressionEvaluationException("Array has a different rank. Number of arguments is incorrect", this);
+
+            var returnType = targetType.GetElementType();
+
+            foreach (var t in parameterTypes)
+            {
+                if (t != typeof(long) && t != typeof(long?) && t != typeof(int) && t != typeof(int?) && t != typeof(short) && t != typeof(short?) && t != typeof(ushort) && t != typeof(ushort?))
+                    throw new BadArgumentException(t.Name + " is not a valid type for array indexers", this);
+            }
+
+            int[] indexes = new int[parameters.Length];
+
+            for (int i = 0; i < parameters.Length; i++)
+                indexes[i] = System.Convert.ToInt32(parameterValues[i]);
+
+            if (assign)
+                ((Array)targetObject).SetValue(newValue,indexes);
+
+            return Exp.Value(((Array)targetObject).GetValue(indexes), returnType);
+        }
+        else
+        {
+            var attributes = targetType.GetCustomAttributes<DefaultMemberAttribute>(true);
+
+            MethodInfo? methodInfo = targetType.GetMethod("get_" + attributes.First().MemberName, parameterTypes);
+
+            if (methodInfo == null)
+                throw new ExpressionEvaluationException("No matching indexer found for " + targetType.Name, this);
+
+            object value = methodInfo.Invoke(targetObject, parameterValues);
+
+            return Exp.Value(value, methodInfo.ReturnType);
+        }
+    }
+
+    public ValueExpression Assign(IParserContext context, object newValue)
+    {
+        return Evaluate(context, true, newValue);
+    }
+
+#if DEBUG
+    public override string ToString()
+    {
+        string[] parameters = Parameters.ConvertAll(expr => expr.ToString());
+
+        return $"({Target}[{String.Join(",", parameters)}])";
+    }
+#endif
 }

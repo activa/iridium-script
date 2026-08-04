@@ -1,8 +1,8 @@
 ﻿#region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -30,23 +30,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public delegate TOut Converter<in TIn, out TOut>(TIn input);
+
+public static class ScriptExtensions
 {
-    public delegate TOut Converter<in TIn, out TOut>(TIn input);
-
-    public static class ScriptExtensions
+    public static TOutput[] ConvertAll<TInput, TOutput>(this TInput[] array, Converter<TInput, TOutput> converter)
     {
-        public static TOutput[] ConvertAll<TInput, TOutput>(this TInput[] array, Converter<TInput, TOutput> converter)
-        {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
+        if (array == null)
+            throw new ArgumentNullException(nameof(array));
 
-            var newArray = new TOutput[array.Length];
+        var newArray = new TOutput[array.Length];
 
-            for (int i = 0; i < array.Length; i++)
-                newArray[i] = converter(array[i]);
+        for (int i = 0; i < array.Length; i++)
+            newArray[i] = converter(array[i]);
 
-            return newArray;
-        }
+        return newArray;
     }
 }

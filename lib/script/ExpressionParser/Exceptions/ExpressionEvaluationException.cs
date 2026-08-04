@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,26 +26,25 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class ExpressionEvaluationException : ParserException
 {
-    public class ExpressionEvaluationException : ParserException
+    public Expression ExpressionNode { get; private set; }
+
+    public ExpressionEvaluationException(Expression expressionNode)
     {
-        public Expression ExpressionNode { get; private set; }
-
-        public ExpressionEvaluationException(Expression expressionNode)
-        {
-            ExpressionNode = expressionNode;
-        }
-
-        public ExpressionEvaluationException(string message, Expression expressionNode) : base(message)
-        {
-            ExpressionNode = expressionNode;
-        }
-
-        public ExpressionEvaluationException(string message, Expression expressionNode, Exception innerException) : base(message, innerException)
-        {
-            ExpressionNode = expressionNode;
-        }
-
+        ExpressionNode = expressionNode;
     }
+
+    public ExpressionEvaluationException(string message, Expression expressionNode) : base(message)
+    {
+        ExpressionNode = expressionNode;
+    }
+
+    public ExpressionEvaluationException(string message, Expression expressionNode, Exception innerException) : base(message, innerException)
+    {
+        ExpressionNode = expressionNode;
+    }
+
 }

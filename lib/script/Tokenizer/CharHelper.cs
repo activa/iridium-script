@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,13 +24,12 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public static class CharHelper
 {
-    public static class CharHelper
+    public static bool IsMatch(char c1, char c2, bool caseSensitive)
     {
-        public static bool IsMatch(char c1, char c2, bool caseSensitive)
-        {
-            return caseSensitive ? (c1 == c2) : (char.ToLowerInvariant(c1) == char.ToLowerInvariant(c2));
-        }
+        return caseSensitive ? (c1 == c2) : (char.ToLowerInvariant(c1) == char.ToLowerInvariant(c2));
     }
 }

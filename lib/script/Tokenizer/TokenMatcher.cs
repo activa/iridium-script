@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,60 +24,59 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+internal class TokenMatcher
 {
-    internal class TokenMatcher
+    private bool _stillValid = true;
+
+    private readonly ITokenProcessor _tokenProcessor;
+
+    public TokenMatcher(ITokenMatcher tokenMatcher)
     {
-        private bool _stillValid = true;
+        _tokenProcessor = tokenMatcher.CreateTokenProcessor();
+        Matcher = tokenMatcher;
+    }
 
-        private readonly ITokenProcessor _tokenProcessor;
+    public ITokenMatcher Matcher { get; }
 
-        public TokenMatcher(ITokenMatcher tokenMatcher)
-        {
-            _tokenProcessor = tokenMatcher.CreateTokenProcessor();
-            Matcher = tokenMatcher;
-        }
+    public void Reset()
+    {
+        _stillValid = true;
 
-        public ITokenMatcher Matcher { get; }
+        _tokenProcessor.ResetState();
+    }
 
-        public void Reset()
-        {
-            _stillValid = true;
+    public TokenizerState Feed(char c, string fullExpression, int currentIndex)
+    {
+        if (!_stillValid)
+            return TokenizerState.Fail;
 
-            _tokenProcessor.ResetState();
-        }
+        TokenizerState state = _tokenProcessor.ProcessChar(c, fullExpression, currentIndex);
 
-        public TokenizerState Feed(char c, string fullExpression, int currentIndex)
-        {
-            if (!_stillValid)
-                return TokenizerState.Fail;
+        if (state != TokenizerState.Valid)
+            _stillValid = false;
 
-            TokenizerState state = _tokenProcessor.ProcessChar(c, fullExpression, currentIndex);
-
-            if (state != TokenizerState.Valid)
-                _stillValid = false;
-
-            return state;
-        }
+        return state;
+    }
 
 
 #if DEBUG
-        public override string ToString()
-        {
-            string s = "";
+    public override string ToString()
+    {
+        string s = "";
             
-            if (_stillValid)
-                s += "StillValid/";
+        if (_stillValid)
+            s += "StillValid/";
 
-            s += _tokenProcessor == null ? "(null)" : _tokenProcessor.GetType().Name;
+        s += _tokenProcessor == null ? "(null)" : _tokenProcessor.GetType().Name;
 
-            return s;
-        }
+        return s;
+    }
 #endif
 
-        public string TranslateToken(string text)
-        {
-            return Matcher.TranslateToken(text, _tokenProcessor);
-        }
+    public string TranslateToken(string text)
+    {
+        return Matcher.TranslateToken(text, _tokenProcessor);
     }
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,30 +27,29 @@
 using System.IO;
 using System.Xml;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class Xml : TemplateParserConfig<XmlTokenizer>
 {
-    public class Xml : TemplateParserConfig<XmlTokenizer>
+    internal static string ReplaceEscapes(string text)
     {
-        internal static string ReplaceEscapes(string text)
+        StringWriter writer = new StringWriter();
+
+        var settings = new XmlWriterSettings
         {
-            StringWriter writer = new StringWriter();
+            ConformanceLevel = ConformanceLevel.Fragment
+        };
 
-            var settings = new XmlWriterSettings
-            {
-                ConformanceLevel = ConformanceLevel.Fragment
-            };
-
-            using (var xmlWriter = XmlWriter.Create(writer, settings))
-            {
-                xmlWriter.WriteString(text);
-            }
-
-            return writer.ToString();
+        using (var xmlWriter = XmlWriter.Create(writer, settings))
+        {
+            xmlWriter.WriteString(text);
         }
 
-        protected override string OnEvalExpression(ExpressionParser parser, TemplateToken templateToken, IParserContext context)
-        {
-            return ReplaceEscapes(base.OnEvalExpression(parser, templateToken, context));
-        }
+        return writer.ToString();
+    }
+
+    protected override string OnEvalExpression(ExpressionParser parser, TemplateToken templateToken, IParserContext context)
+    {
+        return ReplaceEscapes(base.OnEvalExpression(parser, templateToken, context));
     }
 }

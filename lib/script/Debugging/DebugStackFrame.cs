@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,24 +24,23 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+/// <summary>
+/// A single entry in the debugger call stack: the source region of a statement
+/// that is currently executing, together with the context (scope) it runs in.
+/// The innermost (currently executing) statement is the first frame.
+/// </summary>
+public sealed class DebugStackFrame(SourceSpan location, IParserContext context)
 {
+    /// <summary>The source region of the statement executing in this frame.</summary>
+    public SourceSpan Location { get; } = location;
+
     /// <summary>
-    /// A single entry in the debugger call stack: the source region of a statement
-    /// that is currently executing, together with the context (scope) it runs in.
-    /// The innermost (currently executing) statement is the first frame.
+    /// The scope this frame executes in. Can be used to evaluate expressions or
+    /// enumerate variables local to the frame.
     /// </summary>
-    public sealed class DebugStackFrame(SourceSpan location, IParserContext context)
-    {
-        /// <summary>The source region of the statement executing in this frame.</summary>
-        public SourceSpan Location { get; } = location;
+    public IParserContext Context { get; } = context;
 
-        /// <summary>
-        /// The scope this frame executes in. Can be used to evaluate expressions or
-        /// enumerate variables local to the frame.
-        /// </summary>
-        public IParserContext Context { get; } = context;
-
-        public override string ToString() => Location.ToString();
-    }
+    public override string ToString() => Location.ToString();
 }

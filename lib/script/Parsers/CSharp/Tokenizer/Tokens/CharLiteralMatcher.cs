@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,54 +26,53 @@
 
 using Iridium.Script;
 
-namespace Iridium.Script.CSharp
+namespace Iridium.Script.CSharp;
+
+public class CharLiteralMatcher : ITokenMatcher, ITokenProcessor
 {
-    public class CharLiteralMatcher : ITokenMatcher, ITokenProcessor
+    private bool _started;
+    private bool _inEscape;
+    private bool _done;
+
+    public void ResetState()
     {
-        private bool _started;
-        private bool _inEscape;
-        private bool _done;
+        _started = false;
+        _inEscape = false;
+        _done = false;
+    }
 
-        public void ResetState()
+    ITokenProcessor ITokenMatcher.CreateTokenProcessor()
+    {
+        return new CharLiteralMatcher();
+    }
+
+    TokenizerState ITokenProcessor.ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        if (_done)
+            return TokenizerState.Success;
+
+        if (!_started)
         {
-            _started = false;
-            _inEscape = false;
-            _done = false;
+            if (c != '\'')
+                return TokenizerState.Fail;
+
+            _started = true;
+        }
+        else
+        {
+            if (_inEscape)
+                _inEscape = false;
+            else if (c == '\'')
+                _done = true;
+            else if (c == '\\')
+                _inEscape = true;
         }
 
-        ITokenProcessor ITokenMatcher.CreateTokenProcessor()
-        {
-            return new CharLiteralMatcher();
-        }
+        return TokenizerState.Valid;
+    }
 
-        TokenizerState ITokenProcessor.ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            if (_done)
-                return TokenizerState.Success;
-
-            if (!_started)
-            {
-                if (c != '\'')
-                    return TokenizerState.Fail;
-
-                _started = true;
-            }
-            else
-            {
-                if (_inEscape)
-                    _inEscape = false;
-                else if (c == '\'')
-                    _done = true;
-                else if (c == '\\')
-                    _inEscape = true;
-            }
-
-            return TokenizerState.Valid;
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

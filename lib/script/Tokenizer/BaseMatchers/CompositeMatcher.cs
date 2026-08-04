@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,85 +24,84 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class CompositeMatcher : ITokenMatcher
 {
-    public class CompositeMatcher : ITokenMatcher
+    public CompositeMatcher(params ITokenMatcher[] tokens)
     {
-        public CompositeMatcher(params ITokenMatcher[] tokens)
-        {
-            TokenMatchers = tokens;
-        }
-
-        public ITokenProcessor CreateTokenProcessor()
-        {
-            ITokenProcessor[] tokenProcessors = new ITokenProcessor[TokenMatchers.Length];
-
-            for (int i=0;i<TokenMatchers.Length;i++)
-                tokenProcessors[i] = TokenMatchers[i].CreateTokenProcessor();
-
-            return new CompositeTokenProcessor(tokenProcessors);
-        }
-
-        protected ITokenMatcher[] TokenMatchers { get; }
-
-        protected class CompositeTokenProcessor : ITokenProcessor
-        {
-            private int _firstIndex;
-            private int _current;
-
-            public CompositeTokenProcessor(ITokenProcessor[] tokens)
-            {
-                TokenProcessors = tokens;
-                StartIndexes = new int[tokens.Length];
-            }
-
-            public virtual void ResetState()
-            {
-                TokenProcessors[0].ResetState();
-                _current = 0;
-                _firstIndex = -1;
-                StartIndexes[0] = 0;
-            }
-
-            public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-            {
-                TokenizerState state = TokenProcessors[_current].ProcessChar(c, fullExpression, currentIndex);
-
-                if (state == TokenizerState.Success)
-                {
-                    _current++;
-
-                    if (_current == TokenProcessors.Length)
-                        return TokenizerState.Success;
-
-                    StartIndexes[_current] = currentIndex - _firstIndex;
-                    TokenProcessors[_current].ResetState();
-
-                    state = TokenProcessors[_current].ProcessChar(c, fullExpression, currentIndex);
-                }
-
-                if (state == TokenizerState.Fail)
-                    return TokenizerState.Fail;
-
-                if (_current == 0 && _firstIndex < 0)
-                    _firstIndex = currentIndex;
-
-                return TokenizerState.Valid;
-            }
-
-            public ITokenProcessor[] TokenProcessors { get; }
-            public int[] StartIndexes { get; }
-        }
-
-        string ITokenMatcher.TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return TranslateToken(originalToken, (CompositeTokenProcessor) tokenProcessor);
-        }
-
-        protected virtual string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
-
+        TokenMatchers = tokens;
     }
+
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        ITokenProcessor[] tokenProcessors = new ITokenProcessor[TokenMatchers.Length];
+
+        for (int i=0;i<TokenMatchers.Length;i++)
+            tokenProcessors[i] = TokenMatchers[i].CreateTokenProcessor();
+
+        return new CompositeTokenProcessor(tokenProcessors);
+    }
+
+    protected ITokenMatcher[] TokenMatchers { get; }
+
+    protected class CompositeTokenProcessor : ITokenProcessor
+    {
+        private int _firstIndex;
+        private int _current;
+
+        public CompositeTokenProcessor(ITokenProcessor[] tokens)
+        {
+            TokenProcessors = tokens;
+            StartIndexes = new int[tokens.Length];
+        }
+
+        public virtual void ResetState()
+        {
+            TokenProcessors[0].ResetState();
+            _current = 0;
+            _firstIndex = -1;
+            StartIndexes[0] = 0;
+        }
+
+        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
+        {
+            TokenizerState state = TokenProcessors[_current].ProcessChar(c, fullExpression, currentIndex);
+
+            if (state == TokenizerState.Success)
+            {
+                _current++;
+
+                if (_current == TokenProcessors.Length)
+                    return TokenizerState.Success;
+
+                StartIndexes[_current] = currentIndex - _firstIndex;
+                TokenProcessors[_current].ResetState();
+
+                state = TokenProcessors[_current].ProcessChar(c, fullExpression, currentIndex);
+            }
+
+            if (state == TokenizerState.Fail)
+                return TokenizerState.Fail;
+
+            if (_current == 0 && _firstIndex < 0)
+                _firstIndex = currentIndex;
+
+            return TokenizerState.Valid;
+        }
+
+        public ITokenProcessor[] TokenProcessors { get; }
+        public int[] StartIndexes { get; }
+    }
+
+    string ITokenMatcher.TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return TranslateToken(originalToken, (CompositeTokenProcessor) tokenProcessor);
+    }
+
+    protected virtual string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
+    {
+        return originalToken;
+    }
+
 }

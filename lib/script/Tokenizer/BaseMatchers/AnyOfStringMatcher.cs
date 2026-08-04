@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,53 +26,52 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+//TODO: split tokenprocessor to avoid overhead of array sorting
+public class AnyOfStringMatcher : ITokenMatcher, ITokenProcessor
 {
-    //TODO: split tokenprocessor to avoid overhead of array sorting
-    public class AnyOfStringMatcher : ITokenMatcher, ITokenProcessor
+    private int _index;
+    private int _lastMatch;
+    private readonly string[] _strings;
+
+    public AnyOfStringMatcher(params string[] strings)
     {
-        private int _index;
-        private int _lastMatch;
-        private readonly string[] _strings;
+        _strings = strings;
 
-        public AnyOfStringMatcher(params string[] strings)
-        {
-            _strings = strings;
+        Array.Sort(_strings, (s1, s2) => s1.Length - s2.Length);
+    }
 
-            Array.Sort(_strings, (s1, s2) => s1.Length - s2.Length);
-        }
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        return new AnyOfStringMatcher(_strings);
+    }
 
-        public ITokenProcessor CreateTokenProcessor()
-        {
-            return new AnyOfStringMatcher(_strings);
-        }
+    public void ResetState()
+    {
+        _index = 0;
+        _lastMatch = -1;
+    }
 
-        public void ResetState()
-        {
-            _index = 0;
-            _lastMatch = -1;
-        }
+    public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        for (int i=0;i<_strings.Length;i++)
+            if (_index < _strings[i].Length && _strings[i][_index] == c)
+            {
+                _lastMatch = i;
+                _index++;
 
-        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            for (int i=0;i<_strings.Length;i++)
-                if (_index < _strings[i].Length && _strings[i][_index] == c)
-                {
-                    _lastMatch = i;
-                    _index++;
+                return TokenizerState.Valid;
+            }
 
-                    return TokenizerState.Valid;
-                }
+        if (_lastMatch >= 0 && _index >= _strings[_lastMatch].Length)
+            return TokenizerState.Success;
 
-            if (_lastMatch >= 0 && _index >= _strings[_lastMatch].Length)
-                return TokenizerState.Success;
+        return TokenizerState.Fail;
+    }
 
-            return TokenizerState.Fail;
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

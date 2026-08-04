@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,29 +24,28 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class ConditionalExpression(Expression condition, Expression trueValue, Expression falseValue) : Expression
 {
-    public class ConditionalExpression(Expression condition, Expression trueValue, Expression falseValue) : Expression
+    public Expression Condition { get; } = condition;
+    public Expression TrueValue { get; } = trueValue;
+    public Expression FalseValue { get; } = falseValue;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public Expression Condition { get; } = condition;
-        public Expression TrueValue { get; } = trueValue;
-        public Expression FalseValue { get; } = falseValue;
+        bool result = context.ToBoolean(Condition.Evaluate(context).Value);
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            bool result = context.ToBoolean(Condition.Evaluate(context).Value);
-
-            if (result)
-                return TrueValue.Evaluate(context);
-            else
-                return FalseValue.Evaluate(context);
-        }
+        if (result)
+            return TrueValue.Evaluate(context);
+        else
+            return FalseValue.Evaluate(context);
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return $"({Condition} ? {TrueValue} : {FalseValue})";
-        }
-#endif
+    public override string ToString()
+    {
+        return $"({Condition} ? {TrueValue} : {FalseValue})";
     }
+#endif
 }

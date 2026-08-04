@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,59 +24,58 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class WhiteSpacePaddedMatcher : ITokenMatcher
 {
-    public class WhiteSpacePaddedMatcher : ITokenMatcher
+    private readonly ITokenMatcher _matcher;
+
+    public WhiteSpacePaddedMatcher(ITokenMatcher matcher)
     {
-        private readonly ITokenMatcher _matcher;
+        _matcher = matcher;
+    }
 
-        public WhiteSpacePaddedMatcher(ITokenMatcher matcher)
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        return new MatchProcessor(_matcher);
+    }
+
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken.Substring(((MatchProcessor) tokenProcessor).Skipped);
+    }
+
+    private class MatchProcessor : ITokenProcessor
+    {
+        private bool _passedWhitespace;
+        private readonly ITokenProcessor _processor;
+
+        public MatchProcessor(ITokenMatcher matcher)
         {
-            _matcher = matcher;
+            _processor = matcher.CreateTokenProcessor();
         }
 
-        public ITokenProcessor CreateTokenProcessor()
+        public int Skipped { get; private set; }
+
+        public void ResetState()
         {
-            return new MatchProcessor(_matcher);
+            _passedWhitespace = false;
+            Skipped = 0;
+
+            _processor.ResetState();
         }
 
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
         {
-            return originalToken.Substring(((MatchProcessor) tokenProcessor).Skipped);
-        }
-
-        private class MatchProcessor : ITokenProcessor
-        {
-            private bool _passedWhitespace;
-            private readonly ITokenProcessor _processor;
-
-            public MatchProcessor(ITokenMatcher matcher)
+            if (!_passedWhitespace && " \t\r\n".IndexOf(c) >= 0)
             {
-                _processor = matcher.CreateTokenProcessor();
+                Skipped = Skipped + 1;
+                return TokenizerState.Valid;
             }
 
-            public int Skipped { get; private set; }
+            _passedWhitespace = true;
 
-            public void ResetState()
-            {
-                _passedWhitespace = false;
-                Skipped = 0;
-
-                _processor.ResetState();
-            }
-
-            public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-            {
-                if (!_passedWhitespace && " \t\r\n".IndexOf(c) >= 0)
-                {
-                    Skipped = Skipped + 1;
-                    return TokenizerState.Valid;
-                }
-
-                _passedWhitespace = true;
-
-                return _processor.ProcessChar(c,fullExpression,currentIndex);
-            }
+            return _processor.ProcessChar(c,fullExpression,currentIndex);
         }
     }
 }

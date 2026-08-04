@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -29,79 +29,78 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Iridium.Script;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class TemplateToken : Token
 {
-    public class TemplateToken : Token
+    private static readonly object _lock = new object();
+    private ParameterizedExpression? _parameterizedExpression;
+
+    public TemplateToken()
     {
-        private static readonly object _lock = new object();
-        private ParameterizedExpression _parameterizedExpression;
-
-        public TemplateToken()
-        {
-            throw new NotSupportedException();
-        }
-
-        public TemplateToken(TemplateTokenMatcher tokenMatcher, string token) : base(tokenMatcher, token)
-        {
-        }
-
-        private TemplateTokenMatcher Matcher => (TemplateTokenMatcher) TokenMatcher;
-        public bool RemoveEmptyLine => Matcher != null && Matcher.RemoveEmptyLine;
-        public TemplateTokenType TokenType => Matcher.TokenType;
-        public string TokenId => Matcher.TokenId;
-
-        public ParameterizedExpression ExtractParameters()
-        {
-            lock (_lock)
-            {
-                if (_parameterizedExpression == null)
-                    _parameterizedExpression = new ParameterizedExpression(Text);
-            }
-
-            return _parameterizedExpression;
-        }
-
-        public class ParameterizedExpression
-        {
-            public readonly string MainExpression;
-            public readonly Dictionary<string, string> Parameters;
-
-            public ParameterizedExpression(string expression)
-            {
-                Parameters = new Dictionary<string, string>();
-
-                MatchCollection matches = Regex.Matches(expression, @"[,\s]*@(?<varname>[a-zA-Z_$][a-zA-Z_$0-9]*)\s*=");
-
-                int index = -1;
-                string varName = null;
-
-                if (matches.Count < 1)
-                {
-                    MainExpression = expression;
-                    return;
-                }
-
-                foreach (Match match in matches)
-                {
-                    if (index == -1)
-                    {
-                        MainExpression = expression.Substring(0, match.Index).Trim();
-                    }
-                    else
-                    {
-                        if (varName != null)
-                            Parameters[varName] = expression.Substring(index, match.Index - index).Trim();
-                    }
-
-                    varName = match.Groups["varname"].Value;
-
-                    index = match.Index + match.Length;
-                }
-
-                if (varName != null)
-                    Parameters[varName] = expression.Substring(index, expression.Length - index).Trim();
-            }
-        }
-
+        throw new NotSupportedException();
     }
+
+    public TemplateToken(TemplateTokenMatcher? tokenMatcher, string token) : base(tokenMatcher, token)
+    {
+    }
+
+    private TemplateTokenMatcher? Matcher => (TemplateTokenMatcher?) TokenMatcher;
+    public bool RemoveEmptyLine => Matcher != null && Matcher.RemoveEmptyLine;
+    public TemplateTokenType TokenType => Matcher.TokenType;
+    public string TokenId => Matcher.TokenId;
+
+    public ParameterizedExpression ExtractParameters()
+    {
+        lock (_lock)
+        {
+            if (_parameterizedExpression == null)
+                _parameterizedExpression = new ParameterizedExpression(Text);
+        }
+
+        return _parameterizedExpression;
+    }
+
+    public class ParameterizedExpression
+    {
+        public readonly string MainExpression;
+        public readonly Dictionary<string, string> Parameters;
+
+        public ParameterizedExpression(string expression)
+        {
+            Parameters = new Dictionary<string, string>();
+
+            MatchCollection matches = Regex.Matches(expression, @"[,\s]*@(?<varname>[a-zA-Z_$][a-zA-Z_$0-9]*)\s*=");
+
+            int index = -1;
+            string varName = null;
+
+            if (matches.Count < 1)
+            {
+                MainExpression = expression;
+                return;
+            }
+
+            foreach (Match match in matches)
+            {
+                if (index == -1)
+                {
+                    MainExpression = expression.Substring(0, match.Index).Trim();
+                }
+                else
+                {
+                    if (varName != null)
+                        Parameters[varName] = expression.Substring(index, match.Index - index).Trim();
+                }
+
+                varName = match.Groups["varname"].Value;
+
+                index = match.Index + match.Length;
+            }
+
+            if (varName != null)
+                Parameters[varName] = expression.Substring(index, expression.Length - index).Trim();
+        }
+    }
+
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -28,32 +28,31 @@ using System;
 using System.Reflection;
 using Iridium.Script.Reflection;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+internal class StaticMethod : MethodDefinition
 {
-    internal class StaticMethod : MethodDefinition
+    public StaticMethod(MethodInfo methodInfo) : base(methodInfo)
     {
-        public StaticMethod(MethodInfo methodInfo) : base(methodInfo)
-        {
-        }
+    }
 
-        public StaticMethod(Type type, string methodName) : base(type, methodName)
-        {
-        }
+    public StaticMethod(Type type, string methodName) : base(type, methodName)
+    {
+    }
 
-        public override object Invoke(Type[] types, object[] parameters, out Type returnType)
-        {
-            MethodInfo methodInfo = GetMethodInfo(types);
+    public override object Invoke(Type[] types, object[] parameters, out Type returnType)
+    {
+        MethodInfo methodInfo = GetMethodInfo(types);
 
-            if (methodInfo == null)
-                throw new MissingMemberException(MethodName);
+        if (methodInfo == null)
+            throw new MissingMemberException(MethodName);
 
-            returnType = methodInfo.ReturnType;
+        returnType = methodInfo.ReturnType;
 
-            // Convert the arguments to the selected overload's parameter types
-            // (consistent with InstanceMethod), so e.g. an int argument bound to a
-            // method that only exposes a wider numeric parameter is converted rather
-            // than causing a reflection ArgumentException.
-            return SmartBinder.Invoke(methodInfo, parameters);
-        }
+        // Convert the arguments to the selected overload's parameter types
+        // (consistent with InstanceMethod), so e.g. an int argument bound to a
+        // method that only exposes a wider numeric parameter is converted rather
+        // than causing a reflection ArgumentException.
+        return SmartBinder.Invoke(methodInfo, parameters);
     }
 }

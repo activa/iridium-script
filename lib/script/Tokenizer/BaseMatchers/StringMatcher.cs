@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,39 +24,38 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class StringMatcher : ITokenMatcher, ITokenProcessor
 {
-    public class StringMatcher : ITokenMatcher, ITokenProcessor
+    private int _index;
+    private readonly string _string;
+
+    public StringMatcher(string s)
     {
-        private int _index;
-        private readonly string _string;
+        _string = s;
+    }
 
-        public StringMatcher(string s)
-        {
-            _string = s;
-        }
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        return new StringMatcher(_string);
+    }
 
-        public ITokenProcessor CreateTokenProcessor()
-        {
-            return new StringMatcher(_string);
-        }
+    public void ResetState()
+    {
+        _index = 0;
+    }
 
-        public void ResetState()
-        {
-            _index = 0;
-        }
+    public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        if (_index >= _string.Length)
+            return TokenizerState.Success;
 
-        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            if (_index >= _string.Length)
-                return TokenizerState.Success;
+        return (c == _string[_index++]) ? TokenizerState.Valid : TokenizerState.Fail;
+    }
 
-            return (c == _string[_index++]) ? TokenizerState.Valid : TokenizerState.Fail;
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

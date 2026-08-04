@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,20 +24,19 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+/// <summary>
+/// Explains why script execution paused and control was handed to the debugger.
+/// </summary>
+public enum ScriptBreakReason
 {
-    /// <summary>
-    /// Explains why script execution paused and control was handed to the debugger.
-    /// </summary>
-    public enum ScriptBreakReason
-    {
-        /// <summary>Execution stopped because it reached a breakpoint.</summary>
-        Breakpoint,
+    /// <summary>Execution stopped because it reached a breakpoint.</summary>
+    Breakpoint,
 
-        /// <summary>Execution stopped because a stepping operation completed.</summary>
-        Step,
+    /// <summary>Execution stopped because a stepping operation completed.</summary>
+    Step,
 
-        /// <summary>Execution stopped because a pause was requested by the host.</summary>
-        Pause
-    }
+    /// <summary>Execution stopped because a pause was requested by the host.</summary>
+    Pause
 }

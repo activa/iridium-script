@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,74 +26,73 @@
 
 using System.Text.RegularExpressions;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class RegexMatcher : ITokenMatcher, ITokenProcessor
 {
-    public class RegexMatcher : ITokenMatcher, ITokenProcessor
+    private readonly Regex _regex;
+    private readonly Regex _regexComplete;
+
+    private string _buffer = "";
+    private bool _seen;
+
+    public ITokenProcessor CreateTokenProcessor()
     {
-        private readonly Regex _regex;
-        private readonly Regex _regexComplete;
+        return new RegexMatcher(_regex, _regexComplete);
+    }
 
-        private string _buffer;
-        private bool _seen;
+    private RegexMatcher(Regex regex, Regex regexComplete)
+    {
+        _regex = regex;
+        _regexComplete = regexComplete;
+    }
 
-        public ITokenProcessor CreateTokenProcessor()
+    public RegexMatcher(string regex, string regexComplete)
+    {
+        if (!regex.StartsWith("^"))
+            regex = "^" + regex;
+
+        if (!regex.EndsWith("$"))
+            regex += "$";
+
+        if (!regexComplete.StartsWith("^"))
+            regexComplete = "^" + regexComplete;
+
+        if (!regexComplete.EndsWith("$"))
+            regexComplete += "$";
+
+        _regex = new Regex(regex, RegexOptions.Singleline);
+        _regexComplete = new Regex(regexComplete, RegexOptions.Singleline);
+    }
+
+    public void ResetState()
+    {
+        _buffer = "";
+        _seen = false;
+    }
+
+    public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        _buffer += c;
+
+        bool isMatch = _regex.IsMatch(_buffer);
+
+        if (isMatch)
         {
-            return new RegexMatcher(_regex, _regexComplete);
+            if (_regexComplete.IsMatch(_buffer))
+                _seen = true;
+
+            return TokenizerState.Valid;
         }
 
-        private RegexMatcher(Regex regex, Regex regexComplete)
-        {
-            _regex = regex;
-            _regexComplete = regexComplete;
-        }
+        if (_seen)
+            return TokenizerState.Success;
+        else
+            return TokenizerState.Fail;
+    }
 
-        public RegexMatcher(string regex, string regexComplete)
-        {
-            if (!regex.StartsWith("^"))
-                regex = "^" + regex;
-
-            if (!regex.EndsWith("$"))
-                regex += "$";
-
-            if (!regexComplete.StartsWith("^"))
-                regexComplete = "^" + regexComplete;
-
-            if (!regexComplete.EndsWith("$"))
-                regexComplete += "$";
-
-            _regex = new Regex(regex, RegexOptions.Singleline);
-            _regexComplete = new Regex(regexComplete, RegexOptions.Singleline);
-        }
-
-        public void ResetState()
-        {
-            _buffer = "";
-            _seen = false;
-        }
-
-        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            _buffer += c;
-
-            bool isMatch = _regex.IsMatch(_buffer);
-
-            if (isMatch)
-            {
-                if (_regexComplete.IsMatch(_buffer))
-                    _seen = true;
-
-                return TokenizerState.Valid;
-            }
-
-            if (_seen)
-                return TokenizerState.Success;
-            else
-                return TokenizerState.Fail;
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

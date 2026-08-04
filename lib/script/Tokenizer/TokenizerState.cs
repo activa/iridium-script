@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,10 +24,32 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+/// <summary>
+/// Returned by <see cref="ITokenProcessor.ProcessChar"/> for every character fed to a
+/// token processor, telling the tokenizer whether the character can still be part of
+/// the token being matched.
+/// </summary>
+public enum TokenizerState
 {
-    public enum TokenizerState
-    {
-        Fail, Valid, Success
-    }
+    /// <summary>
+    /// The character cannot be part of this token. The processor is out of the running
+    /// until the tokenizer resets it at the start of the next token.
+    /// </summary>
+    Fail,
+
+    /// <summary>
+    /// The character is part of the token, but the token isn't complete yet. More
+    /// characters are needed before the processor can decide.
+    /// </summary>
+    Valid,
+
+    /// <summary>
+    /// A complete token ends just before this character. The character itself is not
+    /// consumed: the tokenizer records the match and re-reads the character as the
+    /// start of the next token. A processor that matches until end of input reports
+    /// this when fed the terminating '\0'.
+    /// </summary>
+    Success
 }

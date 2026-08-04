@@ -1,7 +1,8 @@
+#region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -21,17 +22,17 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //=============================================================================
+#endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class InExpression(VariableExpression variable, Expression expression) : Expression
 {
-    public class InExpression(VariableExpression variable, Expression expression) : Expression
-    {
-        public VariableExpression Variable { get; } = variable;
-        public Expression Expression { get; } = expression;
+    public VariableExpression Variable { get; } = variable;
+    public Expression Expression { get; } = expression;
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            return Exp.NullValue();
-        }
+    public override ValueExpression Evaluate(IParserContext context)
+    {
+        return Exp.NullValue();
     }
 }

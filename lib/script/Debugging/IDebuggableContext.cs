@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,17 +24,16 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+/// <summary>
+/// Implemented by contexts that can carry a debugger. The evaluation engine looks
+/// for this on the active context to decide whether debugging is enabled. Keeping
+/// this separate from <see cref="IParserContext"/> avoids forcing debugging onto
+/// every context implementation.
+/// </summary>
+public interface IDebuggableContext
 {
-    /// <summary>
-    /// Implemented by contexts that can carry a debugger. The evaluation engine looks
-    /// for this on the active context to decide whether debugging is enabled. Keeping
-    /// this separate from <see cref="IParserContext"/> avoids forcing debugging onto
-    /// every context implementation.
-    /// </summary>
-    public interface IDebuggableContext
-    {
-        /// <summary>The debugger attached to this execution, or <c>null</c> if none.</summary>
-        IScriptDebugger Debugger { get; }
-    }
+    /// <summary>The debugger attached to this execution, or <c>null</c> if none.</summary>
+    IScriptDebugger Debugger { get; }
 }

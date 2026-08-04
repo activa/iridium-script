@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,32 +24,31 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class ExpressionWithContext
 {
-	public class ExpressionWithContext
-	{
-	    private Expression Expression { get; }
-        public IParserContext Context { get; }
+    private Expression Expression { get; }
+    public IParserContext Context { get; }
 
-	    public ExpressionWithContext(Expression expression, IParserContext context)
-		{
-			Expression = expression;
-			Context = context;
-		}
+    public ExpressionWithContext(Expression expression, IParserContext context)
+    {
+        Expression = expression;
+        Context = context;
+    }
 
-	    public object? EvaluateToObject()
-		{
-			return Expression.EvaluateStatementToObject(Context);
-		}
+    public object? EvaluateToObject()
+    {
+        return Expression.EvaluateStatementToObject(Context);
+    }
 
-		public IValueWithType Evaluate()
-		{
-			return Expression.EvaluateStatement(Context);
-		}
+    public IValueWithType Evaluate()
+    {
+        return Expression.EvaluateStatement(Context);
+    }
 
-		public T? Evaluate<T>()
-		{
-			return Expression.EvaluateStatement<T>(Context);
-		}
-	}
+    public T? Evaluate<T>()
+    {
+        return Expression.EvaluateStatement<T>(Context);
+    }
 }

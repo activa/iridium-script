@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,26 +26,25 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public abstract class ParserException : Exception
 {
-    public abstract class ParserException : Exception
+    protected ParserException()
     {
-        protected ParserException()
-        {
-        }
-
-        protected ParserException(string? message) : base(message)
-        {
-        }
-
-        protected ParserException(string? message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        /// <summary>
-        /// The location in the source script where the error occurred, or
-        /// <see cref="SourcePosition.Unknown"/> when it could not be determined.
-        /// </summary>
-        public SourcePosition Position { get; protected set; } = SourcePosition.Unknown;
     }
+
+    protected ParserException(string? message) : base(message)
+    {
+    }
+
+    protected ParserException(string? message, Exception innerException) : base(message, innerException)
+    {
+    }
+
+    /// <summary>
+    /// The location in the source script where the error occurred, or
+    /// <see cref="SourcePosition.Unknown"/> when it could not be determined.
+    /// </summary>
+    public SourcePosition Position { get; protected set; } = SourcePosition.Unknown;
 }

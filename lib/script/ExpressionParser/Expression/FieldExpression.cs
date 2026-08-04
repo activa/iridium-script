@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -28,144 +28,143 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class FieldExpression : Expression
 {
-    public class FieldExpression : Expression
+    public Expression Target { get; }
+    public string Member { get; }
+
+    public FieldExpression(Expression target, string member)
     {
-        public Expression Target { get; }
-        public string Member { get; }
+        Target = target;
+        Member = member;
+    }
 
-        public FieldExpression(Expression target, string member)
+    public override ValueExpression Evaluate(IParserContext context)
+    {
+        return Evaluate(context, false, null);
+    }
+
+    private ValueExpression Evaluate(IParserContext context, bool assign, object? newValue)
+    {
+        ValueExpression targetValue = Target.Evaluate(context);
+        object? targetObject;
+        Type? targetType;
+
+        if (targetValue.Value is TypeName typeName)
         {
-            Target = target;
-            Member = member;
+            targetType = typeName.Type;
+            targetObject = null;
+        }
+        else
+        {
+            targetType = targetValue.Type;
+            targetObject = targetValue.Value;
+
+            if (targetObject == null)
+                return Exp.Value(null, targetType);
         }
 
-        public override ValueExpression Evaluate(IParserContext context)
+        /*
+        if (targetObject is IDynamicObject dynamicObject)
         {
-        	return Evaluate(context, false, null);
+            if (dynamicObject.TryGetValue(Member, out var value, out var type) && value is IDynamicObject dynField && dynField.IsValue && dynField.TryGetValue(out var fieldValue, out var fieldType))
+                return Exp.Value(fieldValue, fieldType);
+            else
+                return Exp.Value(value, type);
         }
+        */
 
-		private ValueExpression Evaluate(IParserContext context, bool assign, object? newValue)
-    	{
-    		ValueExpression targetValue = Target.Evaluate(context);
-    		object? targetObject;
-    		Type? targetType;
+        targetType = targetType.RealType();
 
-    		if (targetValue.Value is TypeName typeName)
-    		{
-    			targetType = typeName.Type;
-    			targetObject = null;
-    		}
-    		else
-    		{
-    			targetType = targetValue.Type;
-    			targetObject = targetValue.Value;
+        MemberInfo[] members = FindMemberInHierarchy(targetType, Member, (context.Behavior & ParserContextBehavior.CaseInsensitiveMembers) == ParserContextBehavior.CaseInsensitiveMembers);
 
-                if (targetObject == null)
-                    return Exp.Value(null, targetType);
-    		}
+        if (members.Length == 0)
+        {
+            PropertyInfo? indexerPropInfo = targetType.FindIndexer([typeof(string)]);
 
-            /*
-            if (targetObject is IDynamicObject dynamicObject)
+            if (indexerPropInfo != null)
             {
-                if (dynamicObject.TryGetValue(Member, out var value, out var type) && value is IDynamicObject dynField && dynField.IsValue && dynField.TryGetValue(out var fieldValue, out var fieldType))
-                    return Exp.Value(fieldValue, fieldType);
-                else
-                    return Exp.Value(value, type);
+                if (!MemberAccessPolicy.IsSafe(indexerPropInfo))
+                    throw new ExpressionEvaluationException("Access to member " + indexerPropInfo.Name + " is not allowed", this);
+
+                return Exp.Value(indexerPropInfo.GetValue(targetObject, [Member]), indexerPropInfo.PropertyType);
             }
-            */
 
-            targetType = targetType.RealType();
+            throw new UnknownPropertyException("Unknown property " + Member + " for object " + Target + " (type " + targetType.Name + ")", this);
+        }
 
-            MemberInfo[] members = FindMemberInHierarchy(targetType, Member, (context.Behavior & ParserContextBehavior.CaseInsensitiveMembers) == ParserContextBehavior.CaseInsensitiveMembers);
+        if (members.Length >= 1 && members[0] is MethodInfo methodInfo)
+        {
+            if (!MemberAccessPolicy.IsSafe(methodInfo))
+                throw new ExpressionEvaluationException("Access to member " + methodInfo.Name + " is not allowed", this);
 
-    		if (members.Length == 0)
-    		{
-                PropertyInfo? indexerPropInfo = targetType.FindIndexer([typeof(string)]);
+            if (targetObject == null)
+                return Exp.Value(new StaticMethod(targetType, Member));
+            else
+                return Exp.Value(new InstanceMethod(targetType, Member, targetObject));
+        }
 
-                if (indexerPropInfo != null)
-                {
-                    if (!MemberAccessPolicy.IsSafe(indexerPropInfo))
-                        throw new ExpressionEvaluationException("Access to member " + indexerPropInfo.Name + " is not allowed", this);
+        MemberInfo member = members[0];
 
-                    return Exp.Value(indexerPropInfo.GetValue(targetObject, [Member]), indexerPropInfo.PropertyType);
-                }
-
-    			throw new UnknownPropertyException("Unknown property " + Member + " for object " + Target + " (type " + targetType.Name + ")", this);
-    		}
-
-    		if (members.Length >= 1 && members[0] is MethodInfo methodInfo)
-    		{
-                if (!MemberAccessPolicy.IsSafe(methodInfo))
-                    throw new ExpressionEvaluationException("Access to member " + methodInfo.Name + " is not allowed", this);
-
-    			if (targetObject == null)
-                    return Exp.Value(new StaticMethod(targetType, Member));
-    			else
-                    return Exp.Value(new InstanceMethod(targetType, Member, targetObject));
-    		}
-
-    		MemberInfo member = members[0];
-
-    		if (members.Length > 1 && targetObject != null) // CoolStorage, ActiveRecord and Dynamic Proxy frameworks sometimes return > 1 member
-    		{
-    			foreach (MemberInfo mi in members)
-    				if (mi.DeclaringType == targetObject.GetType())
-    					member = mi;
-    		}
+        if (members.Length > 1 && targetObject != null) // CoolStorage, ActiveRecord and Dynamic Proxy frameworks sometimes return > 1 member
+        {
+            foreach (MemberInfo mi in members)
+                if (mi.DeclaringType == targetObject.GetType())
+                    member = mi;
+        }
             
-            if (!MemberAccessPolicy.IsSafe(member))
-                throw new ExpressionEvaluationException("Access to member " + member.Name + " is not allowed", this);
+        if (!MemberAccessPolicy.IsSafe(member))
+            throw new ExpressionEvaluationException("Access to member " + member.Name + " is not allowed", this);
 
-	        if (member is FieldInfo fieldInfo)
-	        {
-                if (assign)
-                    fieldInfo.SetValue(targetObject, newValue);
-
-	            return Exp.Value(fieldInfo.GetValue(targetObject), fieldInfo.FieldType);
-	        }
-
-	        if (member is PropertyInfo propertyInfo)
-	        {
-	            if (assign)
-	                propertyInfo.SetValue(targetObject, newValue, null);
-
-	            return Exp.Value(propertyInfo.GetValue(targetObject, null), propertyInfo.PropertyType);
-	        }
-
-    		throw new ExpressionEvaluationException(Member + " is not a field or property", this);
-    	}
-
-        private static MemberInfo[] FindMemberInHierarchy(Type type, string name, bool caseInsensitive = false)
+        if (member is FieldInfo fieldInfo)
         {
-            Type? t = type;
+            if (assign)
+                fieldInfo.SetValue(targetObject, newValue);
 
-            var stringComparison = caseInsensitive ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture;
-
-            while (t != null)
-            {
-                MemberInfo[] members = t.GetMembers().Where(m => string.Equals(m.Name, name, stringComparison)).ToArray();
-
-                if (members.Length > 0)
-                    return members;
-
-                t = t.BaseType;
-            }
-
-            return [];
+            return Exp.Value(fieldInfo.GetValue(targetObject), fieldInfo.FieldType);
         }
+
+        if (member is PropertyInfo propertyInfo)
+        {
+            if (assign)
+                propertyInfo.SetValue(targetObject, newValue, null);
+
+            return Exp.Value(propertyInfo.GetValue(targetObject, null), propertyInfo.PropertyType);
+        }
+
+        throw new ExpressionEvaluationException(Member + " is not a field or property", this);
+    }
+
+    private static MemberInfo[] FindMemberInHierarchy(Type type, string name, bool caseInsensitive = false)
+    {
+        Type? t = type;
+
+        var stringComparison = caseInsensitive ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture;
+
+        while (t != null)
+        {
+            MemberInfo[] members = t.GetMembers().Where(m => string.Equals(m.Name, name, stringComparison)).ToArray();
+
+            if (members.Length > 0)
+                return members;
+
+            t = t.BaseType;
+        }
+
+        return [];
+    }
 
 #if DEBUG
-    	public override string ToString()
-        {
-            return $"({Target}.{Member})";
-        }
+    public override string ToString()
+    {
+        return $"({Target}.{Member})";
+    }
 #endif
 
-    	public ValueExpression Assign(IParserContext context, object? value)
-    	{
-    		return Evaluate(context, true, value);
-    	}
+    public ValueExpression Assign(IParserContext context, object? value)
+    {
+        return Evaluate(context, true, value);
     }
 }

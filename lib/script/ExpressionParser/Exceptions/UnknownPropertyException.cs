@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,21 +26,20 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class UnknownPropertyException : ExpressionEvaluationException
 {
-    public class UnknownPropertyException : ExpressionEvaluationException
+    public UnknownPropertyException(Expression expressionNode) : base(expressionNode)
     {
-        public UnknownPropertyException(Expression expressionNode) : base(expressionNode)
-        {
-        }
-
-        public UnknownPropertyException(string message, Expression expressionNode) : base(message, expressionNode)
-        {
-        }
-
-        public UnknownPropertyException(string message, Expression expressionNode, Exception innerException) : base(message, expressionNode, innerException)
-        {
-        }
-
     }
+
+    public UnknownPropertyException(string message, Expression expressionNode) : base(message, expressionNode)
+    {
+    }
+
+    public UnknownPropertyException(string message, Expression expressionNode, Exception innerException) : base(message, expressionNode, innerException)
+    {
+    }
+
 }

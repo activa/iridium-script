@@ -1,7 +1,8 @@
-﻿//=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+﻿#region License
+//=============================================================================
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -21,41 +22,41 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //=============================================================================
+#endregion
 
 using System.Collections;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class ForEachExpression : Expression
 {
-    public class ForEachExpression : Expression
+    public required Expression Expression { get; init; }
+    public required VariableExpression Iterator { get; init; }
+    public required Expression Body { get; init; }
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public required Expression Expression { get; init; }
-        public required VariableExpression Iterator { get; init; }
-        public required Expression Body { get; init; }
-
-        public override ValueExpression Evaluate(IParserContext context)
+        if (Expression.Evaluate(context).Value is IEnumerable enumerable)
         {
-            if (Expression.Evaluate(context).Value is IEnumerable enumerable)
+            var monitor = ExecutionMonitor.For(context);
+
+            foreach (var item in enumerable)
             {
-                var monitor = ExecutionMonitor.For(context);
+                monitor?.CheckExecutionTime(this);
 
-                foreach (var item in enumerable)
+                var localContext = context.CreateLocal();
+
+                localContext.Set(Iterator.VarName, item);
+
+                var returnValue = Body.EvaluateStatement(localContext);
+
+                if (returnValue is ReturnValueExpression || returnValue is BreakLoopExpression)
                 {
-                    monitor?.CheckExecutionTime(this);
-
-                    var localContext = context.CreateLocal();
-
-                    localContext.Set(Iterator.VarName, item);
-
-                    var returnValue = Body.EvaluateStatement(localContext);
-
-                    if (returnValue is ReturnValueExpression || returnValue is BreakLoopExpression)
-                    {
-                        return returnValue;
-                    }
+                    return returnValue;
                 }
             }
-
-            return Exp.NoValue();
         }
+
+        return Exp.NoValue();
     }
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,28 +24,27 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class CoalesceExpression(Expression value, Expression valueIfNull) : BinaryExpression(value, valueIfNull)
 {
-    public class CoalesceExpression(Expression value, Expression valueIfNull) : BinaryExpression(value, valueIfNull)
+    public Expression Value => Left;
+    public Expression ValueIfNull => Right;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public Expression Value => Left;
-        public Expression ValueIfNull => Right;
+        ValueExpression result = Value.Evaluate(context);
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            ValueExpression result = Value.Evaluate(context);
+        if (result.Value == null)
+            return ValueIfNull.Evaluate(context);
 
-            if (result.Value == null)
-                return ValueIfNull.Evaluate(context);
-
-            return result;
-        }
+        return result;
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return $"({Value} ?? {ValueIfNull})";
-        }
-#endif
+    public override string ToString()
+    {
+        return $"({Value} ?? {ValueIfNull})";
     }
+#endif
 }

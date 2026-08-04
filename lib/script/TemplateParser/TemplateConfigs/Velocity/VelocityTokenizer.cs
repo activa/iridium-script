@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,82 +27,81 @@
 using Iridium.Script;
 using Iridium.Script.CSharp;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class VelocityTokenizer : TemplateTokenizer
 {
-    public class VelocityTokenizer : TemplateTokenizer
+    public VelocityTokenizer()
     {
-        public VelocityTokenizer()
+        AddTokenMatcher(TemplateTokenType.IncludeFile, new VelocityTagMatcher("include"), true);
+        AddTokenMatcher(TemplateTokenType.IncludeFile, new VelocityTagMatcher("parse"), true);
+        AddTokenMatcher(TemplateTokenType.ForEach, new VelocityForEachMatcher(), true);
+        AddTokenMatcher(TemplateTokenType.EndBlock, new AnyOfStringMatcher("#end","#{end}"), true);
+        AddTokenMatcher(TemplateTokenType.If, new VelocityTagMatcher("if"), true);
+        AddTokenMatcher(TemplateTokenType.ElseIf, new VelocityTagMatcher("elseif"), true);
+        AddTokenMatcher(TemplateTokenType.Else, new AnyOfStringMatcher("#else","#{else}"), true);
+        AddTokenMatcher(TemplateTokenType.Statement, new WrappedExpressionMatcher("${#", "}"), true);
+        AddTokenMatcher(TemplateTokenType.Expression, new WrappedExpressionMatcher("${","}"));
+        AddTokenMatcher(TemplateTokenType.Expression, new DollarExpressionMatcher());
+        AddTokenMatcher(TemplateTokenType.Comment, new WrappedExpressionMatcher("#*", "*#"), true);
+    }
+
+    private class DollarExpressionMatcher : CompositeMatcher
+    {
+        public DollarExpressionMatcher()
+            : base(
+                new CharMatcher('$'),
+                new SmartExpressionMatcher(" \t\r\n")
+            )
         {
-            AddTokenMatcher(TemplateTokenType.IncludeFile, new VelocityTagMatcher("include"), true);
-            AddTokenMatcher(TemplateTokenType.IncludeFile, new VelocityTagMatcher("parse"), true);
-            AddTokenMatcher(TemplateTokenType.ForEach, new VelocityForEachMatcher(), true);
-            AddTokenMatcher(TemplateTokenType.EndBlock, new AnyOfStringMatcher("#end","#{end}"), true);
-            AddTokenMatcher(TemplateTokenType.If, new VelocityTagMatcher("if"), true);
-            AddTokenMatcher(TemplateTokenType.ElseIf, new VelocityTagMatcher("elseif"), true);
-            AddTokenMatcher(TemplateTokenType.Else, new AnyOfStringMatcher("#else","#{else}"), true);
-            AddTokenMatcher(TemplateTokenType.Statement, new WrappedExpressionMatcher("${#", "}"), true);
-            AddTokenMatcher(TemplateTokenType.Expression, new WrappedExpressionMatcher("${","}"));
-            AddTokenMatcher(TemplateTokenType.Expression, new DollarExpressionMatcher());
-            AddTokenMatcher(TemplateTokenType.Comment, new WrappedExpressionMatcher("#*", "*#"), true);
         }
 
-        private class DollarExpressionMatcher : CompositeMatcher
+        protected override string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
         {
-            public DollarExpressionMatcher()
-                : base(
-                    new CharMatcher('$'),
-                    new SmartExpressionMatcher(" \t\r\n")
-                    )
-            {
-            }
+            return originalToken.Substring(1);
+        }
+    }
 
-            protected override string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
-            {
-                return originalToken.Substring(1);
-            }
+
+    private class VelocityForEachMatcher : CompositeMatcher
+    {
+        public VelocityForEachMatcher()
+            : base(
+                new AnyOfStringMatcher("#foreach","#{foreach}"),
+                new WhiteSpacePaddedMatcher(new CharMatcher('(')),
+                new WhiteSpacePaddedMatcher(new VariableMatcher()),
+                new WhiteSpaceMatcher(),
+                new StringMatcher("in"),
+                new WhiteSpaceMatcher(),
+                new SmartExpressionMatcher(")"),
+                new CharMatcher(')'))
+        {
         }
 
-
-        private class VelocityForEachMatcher : CompositeMatcher
+        protected override string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
         {
-            public VelocityForEachMatcher()
-                : base(
-                    new AnyOfStringMatcher("#foreach","#{foreach}"),
-                    new WhiteSpacePaddedMatcher(new CharMatcher('(')),
-                    new WhiteSpacePaddedMatcher(new VariableMatcher()),
-                    new WhiteSpaceMatcher(),
-                    new StringMatcher("in"),
-                    new WhiteSpaceMatcher(),
-                    new SmartExpressionMatcher(")"),
-                    new CharMatcher(')'))
-            {
-            }
+            string iterator = originalToken.Substring(tokenProcessor.StartIndexes[2], tokenProcessor.StartIndexes[3] - tokenProcessor.StartIndexes[2]).Trim();
+            string expr = originalToken.Substring(tokenProcessor.StartIndexes[6], tokenProcessor.StartIndexes[7] - tokenProcessor.StartIndexes[6]).Trim();
 
-            protected override string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
-            {
-                string iterator = originalToken.Substring(tokenProcessor.StartIndexes[2], tokenProcessor.StartIndexes[3] - tokenProcessor.StartIndexes[2]).Trim();
-                string expr = originalToken.Substring(tokenProcessor.StartIndexes[6], tokenProcessor.StartIndexes[7] - tokenProcessor.StartIndexes[6]).Trim();
+            return iterator + '\0' + expr;
+        }
+    }
 
-                return iterator + '\0' + expr;
-            }
+    private class VelocityTagMatcher : CompositeMatcher
+    {
+        public VelocityTagMatcher(string keyword)
+            : base(
+                new AnyOfStringMatcher("#" + keyword, "#{" + keyword + "}"),
+                new WhiteSpacePaddedMatcher(new CharMatcher('(')),
+                new WhiteSpacePaddedMatcher(new SmartExpressionMatcher(")")),
+                new WhiteSpacePaddedMatcher(new CharMatcher(')'))
+            )
+        {
         }
 
-        private class VelocityTagMatcher : CompositeMatcher
+        protected override string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
         {
-            public VelocityTagMatcher(string keyword)
-                : base(
-                    new AnyOfStringMatcher("#" + keyword, "#{" + keyword + "}"),
-                    new WhiteSpacePaddedMatcher(new CharMatcher('(')),
-                    new WhiteSpacePaddedMatcher(new SmartExpressionMatcher(")")),
-                    new WhiteSpacePaddedMatcher(new CharMatcher(')'))
-                )
-            {
-            }
-
-            protected override string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
-            {
-                return originalToken.Substring(tokenProcessor.StartIndexes[2], tokenProcessor.StartIndexes[3] - tokenProcessor.StartIndexes[2]).Trim();
-            }
+            return originalToken.Substring(tokenProcessor.StartIndexes[2], tokenProcessor.StartIndexes[3] - tokenProcessor.StartIndexes[2]).Trim();
         }
     }
 }

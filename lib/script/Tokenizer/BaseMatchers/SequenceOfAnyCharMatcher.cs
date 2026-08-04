@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,46 +24,45 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class SequenceOfAnyCharMatcher : ITokenMatcher, ITokenProcessor
 {
-    public class SequenceOfAnyCharMatcher : ITokenMatcher, ITokenProcessor
+    private readonly string _chars;
+    private bool _seen;
+
+    public SequenceOfAnyCharMatcher(string chars)
     {
-        private readonly string _chars;
-        private bool _seen;
+        _chars = chars;
+    }
 
-        public SequenceOfAnyCharMatcher(string chars)
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        return new SequenceOfAnyCharMatcher(_chars);
+    }
+
+    public void ResetState()
+    {
+        _seen = false;
+    }
+
+    public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        if (_chars.IndexOf(c) < 0)
         {
-            _chars = chars;
+            if (_seen)
+                return TokenizerState.Success;
+            else
+                return TokenizerState.Fail;
         }
 
-        public ITokenProcessor CreateTokenProcessor()
-        {
-            return new SequenceOfAnyCharMatcher(_chars);
-        }
+        _seen = true;
 
-        public void ResetState()
-        {
-            _seen = false;
-        }
+        return TokenizerState.Valid;
+    }
 
-        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            if (_chars.IndexOf(c) < 0)
-            {
-                if (_seen)
-                    return TokenizerState.Success;
-                else
-                    return TokenizerState.Fail;
-            }
-
-            _seen = true;
-
-            return TokenizerState.Valid;
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

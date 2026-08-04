@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,52 +26,51 @@
 
 using Iridium.Script;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class ExpressionTokenizer : Tokenizer<ExpressionToken>
 {
-    public class ExpressionTokenizer : Tokenizer<ExpressionToken>
+    public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, int? numTerms = null)
     {
-        public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, int? numTerms = null)
-        {
-            AddTokenMatcher(tokenMatcher, tokenType, 0, OperatorAssociativity.Left, null, numTerms);
-        }
+        AddTokenMatcher(tokenMatcher, tokenType, 0, OperatorAssociativity.Left, null, numTerms);
+    }
 
-        public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, TokenEvaluator tokenEvaluator, int? numTerms = null)
-        {
-            AddTokenMatcher(tokenMatcher, tokenType, 0, OperatorAssociativity.Left, tokenEvaluator, numTerms);
-        }
+    public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, TokenEvaluator tokenEvaluator, int? numTerms = null)
+    {
+        AddTokenMatcher(tokenMatcher, tokenType, 0, OperatorAssociativity.Left, tokenEvaluator, numTerms);
+    }
 
-        public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, int precedence, TokenEvaluator tokenEvaluator, int? numTerms = null)
-        {
-            AddTokenMatcher(tokenMatcher, tokenType, precedence, OperatorAssociativity.Left, tokenEvaluator, numTerms);
-        }
+    public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, int precedence, TokenEvaluator tokenEvaluator, int? numTerms = null)
+    {
+        AddTokenMatcher(tokenMatcher, tokenType, precedence, OperatorAssociativity.Left, tokenEvaluator, numTerms);
+    }
 
-        public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator tokenEvaluator, int? numTerms = null)
-        {
-            var matcher = new ExpressionTokenMatcher(tokenMatcher, tokenType, precedence, associativity, tokenEvaluator);
+    public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator tokenEvaluator, int? numTerms = null)
+    {
+        var matcher = new ExpressionTokenMatcher(tokenMatcher, tokenType, precedence, associativity, tokenEvaluator);
 
-            if (numTerms != null)
-                matcher.NumTerms = numTerms;
+        if (numTerms != null)
+            matcher.NumTerms = numTerms;
 
-            AddTokenMatcher(matcher);
-        }
+        AddTokenMatcher(matcher);
+    }
 
-        public void AddTernaryTokenMatcher(ITokenMatcher matcher1, ITokenMatcher matcher2, int precedence, OperatorAssociativity associativity, TokenEvaluator tokenEvaluator)
-        {
-            ExpressionTokenMatcher root = new ExpressionTokenMatcher(null, TokenType.TernaryOperator, tokenEvaluator);
+    public void AddTernaryTokenMatcher(ITokenMatcher matcher1, ITokenMatcher matcher2, int precedence, OperatorAssociativity associativity, TokenEvaluator tokenEvaluator)
+    {
+        ExpressionTokenMatcher root = new ExpressionTokenMatcher(null, TokenType.TernaryOperator, tokenEvaluator);
 
-            ExpressionTokenMatcher partial1 = new ExpressionTokenMatcher(matcher1, TokenType.TernaryOperator1, precedence, associativity, null);
-            ExpressionTokenMatcher partial2 = new ExpressionTokenMatcher(matcher2, TokenType.TernaryOperator1, precedence, associativity, null);
+        ExpressionTokenMatcher partial1 = new ExpressionTokenMatcher(matcher1, TokenType.TernaryOperator1, precedence, associativity, null);
+        ExpressionTokenMatcher partial2 = new ExpressionTokenMatcher(matcher2, TokenType.TernaryOperator1, precedence, associativity, null);
 
-            partial1.Root = root;
-            partial2.Root = root;
+        partial1.Root = root;
+        partial2.Root = root;
 
-            AddTokenMatcher(partial1);
-            AddTokenMatcher(partial2);
-        }
+        AddTokenMatcher(partial1);
+        AddTokenMatcher(partial2);
+    }
 
-        public override ExpressionToken CreateToken(ITokenMatcher tokenMatcher, string token)
-        {
-            return new ExpressionToken((ExpressionTokenMatcher) tokenMatcher, token);
-        }
+    public override ExpressionToken CreateToken(ITokenMatcher tokenMatcher, string token)
+    {
+        return new ExpressionToken((ExpressionTokenMatcher) tokenMatcher, token);
     }
 }

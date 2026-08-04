@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,45 +26,46 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class LexerException : ParserException
 {
-    public class LexerException : ParserException
+    public string? Token { get; private set; }
+
+    public LexerException(string token)
     {
-        public string Token { get; private set; }
+        Token = token;
+        Position = SourcePosition.Unknown;
+    }
 
-        public LexerException(string token) : this(null, token, SourcePosition.Unknown)
-        {
-        }
+    public LexerException(string message, string? token) : this(message, token, SourcePosition.Unknown)
+    {
+    }
 
-        public LexerException(string message, string token) : this(message, token, SourcePosition.Unknown)
-        {
-        }
+    public LexerException(string message, string? token, SourcePosition position) : base(BuildMessage(message, position))
+    {
+        Token = token;
+        Position = position;
+    }
 
-        public LexerException(string message, string token, SourcePosition position) : base(BuildMessage(message, position))
-        {
-            Token = token;
-            Position = position;
-        }
+    public LexerException(string message, string? token, Exception innerException) : this(message, token, SourcePosition.Unknown, innerException)
+    {
+    }
 
-        public LexerException(string message, string token, Exception innerException) : this(message, token, SourcePosition.Unknown, innerException)
-        {
-        }
+    public LexerException(string message, string? token, SourcePosition position, Exception innerException) : base(BuildMessage(message, position), innerException)
+    {
+        Token = token;
+        Position = position;
+    }
 
-        public LexerException(string message, string token, SourcePosition position, Exception innerException) : base(BuildMessage(message, position), innerException)
-        {
-            Token = token;
-            Position = position;
-        }
+    private static string? BuildMessage(string? message, SourcePosition position)
+    {
+        if (!position.IsKnown)
+            return message;
 
-        private static string? BuildMessage(string? message, SourcePosition position)
-        {
-            if (!position.IsKnown)
-                return message;
+        if (string.IsNullOrEmpty(message))
+            return $"Syntax error at {position}";
 
-            if (string.IsNullOrEmpty(message))
-                return $"Syntax error at {position}";
-
-            return $"{message} (at {position})";
-        }
+        return $"{message} (at {position})";
     }
 }

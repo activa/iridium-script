@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,40 +26,39 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class DoubleCurlyTokenizer : TemplateTokenizer
 {
-    public class DoubleCurlyTokenizer : TemplateTokenizer
+    private class ForeachTokenMatcher : WrappedExpressionMatcher
     {
-        private class ForeachTokenMatcher : WrappedExpressionMatcher
+        public ForeachTokenMatcher() : base("{{", "foreach", "}}")
         {
-            public ForeachTokenMatcher() : base("{{", "foreach", "}}")
-            {
-            }
-
-            protected override string TranslateToken(string originalToken, WrappedExpressionMatcher tokenProcessor)
-            {
-                string s = base.TranslateToken(originalToken, tokenProcessor);
-
-                int inIdx = s.IndexOf(" in ", StringComparison.Ordinal);
-
-                if (inIdx < 0)
-                    throw new TemplateParsingException("invalid syntax in foreach");
-                else
-                    return s.Substring(0, inIdx).Trim() + "\0" + s.Substring(inIdx + 4).Trim();
-            }    
         }
 
-        public DoubleCurlyTokenizer()
+        protected override string TranslateToken(string originalToken, WrappedExpressionMatcher tokenProcessor)
         {
-            AddTokenMatcher(TemplateTokenType.MacroDefinition, new WrappedExpressionMatcher("{{", "macro", "}}"), true);
-            AddTokenMatcher(TemplateTokenType.MacroCall, new WrappedExpressionMatcher("{{", "call", "}}"));
-            AddTokenMatcher(TemplateTokenType.ForEach, new ForeachTokenMatcher(), true);
-            AddTokenMatcher(TemplateTokenType.EndBlock, new WrappedExpressionMatcher("{{", "end", "}}"), true);
-            AddTokenMatcher(TemplateTokenType.If, new WrappedExpressionMatcher("{{", "if", "}}"), true);
-            AddTokenMatcher(TemplateTokenType.ElseIf, new WrappedExpressionMatcher("{{", "elseif", "}}"), true);
-            AddTokenMatcher(TemplateTokenType.Else, new WrappedExpressionMatcher("{{", "else", "}}"),true);
-            AddTokenMatcher(TemplateTokenType.Expression, new WrappedExpressionMatcher("{{", "}}"));
-            AddTokenMatcher(TemplateTokenType.Comment, new WrappedExpressionMatcher("{#", "#}"), true);
-        }
+            string s = base.TranslateToken(originalToken, tokenProcessor);
+
+            int inIdx = s.IndexOf(" in ", StringComparison.Ordinal);
+
+            if (inIdx < 0)
+                throw new TemplateParsingException("invalid syntax in foreach");
+            else
+                return s.Substring(0, inIdx).Trim() + "\0" + s.Substring(inIdx + 4).Trim();
+        }    
+    }
+
+    public DoubleCurlyTokenizer()
+    {
+        AddTokenMatcher(TemplateTokenType.MacroDefinition, new WrappedExpressionMatcher("{{", "macro", "}}"), true);
+        AddTokenMatcher(TemplateTokenType.MacroCall, new WrappedExpressionMatcher("{{", "call", "}}"));
+        AddTokenMatcher(TemplateTokenType.ForEach, new ForeachTokenMatcher(), true);
+        AddTokenMatcher(TemplateTokenType.EndBlock, new WrappedExpressionMatcher("{{", "end", "}}"), true);
+        AddTokenMatcher(TemplateTokenType.If, new WrappedExpressionMatcher("{{", "if", "}}"), true);
+        AddTokenMatcher(TemplateTokenType.ElseIf, new WrappedExpressionMatcher("{{", "elseif", "}}"), true);
+        AddTokenMatcher(TemplateTokenType.Else, new WrappedExpressionMatcher("{{", "else", "}}"),true);
+        AddTokenMatcher(TemplateTokenType.Expression, new WrappedExpressionMatcher("{{", "}}"));
+        AddTokenMatcher(TemplateTokenType.Comment, new WrappedExpressionMatcher("{#", "#}"), true);
     }
 }

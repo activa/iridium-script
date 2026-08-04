@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,31 +26,30 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class ValueExpression : Expression , IValueWithType
 {
-    public class ValueExpression : Expression , IValueWithType
+    public Type Type { get; }
+    public object? Value { get; }
+
+    public ValueExpression(object? value, Type type)
     {
-        public Type Type { get; }
-        public object? Value { get; }
+        Value = value;
+        Type = type;
 
-        public ValueExpression(object? value, Type type)
-        {
-            Value = value;
-            Type = type;
-
-            if (Type == typeof(object) && Value != null)
-                Type = Value.GetType();
-        }
-
-        public override ValueExpression Evaluate(IParserContext context) => this;
-
-        public override string? ToString() => Value?.ToString();
+        if (Type == typeof(object) && Value != null)
+            Type = Value.GetType();
     }
 
-    public class ValueExpression<T>(T? value) : ValueExpression(value, typeof(T))
-    {
-        public new T? Value => (T?)base.Value;
-    }
+    public override ValueExpression Evaluate(IParserContext context) => this;
 
-    public class NoValueExpression() : ValueExpression(null, typeof(object));
+    public override string? ToString() => Value?.ToString();
 }
+
+public class ValueExpression<T>(T? value) : ValueExpression(value, typeof(T))
+{
+    public new T? Value => (T?)base.Value;
+}
+
+public class NoValueExpression() : ValueExpression(null, typeof(object));

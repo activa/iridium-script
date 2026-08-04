@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,25 +27,24 @@
 using System;
 using Iridium.Script;
 
-namespace Iridium.Script
-{
-    public class TypeOfExpression : Expression
-    {
-        private static Type GetTypeOfClassName(TypeName typeName)
-        {
-            return typeName.Type;
-        }
+namespace Iridium.Script;
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            return Exp.Value(new Converter<TypeName, Type>(GetTypeOfClassName));
-        }
+public class TypeOfExpression : Expression
+{
+    private static Type GetTypeOfClassName(TypeName typeName)
+    {
+        return typeName.Type;
+    }
+
+    public override ValueExpression Evaluate(IParserContext context)
+    {
+        return Exp.Value(new Converter<TypeName, Type>(GetTypeOfClassName));
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return "typeof";
-        }
-#endif
+    public override string ToString()
+    {
+        return "typeof";
     }
+#endif
 }

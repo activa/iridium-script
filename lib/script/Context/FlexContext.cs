@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,43 +26,42 @@
 
 using System.Collections.Generic;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class FlexContext : ParserContext
 {
-    public class FlexContext : ParserContext
+    public FlexContext() : base(ParserContextBehavior.Easy)
     {
-        public FlexContext() : base(ParserContextBehavior.Easy)
-        {
-        }
-
-        public FlexContext(IDictionary<string, object> dic) : base(dic, ParserContextBehavior.Easy)
-        {
-        }
-
-        public FlexContext(object rootObject, IDictionary<string, object> dic) : base(rootObject, dic, ParserContextBehavior.Easy)
-        {
-        }
-
-        public FlexContext(object rootObject) : base(rootObject, ParserContextBehavior.Easy)
-        {
-        }
-
-        public FlexContext(ParserContext parentContext) : base(parentContext)
-        {
-        }
-
-        public FlexContext(ParserContext parentContext, object? obj) : base(parentContext, obj)
-        {
-        }
-
-        public override IParserContext CreateLocal()
-        {
-            return new FlexContext(this);
-        }
-
-        public override IParserContext CreateLocal(object? rootObject)
-        {
-            return new FlexContext(this, rootObject);
-        }
-
     }
+
+    public FlexContext(IDictionary<string, object> dic) : base(dic, ParserContextBehavior.Easy)
+    {
+    }
+
+    public FlexContext(object rootObject, IDictionary<string, object> dic) : base(rootObject, dic, ParserContextBehavior.Easy)
+    {
+    }
+
+    public FlexContext(object rootObject) : base(rootObject, ParserContextBehavior.Easy)
+    {
+    }
+
+    public FlexContext(ParserContext parentContext) : base(parentContext)
+    {
+    }
+
+    public FlexContext(ParserContext parentContext, object? obj) : base(parentContext, obj)
+    {
+    }
+
+    public override IParserContext CreateLocal()
+    {
+        return new FlexContext(this);
+    }
+
+    public override IParserContext CreateLocal(object? rootObject)
+    {
+        return new FlexContext(this, rootObject);
+    }
+
 }

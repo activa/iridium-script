@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,89 +26,88 @@
 
 using Iridium.Script;
 
-namespace Iridium.Script.CSharp
+namespace Iridium.Script.CSharp;
+
+public class DecimalLiteralMatcher : ITokenMatcher, ITokenProcessor
 {
-    public class DecimalLiteralMatcher : ITokenMatcher, ITokenProcessor
+    private enum Stage
     {
-        private enum Stage
+        Num1a,
+        Num1b,
+        Num2a,
+        Num2b,
+        Done
+    }
+
+    private const string SUFFIXES = "FfDdMm";
+
+    private Stage _stage;
+
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        return new DecimalLiteralMatcher();
+    }
+
+    public void ResetState()
+    {
+        _stage = Stage.Num1a;
+    }
+
+    public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        bool isDigit = (c >= '0' && c <= '9');
+
+        switch (_stage)
         {
-            Num1a,
-            Num1b,
-            Num2a,
-            Num2b,
-            Done
-        }
-
-        private const string SUFFIXES = "FfDdMm";
-
-        private Stage _stage;
-
-        public ITokenProcessor CreateTokenProcessor()
-        {
-            return new DecimalLiteralMatcher();
-        }
-
-        public void ResetState()
-        {
-            _stage = Stage.Num1a;
-        }
-
-        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            bool isDigit = (c >= '0' && c <= '9');
-
-            switch (_stage)
+            case Stage.Num1a:
             {
-                case Stage.Num1a:
-                    {
-                        if (!isDigit)
-                            return TokenizerState.Fail;
+                if (!isDigit)
+                    return TokenizerState.Fail;
 
-                        _stage = Stage.Num1b;
-                    }
-                    break;
+                _stage = Stage.Num1b;
+            }
+                break;
 
-                case Stage.Num1b:
-                    {
-                        if (c == '.')
-                        {
-                            _stage = Stage.Num2a;
-                        }
-                        else if (!isDigit)
-                        {
-                            return TokenizerState.Fail;
-                        }
-                    }
-                    break;
+            case Stage.Num1b:
+            {
+                if (c == '.')
+                {
+                    _stage = Stage.Num2a;
+                }
+                else if (!isDigit)
+                {
+                    return TokenizerState.Fail;
+                }
+            }
+                break;
 
-                case Stage.Num2a:
-                    {
-                        if (!isDigit)
-                            return TokenizerState.Fail;
+            case Stage.Num2a:
+            {
+                if (!isDigit)
+                    return TokenizerState.Fail;
 
-                        _stage = Stage.Num2b;
-                    }
-                    break;
+                _stage = Stage.Num2b;
+            }
+                break;
 
-                case Stage.Num2b:
-                    {
-                        if (SUFFIXES.IndexOf(c) >= 0)
-                            _stage = Stage.Done;
-                        else if (!isDigit)
-                            return TokenizerState.Success;
-                    }
-                    break;
-
-                case Stage.Done:
+            case Stage.Num2b:
+            {
+                if (SUFFIXES.IndexOf(c) >= 0)
+                    _stage = Stage.Done;
+                else if (!isDigit)
                     return TokenizerState.Success;
             }
+                break;
 
-            return TokenizerState.Valid;
+            case Stage.Done:
+                return TokenizerState.Success;
         }
 
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+        return TokenizerState.Valid;
+    }
+
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

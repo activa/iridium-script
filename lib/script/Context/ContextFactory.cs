@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -28,33 +28,32 @@ using System;
 using System.Collections;
 using System.Reflection;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public static class ContextFactory
 {
-    public static class ContextFactory
+    public static object CreateType(Type type)
     {
-        public static object CreateType(Type type)
-        {
-            return new TypeName(type);
-        }
+        return new TypeName(type);
+    }
 
-        public static object CreateFunction(Type type, string methodName)
-        {
-            return new StaticMethod(type, methodName);
-        }
+    public static object CreateFunction(Type type, string methodName)
+    {
+        return new StaticMethod(type, methodName);
+    }
 
-        public static object CreateFunction(MethodInfo methodInfo)
-        {
-            return new StaticMethod(methodInfo);
-        }
+    public static object CreateFunction(MethodInfo methodInfo)
+    {
+        return new StaticMethod(methodInfo);
+    }
 
-        public static object CreateFunction(Type type, string methodName, object targetObject)
-        {
-            return new InstanceMethod(type, methodName, targetObject);
-        }
+    public static object CreateFunction(Type type, string methodName, object targetObject)
+    {
+        return new InstanceMethod(type, methodName, targetObject);
+    }
 
-        public static object CreateFunction(MethodInfo methodInfo, object targetObject)
-        {
-            return new InstanceMethod(methodInfo, targetObject);
-        }
+    public static object CreateFunction(MethodInfo methodInfo, object targetObject)
+    {
+        return new InstanceMethod(methodInfo, targetObject);
     }
 }

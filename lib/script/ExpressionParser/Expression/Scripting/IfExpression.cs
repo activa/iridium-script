@@ -1,7 +1,8 @@
+#region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -21,38 +22,38 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //=============================================================================
+#endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class IfExpression(Expression condition) : Expression
 {
-    public class IfExpression(Expression condition) : Expression
+    public Expression Condition { get; } = condition;
+
+    public Expression TrueExpression { get; set; }
+    public Expression FalseExpression { get; set; }
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public Expression Condition { get; } = condition;
+        bool result = context.ToBoolean(Condition.Evaluate(context).Value);
 
-        public Expression TrueExpression { get; set; }
-        public Expression FalseExpression { get; set; }
+        ValueExpression expression = null;
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            bool result = context.ToBoolean(Condition.Evaluate(context).Value);
+        if (result)
+            expression = TrueExpression.EvaluateStatement(context);
+        else if (FalseExpression != null)
+            expression = FalseExpression.EvaluateStatement(context);
 
-            ValueExpression expression = null;
+        if (expression is ReturnValueExpression || expression is BreakLoopExpression)
+            return expression;
 
-            if (result)
-                expression = TrueExpression.EvaluateStatement(context);
-            else if (FalseExpression != null)
-                expression = FalseExpression.EvaluateStatement(context);
-
-            if (expression is ReturnValueExpression || expression is BreakLoopExpression)
-                return expression;
-
-            return Exp.NullValue();
-        }
+        return Exp.NullValue();
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return $"if({Condition}) {TrueExpression} else {FalseExpression})";
-        }
-#endif
+    public override string ToString()
+    {
+        return $"if({Condition}) {TrueExpression} else {FalseExpression})";
     }
+#endif
 }

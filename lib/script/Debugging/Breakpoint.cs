@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,40 +26,39 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+/// <summary>
+/// A breakpoint on a source line. Execution pauses when it reaches a statement
+/// that starts on <see cref="Line"/>, provided the breakpoint is
+/// <see cref="Enabled"/> and its optional <see cref="Condition"/> is satisfied.
+/// </summary>
+public class Breakpoint
 {
-    /// <summary>
-    /// A breakpoint on a source line. Execution pauses when it reaches a statement
-    /// that starts on <see cref="Line"/>, provided the breakpoint is
-    /// <see cref="Enabled"/> and its optional <see cref="Condition"/> is satisfied.
-    /// </summary>
-    public class Breakpoint
+    public Breakpoint(int line)
     {
-        public Breakpoint(int line)
-        {
-            if (line < 1)
-                throw new ArgumentOutOfRangeException(nameof(line), "Line numbers are one-based.");
+        if (line < 1)
+            throw new ArgumentOutOfRangeException(nameof(line), "Line numbers are one-based.");
 
-            Line = line;
-        }
-
-        /// <summary>One-based source line the breakpoint is set on.</summary>
-        public int Line { get; }
-
-        /// <summary>Whether the breakpoint is currently active.</summary>
-        public bool Enabled { get; set; } = true;
-
-        /// <summary>
-        /// Optional boolean expression; when set, execution only pauses if it
-        /// evaluates to a truthy value in the current scope. Evaluated with the same
-        /// engine used for the script.
-        /// </summary>
-        public string? Condition { get; set; }
-
-        /// <summary>Number of times execution has paused on this breakpoint.</summary>
-        public int HitCount { get; internal set; }
-
-        public override string ToString()
-            => Condition == null ? $"Breakpoint(line {Line})" : $"Breakpoint(line {Line} when '{Condition}')";
+        Line = line;
     }
+
+    /// <summary>One-based source line the breakpoint is set on.</summary>
+    public int Line { get; }
+
+    /// <summary>Whether the breakpoint is currently active.</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// Optional boolean expression; when set, execution only pauses if it
+    /// evaluates to a truthy value in the current scope. Evaluated with the same
+    /// engine used for the script.
+    /// </summary>
+    public string? Condition { get; set; }
+
+    /// <summary>Number of times execution has paused on this breakpoint.</summary>
+    public int HitCount { get; internal set; }
+
+    public override string ToString()
+        => Condition == null ? $"Breakpoint(line {Line})" : $"Breakpoint(line {Line} when '{Condition}')";
 }

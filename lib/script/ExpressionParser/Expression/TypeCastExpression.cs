@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,28 +26,27 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class TypeCastExpression(Expression typeExpression, Expression targetExpression) : BinaryExpression(typeExpression, targetExpression)
 {
-    public class TypeCastExpression(Expression typeExpression, Expression targetExpression) : BinaryExpression(typeExpression, targetExpression)
+    public Expression TypeExpression => Left;
+    public Expression TargetExpression => Right;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public Expression TypeExpression => Left;
-        public Expression TargetExpression => Right;
+        TypeName typeName = TypeExpression.Evaluate(context).Value as TypeName;
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            TypeName typeName = TypeExpression.Evaluate(context).Value as TypeName;
+        if (typeName == null)
+            throw new ExpressionEvaluationException("type cast requires a type. " + TypeExpression + " is not a type", this);
 
-            if (typeName == null)
-                throw new ExpressionEvaluationException("type cast requires a type. " + TypeExpression + " is not a type", this);
-
-            return Exp.Value(System.Convert.ChangeType(TargetExpression.Evaluate(context).Value, typeName.Type, null), typeName.Type);
-        }
+        return Exp.Value(System.Convert.ChangeType(TargetExpression.Evaluate(context).Value, typeName.Type, null), typeName.Type);
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return $"(({TypeExpression}){TargetExpression})";
-        }
-#endif
+    public override string ToString()
+    {
+        return $"(({TypeExpression}){TargetExpression})";
     }
+#endif
 }

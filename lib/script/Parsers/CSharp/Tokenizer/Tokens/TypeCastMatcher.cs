@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,89 +26,88 @@
 
 using Iridium.Script;
 
-namespace Iridium.Script.CSharp
+namespace Iridium.Script.CSharp;
+
+public class TypeCastMatcher : ITokenMatcher, ITokenProcessor
 {
-    public class TypeCastMatcher : ITokenMatcher, ITokenProcessor
+    private bool _sawStart;
+    private bool _sawEnd;
+    private bool _sawType;
+
+    public void ResetState()
     {
-        private bool _sawStart;
-        private bool _sawEnd;
-        private bool _sawType;
+        _sawStart = false;
+        _sawEnd = false;
+        _sawType = false;
+    }
 
-        public void ResetState()
+    ITokenProcessor ITokenMatcher.CreateTokenProcessor()
+    {
+        return new TypeCastMatcher();
+    }
+
+    TokenizerState ITokenProcessor.ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        if (_sawEnd)
         {
-            _sawStart = false;
-            _sawEnd = false;
-            _sawType = false;
+            return TokenizerState.Success;
         }
 
-        ITokenProcessor ITokenMatcher.CreateTokenProcessor()
+        if (!_sawStart)
         {
-            return new TypeCastMatcher();
-        }
-
-        TokenizerState ITokenProcessor.ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            if (_sawEnd)
-            {
-                return TokenizerState.Success;
-            }
-
-            if (!_sawStart)
-            {
-                if (c != '(')
-                    return TokenizerState.Fail;
-                
-                _sawStart = true;
-                
-                return TokenizerState.Valid;
-            }
-
-            if (!_sawType)
-            {
-                if (char.IsWhiteSpace(c))
-                    return TokenizerState.Valid;
-                
-                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '.' || c == '_')
-                {
-                    _sawType = true;
-                    return TokenizerState.Valid;
-                }
-
+            if (c != '(')
                 return TokenizerState.Fail;
-            }
+                
+            _sawStart = true;
+                
+            return TokenizerState.Valid;
+        }
 
+        if (!_sawType)
+        {
             if (char.IsWhiteSpace(c))
                 return TokenizerState.Valid;
-
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '.' || c == '_')
-                return TokenizerState.Valid;
-
-            if (c != ')')
-                return TokenizerState.Fail;
-
-            for (int i = currentIndex + 1; i < fullExpression.Length;i++)
-            {
-                c = fullExpression[i];
-
-                if (char.IsWhiteSpace(c))
-                    continue;
-
-                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || (c >= '0' && c <= '9') || c == '(')
-                {
-                    _sawEnd = true;
-
-                    return TokenizerState.Valid;
-                }
                 
-                break;
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '.' || c == '_')
+            {
+                _sawType = true;
+                return TokenizerState.Valid;
             }
 
             return TokenizerState.Fail;
         }
 
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+        if (char.IsWhiteSpace(c))
+            return TokenizerState.Valid;
+
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '.' || c == '_')
+            return TokenizerState.Valid;
+
+        if (c != ')')
+            return TokenizerState.Fail;
+
+        for (int i = currentIndex + 1; i < fullExpression.Length;i++)
         {
-            return originalToken;
+            c = fullExpression[i];
+
+            if (char.IsWhiteSpace(c))
+                continue;
+
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || (c >= '0' && c <= '9') || c == '(')
+            {
+                _sawEnd = true;
+
+                return TokenizerState.Valid;
+            }
+                
+            break;
         }
+
+        return TokenizerState.Fail;
+    }
+
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

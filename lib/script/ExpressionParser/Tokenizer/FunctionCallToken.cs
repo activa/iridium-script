@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,15 +24,14 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class FunctionCallToken : ExpressionToken
 {
-    public class FunctionCallToken : ExpressionToken
+    public FunctionCallToken(string text, TokenEvaluator evaluator) : base(text)
     {
-        public FunctionCallToken(string text, TokenEvaluator evaluator) : base(text)
-        {
-            Precedence = 20;
-            TokenType = TokenType.FunctionCall;
-            Evaluator = evaluator;
-        }
+        Precedence = 20;
+        TokenType = TokenType.FunctionCall;
+        Evaluator = evaluator;
     }
 }

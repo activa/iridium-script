@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,32 +26,31 @@
 
 using Iridium.Script;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class TemplateTokenMatcher : ITokenMatcher
 {
-    public class TemplateTokenMatcher : ITokenMatcher
+    private ITokenMatcher TokenMatcher { get; }
+
+    public TemplateTokenType TokenType { get; }
+    public string? TokenId { get; }
+    public bool RemoveEmptyLine { get; }
+
+    public TemplateTokenMatcher(ITokenMatcher tokenMatcher, TemplateTokenType tokenType, bool removeEmptyLine, string? tokenId)
     {
-        private ITokenMatcher TokenMatcher { get; }
+        TokenMatcher = tokenMatcher;
+        RemoveEmptyLine = removeEmptyLine;
+        TokenId = tokenId;
+        TokenType = tokenType;
+    }
 
-        public TemplateTokenType TokenType { get; }
-        public string TokenId { get; }
-        public bool RemoveEmptyLine { get; }
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        return TokenMatcher.CreateTokenProcessor();
+    }
 
-        public TemplateTokenMatcher(ITokenMatcher tokenMatcher, TemplateTokenType tokenType, bool removeEmptyLine, string tokenId)
-        {
-            TokenMatcher = tokenMatcher;
-            RemoveEmptyLine = removeEmptyLine;
-            TokenId = tokenId;
-            TokenType = tokenType;
-        }
-
-        public ITokenProcessor CreateTokenProcessor()
-        {
-            return TokenMatcher.CreateTokenProcessor();
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return TokenMatcher.TranslateToken(originalToken, tokenProcessor);
-        }
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return TokenMatcher.TranslateToken(originalToken, tokenProcessor);
     }
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,50 +24,48 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class AssignmentExpression(Expression left, Expression right) : BinaryExpression(left, right)
 {
-    public class AssignmentExpression(Expression left, Expression right) : BinaryExpression(left, right)
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public override ValueExpression Evaluate(IParserContext context)
+        var valueRight = Right.Evaluate(context);
+
+        switch (Left)
         {
-            var valueRight = Right.Evaluate(context);
+            case VariableExpression when (context.AssignmentPermissions & AssignmentPermissions.Variable) == AssignmentPermissions.None:
+                throw new IllegalAssignmentException("Assignment to variable not allowed", this);
 
-            switch (Left)
+            case VariableExpression variableExpression:
             {
-                case VariableExpression when (context.AssignmentPermissions & AssignmentPermissions.Variable) == AssignmentPermissions.None:
-                    throw new IllegalAssignmentException("Assignment to variable not allowed", this);
+                bool exists = context.Exists(variableExpression.VarName);
 
-                case VariableExpression variableExpression:
-                {
-                    bool exists = context.Exists(variableExpression.VarName);
+                if (exists && (context.AssignmentPermissions & AssignmentPermissions.ExistingVariable) == AssignmentPermissions.None)
+                    throw new IllegalAssignmentException("Assignment to existing variable not allowed", this);
 
-                    if (exists && (context.AssignmentPermissions & AssignmentPermissions.ExistingVariable) == AssignmentPermissions.None)
-                        throw new IllegalAssignmentException("Assignment to existing variable not allowed", this);
+                if (!exists && (context.AssignmentPermissions & AssignmentPermissions.NewVariable) == AssignmentPermissions.None)
+                    throw new IllegalAssignmentException("Assignment to new variable not allowed", this);
 
-                    if (!exists && (context.AssignmentPermissions & AssignmentPermissions.NewVariable) == AssignmentPermissions.None)
-                        throw new IllegalAssignmentException("Assignment to new variable not allowed", this);
+                context.Set(variableExpression.VarName, valueRight.Value, valueRight.Type);
 
-                    context.Set(variableExpression.VarName, valueRight.Value, valueRight.Type);
-
-                    return valueRight;
-                }
-
-                case FieldExpression when (context.AssignmentPermissions & AssignmentPermissions.Property) == AssignmentPermissions.None:
-                    throw new IllegalAssignmentException("Assignment to property not allowed", this);
-                
-                case FieldExpression fieldExpression:
-                    return fieldExpression.Assign(context, valueRight.Value);
-                
-                case IndexExpression when (context.AssignmentPermissions & AssignmentPermissions.Indexer) == AssignmentPermissions.None:
-                    throw new IllegalAssignmentException("Assignment to indexer not allowed", this);
-                
-                case IndexExpression indexExpression:
-                    return indexExpression.Assign(context, valueRight.Value);
-                
-                default:
-                    throw new IllegalAssignmentException(this);
+                return valueRight;
             }
+
+            case FieldExpression when (context.AssignmentPermissions & AssignmentPermissions.Property) == AssignmentPermissions.None:
+                throw new IllegalAssignmentException("Assignment to property not allowed", this);
+                
+            case FieldExpression fieldExpression:
+                return fieldExpression.Assign(context, valueRight.Value);
+                
+            case IndexExpression when (context.AssignmentPermissions & AssignmentPermissions.Indexer) == AssignmentPermissions.None:
+                throw new IllegalAssignmentException("Assignment to indexer not allowed", this);
+                
+            case IndexExpression indexExpression:
+                return indexExpression.Assign(context, valueRight.Value);
+                
+            default:
+                throw new IllegalAssignmentException(this);
         }
     }
-
 }

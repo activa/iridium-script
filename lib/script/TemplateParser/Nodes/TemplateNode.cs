@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,20 +26,19 @@
 
 using System.Collections.Generic;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+internal class TemplateNode
 {
-    internal class TemplateNode
+    public virtual TemplateNode Add(TemplateNode n)
     {
-        public virtual TemplateNode Add(TemplateNode n)
-        {
-            if (Children == null)
-                Children = new List<TemplateNode>();
+        if (Children == null)
+            Children = new List<TemplateNode>();
 
-            Children.Add(n);
+        Children.Add(n);
 
-            return n;
-        }
-
-        public List<TemplateNode> Children;
+        return n;
     }
+
+    public List<TemplateNode> Children;
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,56 +27,55 @@
 using System;
 using System.Collections.Generic;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class RangeExpression(Expression from, Expression to, bool excludeFrom, bool excludeTo) : BinaryExpression(from, to)
 {
-    public class RangeExpression(Expression from, Expression to, bool excludeFrom, bool excludeTo) : BinaryExpression(from, to)
+    public bool ExcludeFrom { get; } = excludeFrom;
+    public bool ExcludeTo { get; } = excludeTo;
+
+    public Expression From => Left;
+    public Expression To => Right;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-		public bool ExcludeFrom { get; } = excludeFrom;
-        public bool ExcludeTo { get; } = excludeTo;
+        ValueExpression from = From.Evaluate(context);
+        ValueExpression to = To.Evaluate(context);
 
-        public Expression From => Left;
-        public Expression To => Right;
+        if (from.Type != typeof(int) && from.Type != typeof(long))
+            throw new ExpressionEvaluationException("Expression " + from + " does not evaluate to int or long", from);
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            ValueExpression from = From.Evaluate(context);
-            ValueExpression to = To.Evaluate(context);
+        if (to.Type != typeof(int) && to.Type != typeof(long))
+            throw new ExpressionEvaluationException("Expression " + to + " does not evaluate to int or long", to);
 
-            if (from.Type != typeof(int) && from.Type != typeof(long))
-                throw new ExpressionEvaluationException("Expression " + from + " does not evaluate to int or long", from);
-
-            if (to.Type != typeof(int) && to.Type != typeof(long))
-                throw new ExpressionEvaluationException("Expression " + to + " does not evaluate to int or long", to);
-
-            if (from.Type == typeof(long) || to.Type == typeof(long))
-                return Exp.Value(Range((long)System.Convert.ChangeType(from.Value, typeof(long), null), (long)System.Convert.ChangeType(to.Value, typeof(long), null)));
-            else
-                return Exp.Value(Range((int)System.Convert.ChangeType(from.Value, typeof(int), null), (int)System.Convert.ChangeType(to.Value, typeof(int), null)));
-        }
-
-        private IEnumerable<int> Range(int from, int to)
-        {
-            if (from == to)
-                yield return from;
-            else if (from < to)
-				for (int i = from + (ExcludeFrom ? 1:0); i <= to - (ExcludeTo ? 1:0); i++)
-                    yield return i;
-            else
-				for (int i = from - (ExcludeFrom ? 1:0); i >= to + (ExcludeTo ? 1:0); i--)
-                    yield return i;
-        }
-
-        private IEnumerable<long> Range(long from, long to)
-        {
-            if (from == to)
-                yield return from;
-			else if (from < to)
-				for (long i = from + (ExcludeFrom ? 1 : 0); i <= to - (ExcludeTo ? 1 : 0); i++)
-					yield return i;
-			else
-				for (long i = from - (ExcludeFrom ? 1 : 0); i >= to + (ExcludeTo ? 1 : 0); i--)
-					yield return i;
-		}
-
+        if (from.Type == typeof(long) || to.Type == typeof(long))
+            return Exp.Value(Range((long)System.Convert.ChangeType(from.Value, typeof(long), null), (long)System.Convert.ChangeType(to.Value, typeof(long), null)));
+        else
+            return Exp.Value(Range((int)System.Convert.ChangeType(from.Value, typeof(int), null), (int)System.Convert.ChangeType(to.Value, typeof(int), null)));
     }
+
+    private IEnumerable<int> Range(int from, int to)
+    {
+        if (from == to)
+            yield return from;
+        else if (from < to)
+            for (int i = from + (ExcludeFrom ? 1:0); i <= to - (ExcludeTo ? 1:0); i++)
+                yield return i;
+        else
+            for (int i = from - (ExcludeFrom ? 1:0); i >= to + (ExcludeTo ? 1:0); i--)
+                yield return i;
+    }
+
+    private IEnumerable<long> Range(long from, long to)
+    {
+        if (from == to)
+            yield return from;
+        else if (from < to)
+            for (long i = from + (ExcludeFrom ? 1 : 0); i <= to - (ExcludeTo ? 1 : 0); i++)
+                yield return i;
+        else
+            for (long i = from - (ExcludeFrom ? 1 : 0); i >= to + (ExcludeTo ? 1 : 0); i--)
+                yield return i;
+    }
+
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,69 +27,68 @@
 using System.Text.RegularExpressions;
 using Iridium.Script;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class XmlTokenizer: TemplateTokenizer
 {
-    public class XmlTokenizer: TemplateTokenizer
+    private class XmlDollarExpressionMatcher : CompositeMatcher
     {
-        private class XmlDollarExpressionMatcher : CompositeMatcher
+        public XmlDollarExpressionMatcher()
+            : base(
+                new CharMatcher('$'),
+                new SmartExpressionMatcher(" \t\r\n\"'<")
+            )
         {
-            public XmlDollarExpressionMatcher()
-                : base(
-                    new CharMatcher('$'),
-                    new SmartExpressionMatcher(" \t\r\n\"'<")
-                    )
-            {
-            }
-
-            protected override string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
-            {
-                return originalToken.Substring(1);
-            }
         }
 
-        private class ForeachTokenMatcher : WrappedExpressionMatcher
+        protected override string TranslateToken(string originalToken, CompositeTokenProcessor tokenProcessor)
         {
-            public ForeachTokenMatcher() : base("<foreach" , ">")
-            {
-            }
+            return originalToken.Substring(1);
+        }
+    }
 
-            protected override string TranslateToken(string originalToken, WrappedExpressionMatcher tokenProcessor)
-            {
-                string s = base.TranslateToken(originalToken, tokenProcessor);
-
-                Match m = Regex.Match(s, @"^var=(?<q>""|')(?<iterator>[a-z_][a-z0-9_]*)\k<q>\s+in=(?<q>""|')(?<expr>.*?)\k<q>$");
-
-                return m.Groups["iterator"].Value + "\0" + m.Groups["expr"].Value;
-            }
+    private class ForeachTokenMatcher : WrappedExpressionMatcher
+    {
+        public ForeachTokenMatcher() : base("<foreach" , ">")
+        {
         }
 
-        private class IfTokenMatcher : WrappedExpressionMatcher
+        protected override string TranslateToken(string originalToken, WrappedExpressionMatcher tokenProcessor)
         {
-            public IfTokenMatcher(string tag) : base("<"+tag, ">")
-            {
-            }
+            string s = base.TranslateToken(originalToken, tokenProcessor);
 
-            protected override string TranslateToken(string originalToken, WrappedExpressionMatcher tokenProcessor)
-            {
-                string s = base.TranslateToken(originalToken, tokenProcessor);
+            Match m = Regex.Match(s, @"^var=(?<q>""|')(?<iterator>[a-z_][a-z0-9_]*)\k<q>\s+in=(?<q>""|')(?<expr>.*?)\k<q>$");
 
-                Match m = Regex.Match(s, @"^condition=(?<q>""|')(?<condition>.*)\k<q>$");
+            return m.Groups["iterator"].Value + "\0" + m.Groups["expr"].Value;
+        }
+    }
 
-                return m.Groups["condition"].Value;
-            }
+    private class IfTokenMatcher : WrappedExpressionMatcher
+    {
+        public IfTokenMatcher(string tag) : base("<"+tag, ">")
+        {
         }
 
-        public XmlTokenizer()
+        protected override string TranslateToken(string originalToken, WrappedExpressionMatcher tokenProcessor)
         {
-            AddTokenMatcher(TemplateTokenType.Expression, new WrappedExpressionMatcher("${","}") );
-            AddTokenMatcher(TemplateTokenType.Statement, new WrappedExpressionMatcher("<!--${", "}-->"));
-            AddTokenMatcher(TemplateTokenType.Expression, new XmlDollarExpressionMatcher());
-            AddTokenMatcher(TemplateTokenType.EndBlock, new StringMatcher("</if>"), true);
-            AddTokenMatcher(TemplateTokenType.EndBlock, new StringMatcher("</foreach>"), true);
-            AddTokenMatcher(TemplateTokenType.Else, new StringMatcher("<else/>"), true);
-            AddTokenMatcher(TemplateTokenType.ForEach, new ForeachTokenMatcher(), true);
-            AddTokenMatcher(TemplateTokenType.If, new IfTokenMatcher("if"), true);
-            AddTokenMatcher(TemplateTokenType.ElseIf, new IfTokenMatcher("elseif"), true);
+            string s = base.TranslateToken(originalToken, tokenProcessor);
+
+            Match m = Regex.Match(s, @"^condition=(?<q>""|')(?<condition>.*)\k<q>$");
+
+            return m.Groups["condition"].Value;
         }
+    }
+
+    public XmlTokenizer()
+    {
+        AddTokenMatcher(TemplateTokenType.Expression, new WrappedExpressionMatcher("${","}") );
+        AddTokenMatcher(TemplateTokenType.Statement, new WrappedExpressionMatcher("<!--${", "}-->"));
+        AddTokenMatcher(TemplateTokenType.Expression, new XmlDollarExpressionMatcher());
+        AddTokenMatcher(TemplateTokenType.EndBlock, new StringMatcher("</if>"), true);
+        AddTokenMatcher(TemplateTokenType.EndBlock, new StringMatcher("</foreach>"), true);
+        AddTokenMatcher(TemplateTokenType.Else, new StringMatcher("<else/>"), true);
+        AddTokenMatcher(TemplateTokenType.ForEach, new ForeachTokenMatcher(), true);
+        AddTokenMatcher(TemplateTokenType.If, new IfTokenMatcher("if"), true);
+        AddTokenMatcher(TemplateTokenType.ElseIf, new IfTokenMatcher("elseif"), true);
     }
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,18 +26,17 @@
 
 using System;
 
-namespace Iridium.Script
-{
-    /// <summary>
-    /// A named value that is in scope at a break, as would be shown in an IDE's
-    /// "locals"/"watch" panel.
-    /// </summary>
-    public sealed class DebugVariable(string name, object value, Type type)
-    {
-        public string Name { get; } = name;
-        public object Value { get; } = value;
-        public Type Type { get; } = type;
+namespace Iridium.Script;
 
-        public override string ToString() => $"{Name} = {Value ?? "null"}";
-    }
+/// <summary>
+/// A named value that is in scope at a break, as would be shown in an IDE's
+/// "locals"/"watch" panel.
+/// </summary>
+public sealed class DebugVariable(string name, object value, Type type)
+{
+    public string Name { get; } = name;
+    public object Value { get; } = value;
+    public Type Type { get; } = type;
+
+    public override string ToString() => $"{Name} = {Value ?? "null"}";
 }

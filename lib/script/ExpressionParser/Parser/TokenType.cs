@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,31 +24,30 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
-{
-    public enum TokenType 
-    { 
-        Term, 
-        Operator, 
-        UnaryOperator, 
-        TernaryOperator,
-        TernaryOperator1,
-        TernaryOperator2,
-        FunctionCall , 
-        LeftParen , 
-        RightParen , 
-        ArgumentSeparator,
-        WhiteSpace,
-        StatementSeparator,
-        ForEach,
-        While,
-        If,
-        Else,
-        ElseIf,
-        Return,
-        Break,
-        OpenBrace,
-        CloseBrace,
-        FunctionDefinition
-    }
+namespace Iridium.Script;
+
+public enum TokenType 
+{ 
+    Term, 
+    Operator, 
+    UnaryOperator, 
+    TernaryOperator,
+    TernaryOperator1,
+    TernaryOperator2,
+    FunctionCall , 
+    LeftParen , 
+    RightParen , 
+    ArgumentSeparator,
+    WhiteSpace,
+    StatementSeparator,
+    ForEach,
+    While,
+    If,
+    Else,
+    ElseIf,
+    Return,
+    Break,
+    OpenBrace,
+    CloseBrace,
+    FunctionDefinition
 }

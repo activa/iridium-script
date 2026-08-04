@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,19 +27,18 @@
 using System;
 using System.Collections.Generic;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class CompiledTemplate
 {
-	public class CompiledTemplate
-	{
-	    internal CompiledTemplate(TemplateNode tree)
-	    {
-	        Macros = new Dictionary<string, TemplateNode>(StringComparer.OrdinalIgnoreCase);
-	        Tree = tree;
-	    }
-
-	    internal Dictionary<string, TemplateNode> Macros { get; private set; }
-	    internal TemplateNode Tree { get; }
-
-        public string FileName { get; set; }
+    internal CompiledTemplate(TemplateNode tree)
+    {
+        Macros = new Dictionary<string, TemplateNode>(StringComparer.OrdinalIgnoreCase);
+        Tree = tree;
     }
+
+    internal Dictionary<string, TemplateNode> Macros { get; private set; }
+    internal TemplateNode Tree { get; }
+
+    public string FileName { get; set; }
 }

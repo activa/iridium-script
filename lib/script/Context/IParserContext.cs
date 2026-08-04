@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,35 +26,34 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+[Flags]
+public enum AssignmentPermissions { None = 0, ExistingVariable = 1, NewVariable = 2, Variable = 3, Property = 4, Indexer = 8, All = 15 }
+
+public interface IParserContext
 {
-    [Flags]
-    public enum AssignmentPermissions { None = 0, ExistingVariable = 1, NewVariable = 2, Variable = 3, Property = 4, Indexer = 8, All = 15 }
+    object this[string name] { set; }
 
-    public interface IParserContext
-    {
-        object this[string name] { set; }
+    bool Get(string varName, out object? value, out Type? type);
+    bool Exists(string varName);
 
-        bool Get(string varName, out object? value, out Type? type);
-        bool Exists(string varName);
+    bool ToBoolean(object? value);
 
-        bool ToBoolean(object? value);
+    IParserContext CreateLocal();
+    IParserContext CreateLocal(object? obj);
 
-        IParserContext CreateLocal();
-        IParserContext CreateLocal(object? obj);
+    void SetLocal(string varName, object value, Type type);
+    void SetLocal<T>(string varName, T value);
 
-        void SetLocal(string varName, object value, Type type);
-        void SetLocal<T>(string varName, T value);
+    void Set(string varName, object? value, Type type);
+    void Set<T>(string varName, T value);
 
-        void Set(string varName, object? value, Type type);
-        void Set<T>(string varName, T value);
+    AssignmentPermissions AssignmentPermissions { get; set; }
 
-		AssignmentPermissions AssignmentPermissions { get; set; }
+    StringComparison StringComparison { get; }
 
-        StringComparison StringComparison { get; }
+    string Format(string formatString, params object[] parameters);
 
-        string Format(string formatString, params object[] parameters);
-
-        ParserContextBehavior Behavior { get; }
-    }
+    ParserContextBehavior Behavior { get; }
 }

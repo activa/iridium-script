@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+// ReSharper disable CompareOfFloatsByEqualityOperator
 
 namespace Iridium.Script.Test
 {
+#pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
     public class BinaryExpressionTestCaseProvider
     {
         public short shortA;
@@ -1829,6 +1831,7 @@ namespace Iridium.Script.Test
                 {"boolA||boolB", boolA || boolB}
             };
         }
+#pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
 
     }
 }

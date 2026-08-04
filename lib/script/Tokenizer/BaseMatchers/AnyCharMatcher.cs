@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,61 +24,60 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class AnyCharMatcher : ITokenMatcher, ITokenProcessor
 {
-    public class AnyCharMatcher : ITokenMatcher, ITokenProcessor
+    private bool _seen;
+    private readonly bool _caseSensitive;
+    private readonly string _chars;
+
+    public AnyCharMatcher(string chars)
     {
-        private bool _seen;
-        private readonly bool _caseSensitive;
-        private readonly string _chars;
+        _chars = chars;
+        _caseSensitive = true;
+    }
 
-        public AnyCharMatcher(string chars)
+    public AnyCharMatcher(string chars, bool caseSensitive)
+    {
+        _chars = caseSensitive ? chars : chars.ToLowerInvariant();
+
+        _caseSensitive = caseSensitive;
+    }
+
+    ITokenProcessor ITokenMatcher.CreateTokenProcessor()
+    {
+        return new AnyCharMatcher(_chars, _caseSensitive);
+    }
+
+    void ITokenProcessor.ResetState()
+    {
+        _seen = false;
+    }
+
+    TokenizerState ITokenProcessor.ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        if (_seen)
+            return TokenizerState.Success;
+
+        if (_caseSensitive)
         {
-            _chars = chars;
-            _caseSensitive = true;
+            if (_chars.IndexOf(c) < 0)
+                return TokenizerState.Fail;
+        }
+        else
+        {
+            if (_chars.IndexOf(char.ToLowerInvariant(c)) < 0)
+                return TokenizerState.Fail;
         }
 
-        public AnyCharMatcher(string chars, bool caseSensitive)
-        {
-            _chars = caseSensitive ? chars : chars.ToLowerInvariant();
+        _seen = true;
 
-            _caseSensitive = caseSensitive;
-        }
+        return TokenizerState.Valid;
+    }
 
-        ITokenProcessor ITokenMatcher.CreateTokenProcessor()
-        {
-            return new AnyCharMatcher(_chars, _caseSensitive);
-        }
-
-        void ITokenProcessor.ResetState()
-        {
-            _seen = false;
-        }
-
-        TokenizerState ITokenProcessor.ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            if (_seen)
-                return TokenizerState.Success;
-
-            if (_caseSensitive)
-            {
-                if (_chars.IndexOf(c) < 0)
-                    return TokenizerState.Fail;
-            }
-            else
-            {
-                if (_chars.IndexOf(char.ToLowerInvariant(c)) < 0)
-                    return TokenizerState.Fail;
-            }
-
-            _seen = true;
-
-            return TokenizerState.Valid;
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,76 +27,75 @@
 using System;
 using System.Linq;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public abstract class ExpressionParser(ExpressionTokenizer _tokenizer, TokenEvaluator _functionEvaluator)
 {
-    public abstract class ExpressionParser(ExpressionTokenizer _tokenizer, TokenEvaluator _functionEvaluator)
+    public TokenEvaluator FunctionEvaluator { get; } = _functionEvaluator;
+    public IParserContext DefaultContext { get; set; } = new ParserContext(ParserContextBehavior.Default);
+
+    public Expression Parse(string s)
     {
-        public TokenEvaluator FunctionEvaluator { get; } = _functionEvaluator;
-        public IParserContext DefaultContext { get; set; } = new ParserContext(ParserContextBehavior.Default);
+        ExpressionToken[] tokens = _tokenizer.Tokenize(s).Where(t => t.TokenType != TokenType.WhiteSpace).ToArray();
 
-        public Expression Parse(string s)
-        {
-            ExpressionToken[] tokens = _tokenizer.Tokenize(s).Where(t => t.TokenType != TokenType.WhiteSpace).ToArray();
+        return new ExpressionCompiler(this, tokens).Compile();
+    }
 
-            return new ExpressionCompiler(this, tokens).Compile();
-        }
+    public ExpressionWithContext ParseWithContext(string s, IParserContext context)
+    {
+        return new ExpressionWithContext(Parse(s), context);
+    }
 
-        public ExpressionWithContext ParseWithContext(string s, IParserContext context)
-        {
-            return new ExpressionWithContext(Parse(s), context);
-        }
+    public ExpressionWithContext ParseWithContext(string s)
+    {
+        return new ExpressionWithContext(Parse(s), DefaultContext);
+    }
 
-        public ExpressionWithContext ParseWithContext(string s)
-        {
-            return new ExpressionWithContext(Parse(s), DefaultContext);
-        }
+    public object? EvaluateToObject(string s)
+    {
+        return ParseWithContext(s).EvaluateToObject();
+    }
 
-        public object? EvaluateToObject(string s)
-        {
-            return ParseWithContext(s).EvaluateToObject();
-        }
+    public object? Evaluate(string s, out Type type)
+    {
+        IValueWithType value = ParseWithContext(s).Evaluate();
 
-        public object? Evaluate(string s, out Type type)
-        {
-            IValueWithType value = ParseWithContext(s).Evaluate();
+        type = value.Type;
 
-            type = value.Type;
+        return value.Value;
+    }
 
-            return value.Value;
-        }
+    public IValueWithType Evaluate(string s)
+    {
+        return ParseWithContext(s).Evaluate();
+    }
 
-        public IValueWithType Evaluate(string s)
-        {
-            return ParseWithContext(s).Evaluate();
-        }
+    public T? Evaluate<T>(string s)
+    {
+        return ParseWithContext(s).Evaluate<T>();
+    }
 
-        public T? Evaluate<T>(string s)
-        {
-            return ParseWithContext(s).Evaluate<T>();
-        }
+    public IValueWithType Evaluate(string s, IParserContext context)
+    {
+        return ParseWithContext(s, context).Evaluate();
+    }
 
-        public IValueWithType Evaluate(string s, IParserContext context)
-        {
-            return ParseWithContext(s, context).Evaluate();
-        }
+    public object? EvaluateToObject(string s, IParserContext context)
+    {
+        return ParseWithContext(s, context).EvaluateToObject();
+    }
 
-        public object? EvaluateToObject(string s, IParserContext context)
-        {
-            return ParseWithContext(s, context).EvaluateToObject();
-        }
+    public object? Evaluate(string s, out Type type, IParserContext context)
+    {
+        IValueWithType value = ParseWithContext(s, context).Evaluate();
 
-        public object? Evaluate(string s, out Type type, IParserContext context)
-        {
-            IValueWithType value = ParseWithContext(s, context).Evaluate();
+        type = value.Type;
 
-            type = value.Type;
+        return value.Value;
+    }
 
-            return value.Value;
-        }
-
-        public T? Evaluate<T>(string s, IParserContext context)
-        {
-            return ParseWithContext(s, context).Evaluate<T>();
-        }
+    public T? Evaluate<T>(string s, IParserContext context)
+    {
+        return ParseWithContext(s, context).Evaluate<T>();
     }
 }

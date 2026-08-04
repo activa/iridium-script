@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,46 +26,45 @@
 
 using Iridium.Script;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class ExpressionTokenMatcher : ITokenMatcher
 {
-    public class ExpressionTokenMatcher : ITokenMatcher
+    private readonly ITokenMatcher _matcher;
+
+    public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, TokenEvaluator tokenEvaluator)
     {
-        private readonly ITokenMatcher _matcher;
-
-        public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, TokenEvaluator tokenEvaluator)
-        {
-            _matcher = matcher;
-            TokenType = tokenType;
-            Evaluator = tokenEvaluator;
-        }
-
-        public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator tokenEvaluator)
-        {
-            _matcher = matcher;
-            TokenType = tokenType;
-            Evaluator = tokenEvaluator;
-            Precedence = precedence;
-            Associativity = associativity;
-        }
-
-        public ITokenProcessor CreateTokenProcessor()
-        {
-            return _matcher.CreateTokenProcessor();
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return _matcher.TranslateToken(originalToken, tokenProcessor);
-        }
-
-        public TokenType TokenType { get; }
-        public TokenEvaluator Evaluator { get; }
-        public int Precedence { get; }
-
-        public bool IsPartial => Root != null;
-
-        public ExpressionTokenMatcher Root { get; set; }
-        public OperatorAssociativity Associativity { get; }
-        public int? NumTerms { get; set; }
+        _matcher = matcher;
+        TokenType = tokenType;
+        Evaluator = tokenEvaluator;
     }
+
+    public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator tokenEvaluator)
+    {
+        _matcher = matcher;
+        TokenType = tokenType;
+        Evaluator = tokenEvaluator;
+        Precedence = precedence;
+        Associativity = associativity;
+    }
+
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        return _matcher.CreateTokenProcessor();
+    }
+
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return _matcher.TranslateToken(originalToken, tokenProcessor);
+    }
+
+    public TokenType TokenType { get; }
+    public TokenEvaluator Evaluator { get; }
+    public int Precedence { get; }
+
+    public bool IsPartial => Root != null;
+
+    public ExpressionTokenMatcher Root { get; set; }
+    public OperatorAssociativity Associativity { get; }
+    public int? NumTerms { get; set; }
 }

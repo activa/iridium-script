@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,19 +24,18 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script.CSharp
+namespace Iridium.Script.CSharp;
+
+public class CSharpParser : ExpressionParser
 {
-    public class CSharpParser : ExpressionParser
+    public CSharpParser() : this(false)
     {
-        public CSharpParser() : this(false)
-        {
 
-        }
-
-        public CSharpParser(bool allowScripting) : base(new CSharpTokenizer(allowScripting), CSharpEvaluator.Function)
-        {
-        }
-
-        public static CSharpParser Default = new();
     }
+
+    public CSharpParser(bool allowScripting) : base(new CSharpTokenizer(allowScripting), CSharpEvaluator.Function)
+    {
+    }
+
+    public static CSharpParser Default = new();
 }

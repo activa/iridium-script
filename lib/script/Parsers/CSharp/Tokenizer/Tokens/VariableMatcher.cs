@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,40 +26,39 @@
 
 using Iridium.Script;
 
-namespace Iridium.Script.CSharp
+namespace Iridium.Script.CSharp;
+
+public class VariableMatcher : ITokenMatcher, ITokenProcessor
 {
-    public class VariableMatcher : ITokenMatcher, ITokenProcessor
+    private const string VALID_FIRSTCHARS = "abcdefghijkklmnopqrstuvwxyzABCDEFGHIJKKLMNOPQRSTUVWXYZ_@$";
+    private const string VALID_NEXTCHARS = "abcdefghijkklmnopqrstuvwxyzABCDEFGHIJKKLMNOPQRSTUVWXYZ_@$0123456789";
+
+    private bool _sawFirst;
+
+    public void ResetState()
     {
-        private const string VALID_FIRSTCHARS = "abcdefghijkklmnopqrstuvwxyzABCDEFGHIJKKLMNOPQRSTUVWXYZ_@$";
-        private const string VALID_NEXTCHARS = "abcdefghijkklmnopqrstuvwxyzABCDEFGHIJKKLMNOPQRSTUVWXYZ_@$0123456789";
+        _sawFirst = false;
+    }
 
-        private bool _sawFirst;
+    ITokenProcessor ITokenMatcher.CreateTokenProcessor()
+    {
+        return new VariableMatcher();
+    }
 
-        public void ResetState()
+    TokenizerState ITokenProcessor.ProcessChar(char c, string fullExpression, int currentIndex)
+    {
+        if (!_sawFirst)
         {
-            _sawFirst = false;
+            _sawFirst = true;
+
+            return VALID_FIRSTCHARS.IndexOf(c) >= 0 ? TokenizerState.Valid : TokenizerState.Fail;
         }
 
-        ITokenProcessor ITokenMatcher.CreateTokenProcessor()
-        {
-            return new VariableMatcher();
-        }
+        return VALID_NEXTCHARS.IndexOf(c) >= 0 ? TokenizerState.Valid : TokenizerState.Success;
+    }
 
-        TokenizerState ITokenProcessor.ProcessChar(char c, string fullExpression, int currentIndex)
-        {
-            if (!_sawFirst)
-            {
-                _sawFirst = true;
-
-                return VALID_FIRSTCHARS.IndexOf(c) >= 0 ? TokenizerState.Valid : TokenizerState.Fail;
-            }
-
-            return VALID_NEXTCHARS.IndexOf(c) >= 0 ? TokenizerState.Valid : TokenizerState.Success;
-        }
-
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

@@ -1,8 +1,8 @@
 ﻿#region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,27 +24,26 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class UnknownTokenException : TokenizerException
 {
-    public class UnknownTokenException : TokenizerException
+    public UnknownTokenException(string token) : base(token)
     {
-        public UnknownTokenException(string token) : base(token)
-        {
-        }
+    }
 
-        public UnknownTokenException(string token, SourcePosition position) : base(token, position)
-        {
-        }
+    public UnknownTokenException(string token, SourcePosition position) : base(token, position)
+    {
+    }
 
-        public override string Message
+    public override string Message
+    {
+        get
         {
-            get
-            {
-                if (Position.IsKnown)
-                    return $"Unknown token '{Token}' at {Position}";
+            if (Position.IsKnown)
+                return $"Unknown token '{Token}' at {Position}";
 
-                return "Unknown token " + Token;
-            }
+            return "Unknown token " + Token;
         }
     }
 }

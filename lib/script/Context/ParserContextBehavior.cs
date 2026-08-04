@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,28 +26,27 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+[Flags]
+public enum ParserContextBehavior
 {
-    [Flags]
-    public enum ParserContextBehavior
-    {
-        Default = 0,
+    Default = 0,
 
-        NullIsFalse = 0x0001,
-        NotNullIsTrue = 0x0002,
-        NotZeroIsTrue = 0x0004,
-        ZeroIsFalse = 0x0004,
-        EmptyStringIsFalse = 0x0010,
-        NonEmptyStringIsTrue = 0x0020,
-        EmptyCollectionIsFalse = 0x0040,
+    NullIsFalse = 0x0001,
+    NotNullIsTrue = 0x0002,
+    NotZeroIsTrue = 0x0004,
+    ZeroIsFalse = 0x0004,
+    EmptyStringIsFalse = 0x0010,
+    NonEmptyStringIsTrue = 0x0020,
+    EmptyCollectionIsFalse = 0x0040,
 
-        Falsy = NullIsFalse|NotNullIsTrue|NotZeroIsTrue|ZeroIsFalse|EmptyStringIsFalse|NonEmptyStringIsTrue|EmptyCollectionIsFalse,
+    Falsy = NullIsFalse|NotNullIsTrue|NotZeroIsTrue|ZeroIsFalse|EmptyStringIsFalse|NonEmptyStringIsTrue|EmptyCollectionIsFalse,
 
-        ReturnNullWhenNullReference = 0x0100,
+    ReturnNullWhenNullReference = 0x0100,
 
-        Easy = Falsy|ReturnNullWhenNullReference,
+    Easy = Falsy|ReturnNullWhenNullReference,
         
-        CaseInsensitiveVariables = 0x8000,
-        CaseInsensitiveMembers = 0x10000,
-    }
+    CaseInsensitiveVariables = 0x8000,
+    CaseInsensitiveMembers = 0x10000,
 }

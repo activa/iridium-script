@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,55 +26,54 @@
 
 using System.Collections.Generic;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class Token
 {
-    public class Token
+    private LinkedList<Token>? _alternates;
+
+    public Token()
     {
-        private LinkedList<Token>? _alternates;
+    }
 
-        public Token()
-        {
-        }
+    protected Token(ITokenMatcher tokenMatcher)
+    {
+        TokenMatcher = tokenMatcher;
+    }
 
-        protected Token(ITokenMatcher tokenMatcher)
-        {
-            TokenMatcher = tokenMatcher;
-        }
+    protected Token(ITokenMatcher? tokenMatcher, string text)
+    {
+        TokenMatcher = tokenMatcher;
+        Text = text;
+    }
 
-        protected Token(ITokenMatcher? tokenMatcher, string text)
-        {
-            TokenMatcher = tokenMatcher;
-            Text = text;
-        }
+    public ITokenMatcher? TokenMatcher { get; set; }
 
-        public ITokenMatcher? TokenMatcher { get; set; }
+    /// <summary>
+    /// The location in the source script where this token starts. Populated by
+    /// the tokenizer. Used for error reporting and (in the future) debugging.
+    /// </summary>
+    public SourcePosition Position { get; set; } = SourcePosition.Unknown;
 
-        /// <summary>
-        /// The location in the source script where this token starts. Populated by
-        /// the tokenizer. Used for error reporting and (in the future) debugging.
-        /// </summary>
-        public SourcePosition Position { get; set; } = SourcePosition.Unknown;
+    public IEnumerable<Token>? Alternates => _alternates;
 
-        public IEnumerable<Token>? Alternates => _alternates;
+    public void AddAlternate(Token token)
+    {
+        if (_alternates == null)
+            _alternates = new LinkedList<Token>();
 
-        public void AddAlternate(Token token)
-        {
-            if (_alternates == null)
-                _alternates = new LinkedList<Token>();
+        _alternates.AddLast(token);
+    }
 
-            _alternates.AddLast(token);
-        }
-
-        public string Text { get; set; }
+    public string Text { get; set; } = "";
 
 #if DEBUG
-        public override string ToString()
-        {
-            if (TokenMatcher == null)
-                return "(" + Text + ")";
-            else
-                return TokenMatcher.GetType().Name + "(" + Text + ")";
-        }
-#endif
+    public override string ToString()
+    {
+        if (TokenMatcher == null)
+            return "(" + Text + ")";
+        else
+            return TokenMatcher.GetType().Name + "(" + Text + ")";
     }
+#endif
 }

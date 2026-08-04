@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,36 +26,35 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class AsExpression(Expression objectExpression, Expression typeExpression) : BinaryExpression(objectExpression, typeExpression)
 {
-    public class AsExpression(Expression objectExpression, Expression typeExpression) : BinaryExpression(objectExpression, typeExpression)
+    public Expression ObjectExpression => Left;
+    public Expression TypeExpression => Right;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public Expression ObjectExpression => Left;
-        public Expression TypeExpression => Right;
+        var className = TypeExpression.Evaluate(context).Value as TypeName;
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            var className = TypeExpression.Evaluate(context).Value as TypeName;
+        if (className == null)
+            throw new IllegalOperandsException("as operator requires type. "  + TypeExpression + " is not a type",this);
 
-            if (className == null)
-                throw new IllegalOperandsException("as operator requires type. "  + TypeExpression + " is not a type",this);
+        var checkType = className.Type;
+        ValueExpression objectValue = ObjectExpression.Evaluate(context);
+        Type? objectType = objectValue.Type;
 
-            var checkType = className.Type;
-            ValueExpression objectValue = ObjectExpression.Evaluate(context);
-            Type? objectType = objectValue.Type;
-
-            if (objectValue.Value == null || objectType == null)
-                return Exp.Value(null, checkType);
-
-            objectType = objectType.RealType();
-
-            if (!objectType.IsValueType)
-                return Exp.Value(objectValue.Value, checkType);
-
-            if ((Nullable.GetUnderlyingType(checkType) ?? checkType) == objectType)
-                return Exp.Value(objectValue.Value, checkType);
-
+        if (objectValue.Value == null || objectType == null)
             return Exp.Value(null, checkType);
-        }
+
+        objectType = objectType.RealType();
+
+        if (!objectType.IsValueType)
+            return Exp.Value(objectValue.Value, checkType);
+
+        if ((Nullable.GetUnderlyingType(checkType) ?? checkType) == objectType)
+            return Exp.Value(objectValue.Value, checkType);
+
+        return Exp.Value(null, checkType);
     }
 }

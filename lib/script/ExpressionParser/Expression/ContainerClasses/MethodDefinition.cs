@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -29,54 +29,53 @@ using System.Linq;
 using System.Reflection;
 using Iridium.Script.Reflection;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+internal abstract class MethodDefinition : IMethodDefinition
 {
-    internal abstract class MethodDefinition : IMethodDefinition
+    private readonly MethodInfo? _methodInfo;
+
+    protected MethodDefinition(MethodInfo methodInfo)
     {
-        private readonly MethodInfo? _methodInfo;
-
-        protected MethodDefinition(MethodInfo methodInfo)
-        {
-            _methodInfo = methodInfo;
-        }
-
-        protected MethodDefinition(Type type, string methodName)
-        {
-            Type = type;
-            MethodName = methodName;
-        }
-
-        public string? MethodName { get; }
-        public Type? Type { get; }
-
-        public MethodInfo? GetMethodInfo(Type[] parameterTypes)
-        {
-            if (_methodInfo != null)
-                return _methodInfo;
-
-            Type? t = Type;
-
-            do
-            {
-                var candidates = t.GetMember(MethodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
-                                    .OfType<MethodInfo>();
-
-                // Pick the best matching overload (preferring exact matches) rather
-                // than the first one that matches under any rule. The latter is
-                // order-dependent and can incorrectly select, for example, an
-                // overload only reachable through an implicit numeric conversion.
-                MethodInfo? methodInfo = SmartBinder.SelectBestMethod(candidates, parameterTypes);
-
-                if (methodInfo != null)
-                    return methodInfo;
-
-                t = t.BaseType;
-            } 
-            while (t != null);
-
-            return null;
-        }
-
-        public abstract object? Invoke(Type[] types, object?[] parameters, out Type returnType);
+        _methodInfo = methodInfo;
     }
+
+    protected MethodDefinition(Type type, string methodName)
+    {
+        Type = type;
+        MethodName = methodName;
+    }
+
+    public string? MethodName { get; }
+    public Type? Type { get; }
+
+    public MethodInfo? GetMethodInfo(Type[] parameterTypes)
+    {
+        if (_methodInfo != null)
+            return _methodInfo;
+
+        Type? t = Type;
+
+        do
+        {
+            var candidates = t.GetMember(MethodName!, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                .OfType<MethodInfo>();
+
+            // Pick the best matching overload (preferring exact matches) rather
+            // than the first one that matches under any rule. The latter is
+            // order-dependent and can incorrectly select, for example, an
+            // overload only reachable through an implicit numeric conversion.
+            MethodInfo? methodInfo = SmartBinder.SelectBestMethod(candidates, parameterTypes);
+
+            if (methodInfo != null)
+                return methodInfo;
+
+            t = t.BaseType;
+        } 
+        while (t != null);
+
+        return null;
+    }
+
+    public abstract object? Invoke(Type[] types, object?[] parameters, out Type returnType);
 }

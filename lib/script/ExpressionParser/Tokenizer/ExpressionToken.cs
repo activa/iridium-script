@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -28,65 +28,64 @@ using System;
 using System.Linq;
 using Iridium.Script;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class ExpressionToken : Token
 {
-    public class ExpressionToken : Token
+    internal int NumTerms { get; set; }
+
+    public new ExpressionTokenMatcher? TokenMatcher => (ExpressionTokenMatcher?)base.TokenMatcher;
+
+    public ExpressionToken()
     {
-        internal int NumTerms { get; set; }
+        throw new NotSupportedException();
+    }
 
-        public new ExpressionTokenMatcher? TokenMatcher => (ExpressionTokenMatcher?)base.TokenMatcher;
+    protected ExpressionToken(string token) : base(null,token)
+    {
+        Associativity = OperatorAssociativity.Left;
+    }
 
-        public ExpressionToken()
+    public ExpressionToken(ExpressionTokenMatcher tokenMatcher, string text) : base(tokenMatcher, text)
+    {
+        switch (tokenMatcher.TokenType)
         {
-            throw new NotSupportedException();
+            case TokenType.TernaryOperator: NumTerms = 3; break;
+            case TokenType.UnaryOperator: NumTerms = 1; break;
+            case TokenType.Operator: NumTerms = 2; break;
         }
 
-        protected ExpressionToken(string token) : base(null,token)
-        {
-            Associativity = OperatorAssociativity.Left;
-        }
+        if (tokenMatcher.NumTerms != null)
+            NumTerms = tokenMatcher.NumTerms.Value;
 
-        public ExpressionToken(ExpressionTokenMatcher tokenMatcher, string text) : base(tokenMatcher, text)
-        {
-            switch (tokenMatcher.TokenType)
-            {
-                case TokenType.TernaryOperator: NumTerms = 3; break;
-                case TokenType.UnaryOperator: NumTerms = 1; break;
-                case TokenType.Operator: NumTerms = 2; break;
-            }
+        Precedence = tokenMatcher.Precedence;
+        Associativity = tokenMatcher.Associativity;
+        TokenType = tokenMatcher.TokenType;
+        Evaluator = tokenMatcher.Evaluator;
+    }
 
-            if (tokenMatcher.NumTerms != null)
-                NumTerms = tokenMatcher.NumTerms.Value;
+    internal TokenType TokenType { get; set; }
+    internal OperatorAssociativity Associativity { get; }
+    internal int Precedence { get; set; }
+    internal TokenEvaluator Evaluator { get; set; }
 
-            Precedence = tokenMatcher.Precedence;
-            Associativity = tokenMatcher.Associativity;
-            TokenType = tokenMatcher.TokenType;
-            Evaluator = tokenMatcher.Evaluator;
-        }
+    internal bool IsOperator => (TokenType == TokenType.Operator) || (TokenType == TokenType.UnaryOperator);
+    internal bool IsTerm => (TokenType == TokenType.Term);
+    internal bool IsUnary => (TokenType == TokenType.UnaryOperator);
+    internal bool IsFunction => (TokenType == TokenType.FunctionCall);
+    internal bool IsLeftParen => (TokenType == TokenType.LeftParen);
+    internal bool IsRightParen => (TokenType == TokenType.RightParen);
+    internal bool IsArgumentSeparator => TokenType == TokenType.ArgumentSeparator;
+    public bool IsPartial => TokenMatcher is { IsPartial: true };
+    public bool IsStatementSeperator => TokenType == TokenType.StatementSeparator;
 
-        internal TokenType TokenType { get; set; }
-        internal OperatorAssociativity Associativity { get; }
-        internal int Precedence { get; set; }
-        internal TokenEvaluator Evaluator { get; set; }
+    public ExpressionToken? Alternate => (ExpressionToken?) Alternates?.FirstOrDefault();
+    public ExpressionTokenMatcher Root => TokenMatcher.Root;
+    public bool IsOpenBrace => TokenType == TokenType.OpenBrace;
+    public bool IsCloseBrace => TokenType == TokenType.CloseBrace;
 
-        internal bool IsOperator => (TokenType == TokenType.Operator) || (TokenType == TokenType.UnaryOperator);
-        internal bool IsTerm => (TokenType == TokenType.Term);
-        internal bool IsUnary => (TokenType == TokenType.UnaryOperator);
-        internal bool IsFunction => (TokenType == TokenType.FunctionCall);
-        internal bool IsLeftParen => (TokenType == TokenType.LeftParen);
-        internal bool IsRightParen => (TokenType == TokenType.RightParen);
-        internal bool IsArgumentSeparator => TokenType == TokenType.ArgumentSeparator;
-        public bool IsPartial => TokenMatcher is { IsPartial: true };
-        public bool IsStatementSeperator => TokenType == TokenType.StatementSeparator;
-
-        public ExpressionToken? Alternate => (ExpressionToken?) Alternates?.FirstOrDefault();
-        public ExpressionTokenMatcher Root => TokenMatcher.Root;
-        public bool IsOpenBrace => TokenType == TokenType.OpenBrace;
-        public bool IsCloseBrace => TokenType == TokenType.CloseBrace;
-
-        public override string ToString()
-        {
-            return Text;
-        }
+    public override string ToString()
+    {
+        return Text;
     }
 }

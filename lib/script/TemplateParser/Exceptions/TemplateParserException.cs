@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,17 +26,16 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class TemplateParserException : ParserException
 {
-    public class TemplateParserException : ParserException
+    public TemplateParserException(string message) : base(message)
     {
-        public TemplateParserException(string message) : base(message)
-        {
-        }
-
-        public TemplateParserException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
     }
+
+    public TemplateParserException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
+
 }

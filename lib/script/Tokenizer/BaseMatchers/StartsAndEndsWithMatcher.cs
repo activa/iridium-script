@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,139 +24,138 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class StartsAndEndsWithMatcher : ITokenMatcher
 {
-    public class StartsAndEndsWithMatcher : ITokenMatcher
+    private readonly string _startString;
+    private readonly string _endString;
+    private readonly char _embeddedStringChar;
+
+    public StartsAndEndsWithMatcher(string startString, string endString)
     {
-        private readonly string _startString;
-        private readonly string _endString;
-        private readonly char _embeddedStringChar;
+        _startString = startString;
+        _endString = endString;
+        _embeddedStringChar = '\0';
+    }
 
-        public StartsAndEndsWithMatcher(string startString, string endString)
+    public StartsAndEndsWithMatcher(string startString, string endString, char embeddedStringChar)
+    {
+        _startString = startString;
+        _endString = endString;
+        _embeddedStringChar = embeddedStringChar;
+    }
+
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        return new MatchProcessor(this);
+    }
+
+    private class MatchProcessor : ITokenProcessor
+    {
+        private readonly StartsAndEndsWithMatcher _matcher;
+
+        public MatchProcessor(StartsAndEndsWithMatcher matcher)
         {
-            _startString = startString;
-            _endString = endString;
-            _embeddedStringChar = '\0';
+            _matcher = matcher;
         }
 
-        public StartsAndEndsWithMatcher(string startString, string endString, char embeddedStringChar)
+        private enum State
         {
-            _startString = startString;
-            _endString = endString;
-            _embeddedStringChar = embeddedStringChar;
+            MatchingStart,
+            InString,
+            InEscape,
+            MatchingEnd,
+            Success
         }
 
-        public ITokenProcessor CreateTokenProcessor()
+        private State _state;
+        private int _index;
+
+        public void ResetState()
         {
-            return new MatchProcessor(this);
+            _state = State.MatchingStart;
+            _index = 0;
         }
 
-        private class MatchProcessor : ITokenProcessor
+        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
         {
-            private readonly StartsAndEndsWithMatcher _matcher;
-
-            public MatchProcessor(StartsAndEndsWithMatcher matcher)
+            switch (_state)
             {
-                _matcher = matcher;
-            }
-
-            private enum State
-            {
-                MatchingStart,
-                InString,
-                InEscape,
-                MatchingEnd,
-                Success
-            }
-
-            private State _state;
-            private int _index;
-
-            public void ResetState()
-            {
-                _state = State.MatchingStart;
-                _index = 0;
-            }
-
-            public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-            {
-                switch (_state)
+                case State.MatchingStart:
                 {
-                    case State.MatchingStart:
+                    bool match = _matcher._startString[_index++] == c;
+
+                    if (match)
+                    {
+                        if (_index == _matcher._startString.Length)
                         {
-                            bool match = _matcher._startString[_index++] == c;
-
-                            if (match)
-                            {
-                                if (_index == _matcher._startString.Length)
-                                {
-                                    _state = State.MatchingEnd;
-                                    _index = 0;
-                                }
-
-                                return TokenizerState.Valid;
-                            }
-                            else
-                            {
-                                return TokenizerState.Fail;
-                            }
+                            _state = State.MatchingEnd;
+                            _index = 0;
                         }
 
-                    case State.MatchingEnd:
-                        {
-                            if (c == '\0')
-                                return TokenizerState.Fail;
-
-                            if (c == _matcher._embeddedStringChar)
-                            {
-                                _state = State.InString;
-
-                                return TokenizerState.Valid;
-                            }
-
-                            if (c != _matcher._endString[_index++])
-                                _index = 0;
-
-                            if (_index == _matcher._endString.Length)
-                                _state = State.Success;
-
-                            return TokenizerState.Valid;
-                        }
-
-                    case State.InString:
-                        {
-                            if (c == '\\')
-                                _state = State.InEscape;
-
-                            if (c == _matcher._embeddedStringChar)
-                            {
-                                _state = State.MatchingEnd;
-                                _index = 0;
-                            }
-
-                            return TokenizerState.Valid;
-                        }
-
-                    case State.InEscape:
-                        {
-                            _state = State.InString;
-
-                            return TokenizerState.Valid;
-                        }
-
-                    case State.Success:
-                        return TokenizerState.Success;
-
-                    default:
                         return TokenizerState.Valid;
+                    }
+                    else
+                    {
+                        return TokenizerState.Fail;
+                    }
                 }
+
+                case State.MatchingEnd:
+                {
+                    if (c == '\0')
+                        return TokenizerState.Fail;
+
+                    if (c == _matcher._embeddedStringChar)
+                    {
+                        _state = State.InString;
+
+                        return TokenizerState.Valid;
+                    }
+
+                    if (c != _matcher._endString[_index++])
+                        _index = 0;
+
+                    if (_index == _matcher._endString.Length)
+                        _state = State.Success;
+
+                    return TokenizerState.Valid;
+                }
+
+                case State.InString:
+                {
+                    if (c == '\\')
+                        _state = State.InEscape;
+
+                    if (c == _matcher._embeddedStringChar)
+                    {
+                        _state = State.MatchingEnd;
+                        _index = 0;
+                    }
+
+                    return TokenizerState.Valid;
+                }
+
+                case State.InEscape:
+                {
+                    _state = State.InString;
+
+                    return TokenizerState.Valid;
+                }
+
+                case State.Success:
+                    return TokenizerState.Success;
+
+                default:
+                    return TokenizerState.Valid;
             }
-
         }
 
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+    }
+
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

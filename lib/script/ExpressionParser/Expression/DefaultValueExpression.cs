@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,28 +24,27 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class DefaultValueExpression(Expression value, Expression defaultValue) : BinaryExpression(value, defaultValue)
 {
-    public class DefaultValueExpression(Expression value, Expression defaultValue) : BinaryExpression(value, defaultValue)
+    public Expression Value => Left;
+    public Expression DefaultValue => Right;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public Expression Value => Left;
-        public Expression DefaultValue => Right;
+        ValueExpression result = Value.Evaluate(context);
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            ValueExpression result = Value.Evaluate(context);
-
-            if (context.ToBoolean(result.Value))
-                return result;
-            else
-                return DefaultValue.Evaluate(context);
-        }
+        if (context.ToBoolean(result.Value))
+            return result;
+        else
+            return DefaultValue.Evaluate(context);
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return $"({Value} ?: {DefaultValue})";
-        }
-#endif
+    public override string ToString()
+    {
+        return $"({Value} ?: {DefaultValue})";
     }
+#endif
 }

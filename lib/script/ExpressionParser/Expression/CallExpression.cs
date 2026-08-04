@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,122 +27,121 @@
 using System;
 using System.Reflection;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class CallExpression : Expression
 {
-    public class CallExpression : Expression
+    public Expression MethodExpression { get; }
+    public Expression[] Parameters { get; }
+
+    public CallExpression(Expression methodExpression, Expression[] parameters)
     {
-        public Expression MethodExpression { get; }
-        public Expression[] Parameters { get; }
+        MethodExpression = methodExpression;
+        Parameters = parameters;
+    }
 
-        public CallExpression(Expression methodExpression, Expression[] parameters)
+    public override ValueExpression Evaluate(IParserContext context)
+    {
+        var monitor = ExecutionMonitor.For(context);
+
+        monitor?.CheckExecutionTime(this);
+
+        object? methodObject = MethodExpression.Evaluate(context).Value;
+
+        ValueExpression[] parameters = EvaluateExpressionArray(Parameters, context);
+        Type?[] parameterTypes = parameters.ConvertAll(expr => expr.Type?.RealType());
+        object?[] parameterValues = parameters.ConvertAll(expr => expr.Value);
+
+        switch (methodObject)
         {
-            MethodExpression = methodExpression;
-            Parameters = parameters;
-        }
+            case MethodDefinition methodDefinition:
+                return Exp.Value(methodDefinition.Invoke(parameterTypes!, parameterValues!, out var returnType), returnType);
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            var monitor = ExecutionMonitor.For(context);
+            case ConstructorInfo[] constructors:
+            {
+                MethodBase method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, constructors, parameterTypes, null);
 
-            monitor?.CheckExecutionTime(this);
+                if (method == null)
+                    throw new ExpressionEvaluationException("No match found for constructor " + constructors[0].Name, this);
 
-            object? methodObject = MethodExpression.Evaluate(context).Value;
+                object value;
 
-            ValueExpression[] parameters = EvaluateExpressionArray(Parameters, context);
-            Type?[] parameterTypes = parameters.ConvertAll(expr => expr.Type?.RealType());
-            object?[] parameterValues = parameters.ConvertAll(expr => expr.Value);
+                if (method is ConstructorInfo constructorInfo)
+                    value = constructorInfo.Invoke(parameterValues);
+                else
+                    throw new ExpressionEvaluationException($"{method.Name} is not a constructor", this);
 
-			switch (methodObject)
-			{
-			    case MethodDefinition methodDefinition:
-			        return Exp.Value(methodDefinition.Invoke(parameterTypes!, parameterValues!, out var returnType), returnType);
+                return Exp.Value(value, method.DeclaringType);
+            }
 
-                case ConstructorInfo[] constructors:
+            case Delegate[] delegates:
+            {
+                MethodBase[] methods = delegates.ConvertAll<Delegate, MethodBase>(d => d.GetMethodInfo());
+
+                MethodBase method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, methods, parameterTypes!, null);
+
+                if (method == null)
+                    throw new ExpressionEvaluationException("No match found for delegate " + MethodExpression, this);
+
+                object? value = method.Invoke(delegates[Array.IndexOf(methods, method)].Target, parameterValues);
+
+                return Exp.Value(value, ((MethodInfo)method).ReturnType);
+            }
+
+            case Delegate method:
+            {
+                MethodInfo methodInfo = method.GetMethodInfo();
+
+                object? value = methodInfo.Invoke(method.Target, parameterValues);
+
+                return Exp.Value(value, methodInfo.ReturnType);
+            }
+
+            case FunctionDefinitionExpression func:
+            {
+                var functionContext = context.CreateLocal();
+
+                for (int i = 0; i < parameterValues.Length; i++)
                 {
-                    MethodBase method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, constructors, parameterTypes, null);
-
-                    if (method == null)
-                        throw new ExpressionEvaluationException("No match found for constructor " + constructors[0].Name, this);
-
-                    object value;
-
-                    if (method is ConstructorInfo constructorInfo)
-                        value = constructorInfo.Invoke(parameterValues);
-                    else
-                        throw new ExpressionEvaluationException($"{method.Name} is not a constructor", this);
-
-                    return Exp.Value(value, method.DeclaringType);
+                    functionContext.Set(func.ParameterNames[i], parameterValues[i]);
                 }
 
-                case Delegate[] delegates:
-			    {
-			        MethodBase[] methods = delegates.ConvertAll<Delegate, MethodBase>(d => d.GetMethodInfo());
+                if (monitor == null)
+                    return CallResult(func.Body.EvaluateStatement(functionContext));
 
-                    MethodBase method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, methods, parameterTypes!, null);
+                // Calling a script function is the only way a script can recurse.
+                monitor.EnterCall(this);
 
-			        if (method == null)
-			            throw new ExpressionEvaluationException("No match found for delegate " + MethodExpression, this);
-
-			        object? value = method.Invoke(delegates[Array.IndexOf(methods, method)].Target, parameterValues);
-
-			        return Exp.Value(value, ((MethodInfo)method).ReturnType);
-			    }
-
-			    case Delegate method:
-			    {
-			        MethodInfo methodInfo = method.GetMethodInfo();
-
-			        object? value = methodInfo.Invoke(method.Target, parameterValues);
-
-			        return Exp.Value(value, methodInfo.ReturnType);
-			    }
-
-			    case FunctionDefinitionExpression func:
-			    {
-			        var functionContext = context.CreateLocal();
-
-			        for (int i = 0; i < parameterValues.Length; i++)
-			        {
-			            functionContext.Set(func.ParameterNames[i], parameterValues[i]);
-			        }
-
-			        if (monitor == null)
-			            return CallResult(func.Body.EvaluateStatement(functionContext));
-
-			        // Calling a script function is the only way a script can recurse.
-			        monitor.EnterCall(this);
-
-			        try
-			        {
-			            return CallResult(func.Body.EvaluateStatement(functionContext));
-			        }
-			        finally
-			        {
-			            monitor.ExitCall();
-			        }
-			    }
-			}
-
-            throw new ExpressionEvaluationException(MethodExpression + " is not a function", this);
+                try
+                {
+                    return CallResult(func.Body.EvaluateStatement(functionContext));
+                }
+                finally
+                {
+                    monitor.ExitCall();
+                }
+            }
         }
 
-        /// <summary>
-        /// Turns the result of a function body into the value of the call. <c>return</c>
-        /// is a signal meant for the body only: letting it escape would also abort the
-        /// loop or statement sequence containing the call.
-        /// </summary>
-        private static ValueExpression CallResult(ValueExpression bodyResult)
-        {
-            return bodyResult is ReturnValueExpression ? Exp.Value(bodyResult.Value, bodyResult.Type) : bodyResult;
-        }
+        throw new ExpressionEvaluationException(MethodExpression + " is not a function", this);
+    }
+
+    /// <summary>
+    /// Turns the result of a function body into the value of the call. <c>return</c>
+    /// is a signal meant for the body only: letting it escape would also abort the
+    /// loop or statement sequence containing the call.
+    /// </summary>
+    private static ValueExpression CallResult(ValueExpression bodyResult)
+    {
+        return bodyResult is ReturnValueExpression ? Exp.Value(bodyResult.Value, bodyResult.Type) : bodyResult;
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            string?[] parameters = Parameters.ConvertAll(expr => expr.ToString());
+    public override string ToString()
+    {
+        string?[] parameters = Parameters.ConvertAll(expr => expr.ToString());
 
-            return $"({MethodExpression}({String.Join(",", parameters)}))";
-        }
-#endif
+        return $"({MethodExpression}({String.Join(",", parameters)}))";
     }
+#endif
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,46 +26,45 @@
 
 using Iridium.Script;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class TemplateTokenizer : Tokenizer<TemplateToken>
 {
-    public class TemplateTokenizer : Tokenizer<TemplateToken>
+    public TemplateTokenizer() : base(true)
     {
-        public TemplateTokenizer() : base(true)
-        {
-        }
+    }
 
-        public void AddTokenMatcher(TemplateTokenType templateTokenType, ITokenMatcher tokenMatcher, bool removeEmptyLine, string tokenId)
-        {
-            AddTokenMatcher(new TemplateTokenMatcher(tokenMatcher, templateTokenType, removeEmptyLine, tokenId));
-        }
+    public void AddTokenMatcher(TemplateTokenType templateTokenType, ITokenMatcher tokenMatcher, bool removeEmptyLine, string tokenId)
+    {
+        AddTokenMatcher(new TemplateTokenMatcher(tokenMatcher, templateTokenType, removeEmptyLine, tokenId));
+    }
 
-        public void AddTokenMatcher(TemplateTokenType templateTokenType, ITokenMatcher tokenMatcher)
-        {
-            AddTokenMatcher(new TemplateTokenMatcher(tokenMatcher, templateTokenType, false, null));
-        }
+    public void AddTokenMatcher(TemplateTokenType templateTokenType, ITokenMatcher tokenMatcher)
+    {
+        AddTokenMatcher(new TemplateTokenMatcher(tokenMatcher, templateTokenType, false, null));
+    }
 
-        public void AddTokenMatcher(TemplateTokenType templateTokenType, ITokenMatcher tokenMatcher, bool removeEmptyLine)
-        {
-            AddTokenMatcher(new TemplateTokenMatcher(tokenMatcher, templateTokenType, removeEmptyLine, null));
-        }
+    public void AddTokenMatcher(TemplateTokenType templateTokenType, ITokenMatcher tokenMatcher, bool removeEmptyLine)
+    {
+        AddTokenMatcher(new TemplateTokenMatcher(tokenMatcher, templateTokenType, removeEmptyLine, null));
+    }
    
-        public void AddTokenMatcher(TemplateTokenType templateTokenType, ITokenMatcher tokenMatcher, string tokenId)
+    public void AddTokenMatcher(TemplateTokenType templateTokenType, ITokenMatcher tokenMatcher, string tokenId)
+    {
+        AddTokenMatcher(new TemplateTokenMatcher(tokenMatcher, templateTokenType, false, tokenId));
+    }
+
+    public override TemplateToken CreateToken(ITokenMatcher? tokenMatcher, string token)
+    {
+        TemplateTokenMatcher? matcher = (TemplateTokenMatcher?) tokenMatcher;
+
+        if (matcher != null && matcher.TokenType == TemplateTokenType.ForEach)
         {
-            AddTokenMatcher(new TemplateTokenMatcher(tokenMatcher, templateTokenType, false, tokenId));
+            string[] pieces = token.Split('\0');
+
+            return new ForeachTemplateToken(matcher, pieces[0], pieces[1]);
         }
-
-        public override TemplateToken CreateToken(ITokenMatcher tokenMatcher, string token)
-        {
-            TemplateTokenMatcher matcher = (TemplateTokenMatcher) tokenMatcher;
-
-            if (matcher != null && matcher.TokenType == TemplateTokenType.ForEach)
-            {
-                string[] pieces = token.Split('\0');
-
-                return new ForeachTemplateToken(matcher, pieces[0], pieces[1]);
-            }
-            else
-                return new TemplateToken(matcher, token);
-        }
+        else
+            return new TemplateToken(matcher, token);
     }
 }

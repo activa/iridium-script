@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,30 +27,29 @@
 using System;
 using Iridium.Script;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class ConstructorExpression(VariableExpression typeName, Expression[] parameters) : Expression
 {
-    public class ConstructorExpression(VariableExpression typeName, Expression[] parameters) : Expression
+    public VariableExpression TypeName { get; } = typeName;
+    public Expression[] Parameters { get; } = parameters;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public VariableExpression TypeName { get; } = typeName;
-        public Expression[] Parameters { get; } = parameters;
+        TypeName typeName = TypeName.Evaluate(context).Value as TypeName;
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            TypeName typeName = TypeName.Evaluate(context).Value as TypeName;
+        if (typeName == null)
+            throw new TypeInitializationException(TypeName.VarName,null);
 
-            if (typeName == null)
-                throw new TypeInitializationException(TypeName.VarName,null);
-
-            return Exp.Value(typeName.Type.GetConstructors());
-        }
+        return Exp.Value(typeName.Type.GetConstructors());
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            string[] parameters = Parameters.ConvertAll(expr => expr.ToString());
+    public override string ToString()
+    {
+        string[] parameters = Parameters.ConvertAll(expr => expr.ToString());
 
-            return $"(new {TypeName}({String.Join(",", parameters)}))";
-        }
-#endif    
+        return $"(new {TypeName}({String.Join(",", parameters)}))";
     }
+#endif    
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,17 +26,16 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+/// <summary>
+/// Thrown to unwind and abort a running script when the debugger is asked to stop
+/// execution (<see cref="DebugResumeAction.Stop"/>). Hosts should catch this at
+/// the point where they invoked evaluation.
+/// </summary>
+public class ScriptTerminatedException : Exception
 {
-    /// <summary>
-    /// Thrown to unwind and abort a running script when the debugger is asked to stop
-    /// execution (<see cref="DebugResumeAction.Stop"/>). Hosts should catch this at
-    /// the point where they invoked evaluation.
-    /// </summary>
-    public class ScriptTerminatedException : Exception
+    public ScriptTerminatedException() : base("Script execution was terminated by the debugger.")
     {
-        public ScriptTerminatedException() : base("Script execution was terminated by the debugger.")
-        {
-        }
     }
 }

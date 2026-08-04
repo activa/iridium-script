@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,65 +24,64 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class AnyOfMatcher : ITokenMatcher
 {
-    public class AnyOfMatcher : ITokenMatcher
+    private readonly ITokenMatcher[] _matchers;
+
+    public AnyOfMatcher(params ITokenMatcher[] matchers)
     {
-        private readonly ITokenMatcher[] _matchers;
+        _matchers = matchers;
+    }
 
-        public AnyOfMatcher(params ITokenMatcher[] matchers)
+    public ITokenProcessor CreateTokenProcessor()
+    {
+        ITokenProcessor[] tokenProcessors = new ITokenProcessor[_matchers.Length];
+
+        for (int i = 0; i < _matchers.Length; i++)
+            tokenProcessors[i] = _matchers[i].CreateTokenProcessor();
+
+        return new MatchProcessor(tokenProcessors);
+    }
+
+    private class MatchProcessor : ITokenProcessor
+    {
+        private readonly ITokenProcessor[] _tokenProcessors;
+
+        public MatchProcessor(ITokenProcessor[] matchers)
         {
-            _matchers = matchers;
+            _tokenProcessors = matchers;
         }
 
-        public ITokenProcessor CreateTokenProcessor()
+        public void ResetState()
         {
-            ITokenProcessor[] tokenProcessors = new ITokenProcessor[_matchers.Length];
-
-            for (int i = 0; i < _matchers.Length; i++)
-                tokenProcessors[i] = _matchers[i].CreateTokenProcessor();
-
-            return new MatchProcessor(tokenProcessors);
+            foreach (ITokenProcessor tokenProcessor in _tokenProcessors)
+                tokenProcessor.ResetState();
         }
 
-        private class MatchProcessor : ITokenProcessor
+        public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
         {
-            private readonly ITokenProcessor[] _tokenProcessors;
+            TokenizerState returnState = TokenizerState.Fail;
 
-            public MatchProcessor(ITokenProcessor[] matchers)
+            foreach (ITokenProcessor matcher in _tokenProcessors)
             {
-                _tokenProcessors = matchers;
+                TokenizerState state = matcher.ProcessChar(c, fullExpression, currentIndex);
+
+                if (state == TokenizerState.Success)
+                    returnState = state;
+
+                if (state == TokenizerState.Valid && returnState == TokenizerState.Fail)
+                    returnState = state;
             }
 
-            public void ResetState()
-            {
-                foreach (ITokenProcessor tokenProcessor in _tokenProcessors)
-                    tokenProcessor.ResetState();
-            }
-
-            public TokenizerState ProcessChar(char c, string fullExpression, int currentIndex)
-            {
-                TokenizerState returnState = TokenizerState.Fail;
-
-                foreach (ITokenProcessor matcher in _tokenProcessors)
-                {
-                    TokenizerState state = matcher.ProcessChar(c, fullExpression, currentIndex);
-
-                    if (state == TokenizerState.Success)
-                        returnState = state;
-
-                    if (state == TokenizerState.Valid && returnState == TokenizerState.Fail)
-                        returnState = state;
-                }
-
-                return returnState;
-            }
-
+            return returnState;
         }
 
-        public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
-        {
-            return originalToken;
-        }
+    }
+
+    public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
+    {
+        return originalToken;
     }
 }

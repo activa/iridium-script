@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -27,42 +27,41 @@
 using System;
 using Iridium.Script;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class IsExpression(Expression objectExpression, Expression typeExpression) : BinaryExpression(objectExpression, typeExpression)
 {
-    public class IsExpression(Expression objectExpression, Expression typeExpression) : BinaryExpression(objectExpression, typeExpression)
+    public Expression ObjectExpression => Left;
+    public Expression TypeExpression => Right;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public Expression ObjectExpression => Left;
-        public Expression TypeExpression => Right;
+        TypeName typeName = TypeExpression.Evaluate(context).Value as TypeName;
+        ValueExpression objectValue = ObjectExpression.Evaluate(context);
+        Type objectType = objectValue.Type;
 
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            TypeName typeName = TypeExpression.Evaluate(context).Value as TypeName;
-            ValueExpression objectValue = ObjectExpression.Evaluate(context);
-            Type objectType = objectValue.Type;
+        if (objectValue.Value == null)
+            return Exp.Value(false);
 
-            if (objectValue.Value == null)
-                return Exp.Value(false);
+        objectType = objectType.RealType();
 
-            objectType = objectType.RealType();
-
-            if (typeName == null)
-                throw new ExpressionEvaluationException("is operator requires a type. " + TypeExpression + " is not a type", this);
+        if (typeName == null)
+            throw new ExpressionEvaluationException("is operator requires a type. " + TypeExpression + " is not a type", this);
             
-            Type checkType = typeName.Type;
+        Type checkType = typeName.Type;
 
-            if (!objectType.IsValueType)
-                return Exp.Value(checkType.IsAssignableFrom(objectType));
+        if (!objectType.IsValueType)
+            return Exp.Value(checkType.IsAssignableFrom(objectType));
 
-            checkType = Nullable.GetUnderlyingType(checkType) ?? checkType;
+        checkType = Nullable.GetUnderlyingType(checkType) ?? checkType;
 
-            return Exp.Value(checkType == objectType);
-        }
+        return Exp.Value(checkType == objectType);
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return $"({ObjectExpression} is {TypeExpression})";
-        }
-#endif
+    public override string ToString()
+    {
+        return $"({ObjectExpression} is {TypeExpression})";
     }
+#endif
 }

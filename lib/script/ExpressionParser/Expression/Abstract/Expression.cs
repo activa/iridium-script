@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,97 +26,96 @@
 
 using Iridium.Convert;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public abstract class Expression
 {
-    public abstract class Expression
+    /// <summary>
+    /// The region of source script this expression was compiled from, or
+    /// <see cref="SourceSpan.Unknown"/> when unavailable.
+    /// <para/>
+    /// The parser populates this for statements and control-flow constructs. It
+    /// provides the mapping from the AST back to the source that a debugger needs
+    /// to support breakpoints, stepping and variable evaluation.
+    /// </summary>
+    public SourceSpan SourceSpan { get; set; } = SourceSpan.Unknown;
+
+    public abstract ValueExpression Evaluate(IParserContext context);
+
+    /// <summary>
+    /// When <c>true</c>, this expression is invisible to the debugger: it never
+    /// triggers a break itself and does not appear on the call stack (its children
+    /// are still debugged). Container nodes such as statement sequences set this so
+    /// that only the actual statements are treated as stepping/breakpoint units.
+    /// </summary>
+    protected internal virtual bool IsDebugTransparent => false;
+
+    /// <summary>
+    /// Evaluates this expression as a statement: enforces the context's
+    /// <see cref="ExecutionLimits"/> and gives an attached debugger the chance to
+    /// pause before it runs. This is an internal detail of the execution engine:
+    /// statement-executing nodes call it on their children instead of
+    /// <see cref="Evaluate"/>. With no limits and no debugger attached (or when
+    /// this node isn't a real statement) it is equivalent to <see cref="Evaluate"/>.
+    /// </summary>
+    internal ValueExpression EvaluateStatement(IParserContext context)
     {
-        /// <summary>
-        /// The region of source script this expression was compiled from, or
-        /// <see cref="SourceSpan.Unknown"/> when unavailable.
-        /// <para/>
-        /// The parser populates this for statements and control-flow constructs. It
-        /// provides the mapping from the AST back to the source that a debugger needs
-        /// to support breakpoints, stepping and variable evaluation.
-        /// </summary>
-        public SourceSpan SourceSpan { get; set; } = SourceSpan.Unknown;
+        var monitor = ExecutionMonitor.For(context);
 
-        public abstract ValueExpression Evaluate(IParserContext context);
+        if (monitor == null)
+            return EvaluateStatementCore(context);
 
-        /// <summary>
-        /// When <c>true</c>, this expression is invisible to the debugger: it never
-        /// triggers a break itself and does not appear on the call stack (its children
-        /// are still debugged). Container nodes such as statement sequences set this so
-        /// that only the actual statements are treated as stepping/breakpoint units.
-        /// </summary>
-        protected internal virtual bool IsDebugTransparent => false;
+        // The outermost statement delimits the run, so every top-level evaluation
+        // starts with a fresh time budget.
+        monitor.EnterScope();
 
-        /// <summary>
-        /// Evaluates this expression as a statement: enforces the context's
-        /// <see cref="ExecutionLimits"/> and gives an attached debugger the chance to
-        /// pause before it runs. This is an internal detail of the execution engine:
-        /// statement-executing nodes call it on their children instead of
-        /// <see cref="Evaluate"/>. With no limits and no debugger attached (or when
-        /// this node isn't a real statement) it is equivalent to <see cref="Evaluate"/>.
-        /// </summary>
-        internal ValueExpression EvaluateStatement(IParserContext context)
+        try
         {
-            var monitor = ExecutionMonitor.For(context);
+            monitor.CheckExecutionTime(this);
 
-            if (monitor == null)
-                return EvaluateStatementCore(context);
-
-            // The outermost statement delimits the run, so every top-level evaluation
-            // starts with a fresh time budget.
-            monitor.EnterScope();
-
-            try
-            {
-                monitor.CheckExecutionTime(this);
-
-                return EvaluateStatementCore(context);
-            }
-            finally
-            {
-                monitor.ExitScope();
-            }
+            return EvaluateStatementCore(context);
         }
-
-        private ValueExpression EvaluateStatementCore(IParserContext context)
+        finally
         {
-            if (IsDebugTransparent || !SourceSpan.IsKnown)
-                return Evaluate(context);
+            monitor.ExitScope();
+        }
+    }
 
-            if (context is IDebuggableContext { Debugger: { } debugger })
-                return debugger.Execute(this, context, Evaluate);
-
+    private ValueExpression EvaluateStatementCore(IParserContext context)
+    {
+        if (IsDebugTransparent || !SourceSpan.IsKnown)
             return Evaluate(context);
-        }
 
-        internal object? EvaluateStatementToObject(IParserContext context)
-        {
-            return EvaluateStatement(context).Value;
-        }
+        if (context is IDebuggableContext { Debugger: { } debugger })
+            return debugger.Execute(this, context, Evaluate);
 
-        internal T? EvaluateStatement<T>(IParserContext context)
-        {
-            return EvaluateStatement(context).Value.Convert<T>();
-        }
+        return Evaluate(context);
+    }
 
-        protected static ValueExpression[] EvaluateExpressionArray(Expression[] expressions, IParserContext context)
-        {
-            return expressions.ConvertAll(expr => expr.Evaluate(context));
-        }
+    internal object? EvaluateStatementToObject(IParserContext context)
+    {
+        return EvaluateStatement(context).Value;
+    }
 
-        public object? EvaluateToObject(IParserContext context)
-    	{
-    		return Evaluate(context).Value;
-    	}
+    internal T? EvaluateStatement<T>(IParserContext context)
+    {
+        return EvaluateStatement(context).Value.Convert<T>();
+    }
 
-    	public T? Evaluate<T>(IParserContext context)
-	    {
-	        var value = Evaluate(context).Value;
+    protected static ValueExpression[] EvaluateExpressionArray(Expression[] expressions, IParserContext context)
+    {
+        return expressions.ConvertAll(expr => expr.Evaluate(context));
+    }
 
-	        return value.Convert<T>();
-	    }
+    public object? EvaluateToObject(IParserContext context)
+    {
+        return Evaluate(context).Value;
+    }
+
+    public T? Evaluate<T>(IParserContext context)
+    {
+        var value = Evaluate(context).Value;
+
+        return value.Convert<T>();
     }
 }

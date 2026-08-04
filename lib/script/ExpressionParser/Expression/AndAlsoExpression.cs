@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,27 +24,26 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class AndAlsoExpression(Expression left, Expression right) : BinaryExpression(left, right)
 {
-    public class AndAlsoExpression(Expression left, Expression right) : BinaryExpression(left, right)
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            object left = Left.Evaluate(context).Value;
+        object left = Left.Evaluate(context).Value;
 
-            if (!context.ToBoolean(left))
-                return Exp.Value(false);
+        if (!context.ToBoolean(left))
+            return Exp.Value(false);
 
-            object rightValue = Right.Evaluate(context).Value;
+        object rightValue = Right.Evaluate(context).Value;
 
-            return Exp.Value(context.ToBoolean(rightValue));
-        }
+        return Exp.Value(context.ToBoolean(rightValue));
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return $"({Left} && {Right})";
-        }
-#endif
+    public override string ToString()
+    {
+        return $"({Left} && {Right})";
     }
+#endif
 }

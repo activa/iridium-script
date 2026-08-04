@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,11 +26,10 @@
 
 using System;
 
-namespace Iridium.Script
-{
-    public class ReturnValueExpression(object? value, Type? type) : ValueExpression(value, type);
+namespace Iridium.Script;
 
-    public class BreakLoopExpression : NoValueExpression
-    {
-    }
+public class ReturnValueExpression(object? value, Type? type) : ValueExpression(value, type);
+
+public class BreakLoopExpression : NoValueExpression
+{
 }

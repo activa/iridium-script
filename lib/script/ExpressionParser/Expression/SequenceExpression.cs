@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,39 +26,38 @@
 
 using System.Linq;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class SequenceExpression(Expression[] expressions) : Expression
 {
-    public class SequenceExpression(Expression[] expressions) : Expression
+    public Expression[] Expressions { get; } = expressions;
+
+    // A sequence is a container, not a statement: the debugger steps/breaks on the
+    // individual statements it contains, not on the sequence itself.
+    protected internal override bool IsDebugTransparent => true;
+
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public Expression[] Expressions { get; } = expressions;
+        ValueExpression? returnValue = null;
 
-        // A sequence is a container, not a statement: the debugger steps/breaks on the
-        // individual statements it contains, not on the sequence itself.
-        protected internal override bool IsDebugTransparent => true;
-
-        public override ValueExpression Evaluate(IParserContext context)
+        foreach (var expression in Expressions)
         {
-            ValueExpression? returnValue = null;
+            returnValue = expression.EvaluateStatement(context);
 
-            foreach (var expression in Expressions)
-            {
-                returnValue = expression.EvaluateStatement(context);
-
-                if (returnValue is ReturnValueExpression or BreakLoopExpression)
-                    return returnValue;
-            }
-
-            if (returnValue != null)
+            if (returnValue is ReturnValueExpression or BreakLoopExpression)
                 return returnValue;
-
-            return Exp.Value(null);
         }
+
+        if (returnValue != null)
+            return returnValue;
+
+        return Exp.Value(null);
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return string.Join(";", Expressions.Select(e => e.ToString()).ToArray());
-        }
-#endif
+    public override string ToString()
+    {
+        return string.Join(";", Expressions.Select(e => e.ToString()).ToArray());
     }
+#endif
 }

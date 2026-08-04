@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,27 +24,26 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class BitwiseComplementExpression(Expression value) : UnaryExpression(value)
 {
-    public class BitwiseComplementExpression(Expression value) : UnaryExpression(value)
+    public override ValueExpression Evaluate(IParserContext context)
     {
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            ValueExpression value = Value.Evaluate(context);
+        ValueExpression value = Value.Evaluate(context);
 
-            if (value.Type == typeof(int))
-                return Exp.Value(~(int)value.Value);
+        if (value.Type == typeof(int))
+            return Exp.Value(~(int?)value.Value);
             
-            if (value.Type == typeof(uint))
-                return Exp.Value(~(uint)value.Value);
+        if (value.Type == typeof(uint))
+            return Exp.Value(~(uint?)value.Value);
 
-            if (value.Type == typeof(long))
-                return Exp.Value(~(long)value.Value);
+        if (value.Type == typeof(long))
+            return Exp.Value(~(long?)value.Value);
 
-            if (value.Type == typeof(ulong))
-                return Exp.Value(~(ulong)value.Value);
+        if (value.Type == typeof(ulong))
+            return Exp.Value(~(ulong?)value.Value);
 
-            throw new IllegalOperandsException("Bitwise operator not supported on " + value.Value, this);
-        }
+        throw new IllegalOperandsException("Bitwise operator not supported on " + value.Value, this);
     }
 }

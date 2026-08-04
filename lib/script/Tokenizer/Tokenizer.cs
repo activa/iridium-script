@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium-Core - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2017 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -29,272 +29,268 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+public class Tokenizer : Tokenizer<Token>
 {
-    public class Tokenizer : Tokenizer<Token>
-    {
         
+}
+
+public class Tokenizer<T> where T:Token, new()
+{
+    private readonly List<ITokenMatcher> _tokenMatchers = new List<ITokenMatcher>();
+
+    private readonly bool _allowFillerTokens;
+
+    public Tokenizer()
+    {
     }
 
-    public class Tokenizer<T> where T:Token, new()
+    public Tokenizer(bool allowFillerTokens)
     {
-        private readonly List<ITokenMatcher> _tokenMatchers = new List<ITokenMatcher>();
+        _allowFillerTokens = allowFillerTokens;
+    }
 
-        private readonly bool _allowFillerTokens;
+    public void AddTokenMatcher(ITokenMatcher tokenMatcher)
+    {
+        _tokenMatchers.Add(tokenMatcher);
+    }
 
-        public Tokenizer()
-        {
-        }
+    private class SuccessfulMatch
+    {
+        public required string Token { get; init; }
 
-        public Tokenizer(bool allowFillerTokens)
-        {
-            _allowFillerTokens = allowFillerTokens;
-        }
+        public int StartIndex { get; init; }
+        public int Length { get; init; }
 
-        public void AddTokenMatcher(ITokenMatcher tokenMatcher)
-        {
-            _tokenMatchers.Add(tokenMatcher);
-        }
+        public required List<TokenMatcher> Matches { get; init; }
+    }
 
-        private class SuccessfulMatch
-        {
-            public string Token;
+    public T[] Tokenize(string s)
+    {
+        List<T> tokens = new List<T>();
 
-            public int StartIndex;
-            public int Length;
+        // Precompute the offset of the first character of every line so we can
+        // translate an arbitrary character index into a line/column position. This
+        // has to be a lookup table rather than an incremental counter because the
+        // tokenizer freely moves the read index backwards while backtracking.
+        int[] lineStarts = BuildLineStarts(s);
 
-            public List<TokenMatcher> Matches;
-        }
+        TokenMatcher[] tokenMatchers = new TokenMatcher[_tokenMatchers.Count];
 
-        public T[] Tokenize(string s)
-        {
-            List<T> tokens = new List<T>();
+        for(int i=0;i<tokenMatchers.Length;i++)
+            tokenMatchers[i] = new TokenMatcher(_tokenMatchers[i]);
 
-            // Precompute the offset of the first character of every line so we can
-            // translate an arbitrary character index into a line/column position. This
-            // has to be a lookup table rather than an incremental counter because the
-            // tokenizer freely moves the read index backwards while backtracking.
-            int[] lineStarts = BuildLineStarts(s);
-
-            TokenMatcher[] tokenMatchers = new TokenMatcher[_tokenMatchers.Count];
-
-            for(int i=0;i<tokenMatchers.Length;i++)
-                tokenMatchers[i] = new TokenMatcher(_tokenMatchers[i]);
-
-            List<TokenMatcher> successfulTokens = new List<TokenMatcher>(5);
-            SuccessfulMatch successMatch = null;
+        List<TokenMatcher> successfulTokens = new List<TokenMatcher>(5);
+        SuccessfulMatch? successMatch = null;
             
-            Reset(tokenMatchers);
+        Reset(tokenMatchers);
 
-            int firstValidIndex = -1;
-            int lastSavedIndex = -1;
+        int firstValidIndex = -1;
+        int lastSavedIndex = -1;
 
-            StringBuilder filler = new StringBuilder();
+        StringBuilder filler = new StringBuilder();
 
-            for (int textIndex = 0; textIndex < s.Length; textIndex++)
-            {
-                char c = s[textIndex];
+        for (int textIndex = 0; textIndex < s.Length; textIndex++)
+        {
+            char c = s[textIndex];
 
-                bool foundToken = false;
-                successfulTokens.Clear();
-
-                //TODO: parallel processing in .NET 4.0
-                //Parallel.ForEach(tokenMatchers, tokenMatcher =>
-                //{
-                foreach (var tokenMatcher in tokenMatchers)
-                {
-                    TokenizerState state = tokenMatcher.Feed(c, s, textIndex);
-
-                    if (state == TokenizerState.Valid)
-                        foundToken = true;
-                    else if (state == TokenizerState.Success)
-                        successfulTokens.Add(tokenMatcher);
-                }//);
-
-                if (successfulTokens.Count > 0)
-                {
-                    successMatch = new SuccessfulMatch
-                    {
-                        StartIndex = firstValidIndex, 
-                        Length = textIndex - firstValidIndex, 
-                        Token = successfulTokens[0].TranslateToken(s.Substring(firstValidIndex, textIndex - firstValidIndex)), 
-                        Matches = new List<TokenMatcher>(successfulTokens)
-                    };
-                }
-
-                if (foundToken)
-                {
-                    if (firstValidIndex < 0)
-                        firstValidIndex = textIndex;
-
-                    continue;
-                }
-
-                if (successMatch == null)
-                {
-                    if (_allowFillerTokens)
-                    {
-                        filler.Append(s[++lastSavedIndex]);
-                        
-                        textIndex = lastSavedIndex;
-
-                        Reset(tokenMatchers);
-
-                        firstValidIndex = -1;
-
-                        continue;
-                    }
-                    else
-                    {
-                        string badToken;
-
-                        if (firstValidIndex < 0)
-                            badToken = s.Substring(lastSavedIndex + 1, 1);
-                        else
-                            badToken = s.Substring(lastSavedIndex + 1, firstValidIndex - lastSavedIndex);
-
-                        throw new UnknownTokenException(badToken, PositionFromIndex(lineStarts, lastSavedIndex + 1));
-                    }
-                }
-
-                if (filler.Length > 0)
-                {
-                    T fillerToken = CreateToken(null,filler.ToString());
-
-                    fillerToken.Position = PositionFromIndex(lineStarts, lastSavedIndex - filler.Length + 1);
-
-                    tokens.Add(fillerToken);
-
-                    filler.Length = 0;
-                }
-
-                T token = CreateToken(successMatch.Matches[0].Matcher, successMatch.Token);
-
-                token.Position = PositionFromIndex(lineStarts, successMatch.StartIndex);
-
-                for (int i = 1; i < successMatch.Matches.Count; i++)
-                {
-                    T alternateToken = CreateToken(successMatch.Matches[i].Matcher, successMatch.Token);
-
-                    alternateToken.Position = token.Position;
-
-                    token.AddAlternate(alternateToken);
-                }
-
-                tokens.Add(token);
-
-                lastSavedIndex = textIndex - 1;
-
-                textIndex = successMatch.StartIndex + successMatch.Length-1;
-
-                firstValidIndex = -1;
-                successMatch = null;
-
-                Reset(tokenMatchers);
-            }
-
+            bool foundToken = false;
             successfulTokens.Clear();
 
-            successfulTokens.AddRange(tokenMatchers.Where(tokenMatcher => tokenMatcher.Feed('\0', s, s.Length) == TokenizerState.Success));
-
-            if (_allowFillerTokens && filler.Length > 0)
+            foreach (var tokenMatcher in tokenMatchers)
             {
-                T fillerToken = CreateToken(null, filler.ToString());
+                TokenizerState state = tokenMatcher.Feed(c, s, textIndex);
 
-                fillerToken.Position = PositionFromIndex(lineStarts, s.Length - filler.Length);
-
-                tokens.Add(fillerToken);
+                if (state == TokenizerState.Valid)
+                    foundToken = true;
+                else if (state == TokenizerState.Success)
+                    successfulTokens.Add(tokenMatcher);
             }
 
             if (successfulTokens.Count > 0)
             {
-                string tokenText = s.Substring(firstValidIndex, s.Length - firstValidIndex);
-
-                tokenText = successfulTokens[0].TranslateToken(tokenText);
-
-                T token = CreateToken(successfulTokens[0].Matcher, tokenText);
-
-                token.Position = PositionFromIndex(lineStarts, firstValidIndex);
-
-                for (int i = 1; i < successfulTokens.Count; i++)
+                successMatch = new SuccessfulMatch
                 {
-                    T alternateToken = CreateToken(successfulTokens[i].Matcher, tokenText);
-
-                    alternateToken.Position = token.Position;
-
-                    token.AddAlternate(alternateToken);
-                }
-
-                tokens.Add(token);
+                    StartIndex = firstValidIndex, 
+                    Length = textIndex - firstValidIndex, 
+                    Token = successfulTokens[0].TranslateToken(s.Substring(firstValidIndex, textIndex - firstValidIndex)), 
+                    Matches = new List<TokenMatcher>(successfulTokens)
+                };
             }
 
-            return tokens.ToArray();
-        }
-
-        /// <summary>
-        /// Builds a table containing the character offset of the first character of
-        /// each line. Index 0 corresponds to line 1. Both '\n' and '\r\n' line endings
-        /// are supported (the position after the '\n' starts the next line).
-        /// </summary>
-        private static int[] BuildLineStarts(string s)
-        {
-            List<int> lineStarts = new List<int> { 0 };
-
-            for (int i = 0; i < s.Length; i++)
+            if (foundToken)
             {
-                if (s[i] == '\n')
-                    lineStarts.Add(i + 1);
+                if (firstValidIndex < 0)
+                    firstValidIndex = textIndex;
+
+                continue;
             }
 
-            return lineStarts.ToArray();
-        }
-
-        /// <summary>
-        /// Translates a zero-based character index into a one-based line/column position
-        /// using the precomputed line-start table.
-        /// </summary>
-        private static SourcePosition PositionFromIndex(int[] lineStarts, int index)
-        {
-            if (index < 0)
-                return SourcePosition.Unknown;
-
-            // Binary search for the greatest line start that is <= index.
-            int low = 0;
-            int high = lineStarts.Length - 1;
-            int line = 0;
-
-            while (low <= high)
+            if (successMatch == null)
             {
-                int mid = low + ((high - low) >> 1);
-
-                if (lineStarts[mid] <= index)
+                if (_allowFillerTokens)
                 {
-                    line = mid;
-                    low = mid + 1;
+                    filler.Append(s[++lastSavedIndex]);
+                        
+                    textIndex = lastSavedIndex;
+
+                    Reset(tokenMatchers);
+
+                    firstValidIndex = -1;
+
+                    continue;
                 }
                 else
                 {
-                    high = mid - 1;
+                    string badToken;
+
+                    if (firstValidIndex < 0)
+                        badToken = s.Substring(lastSavedIndex + 1, 1);
+                    else
+                        badToken = s.Substring(lastSavedIndex + 1, firstValidIndex - lastSavedIndex);
+
+                    throw new UnknownTokenException(badToken, PositionFromIndex(lineStarts, lastSavedIndex + 1));
                 }
             }
 
-            return new SourcePosition(index, line + 1, index - lineStarts[line] + 1);
-        }
-
-        private void Reset(TokenMatcher[] matchers)
-        {
-            foreach (var tokenMatcher in matchers)
-                tokenMatcher.Reset();
-        }
-
-        public virtual T CreateToken(ITokenMatcher tokenMatcher, string token)
-        {
-            return new T
+            if (filler.Length > 0)
             {
-                Text = token, 
-                TokenMatcher = tokenMatcher
-            };
+                T fillerToken = CreateToken(null,filler.ToString());
+
+                fillerToken.Position = PositionFromIndex(lineStarts, lastSavedIndex - filler.Length + 1);
+
+                tokens.Add(fillerToken);
+
+                filler.Length = 0;
+            }
+
+            T token = CreateToken(successMatch.Matches[0].Matcher, successMatch.Token);
+
+            token.Position = PositionFromIndex(lineStarts, successMatch.StartIndex);
+
+            for (int i = 1; i < successMatch.Matches.Count; i++)
+            {
+                T alternateToken = CreateToken(successMatch.Matches[i].Matcher, successMatch.Token);
+
+                alternateToken.Position = token.Position;
+
+                token.AddAlternate(alternateToken);
+            }
+
+            tokens.Add(token);
+
+            lastSavedIndex = textIndex - 1;
+
+            textIndex = successMatch.StartIndex + successMatch.Length-1;
+
+            firstValidIndex = -1;
+            successMatch = null;
+
+            Reset(tokenMatchers);
         }
 
+        successfulTokens.Clear();
+
+        successfulTokens.AddRange(tokenMatchers.Where(tokenMatcher => tokenMatcher.Feed('\0', s, s.Length) == TokenizerState.Success));
+
+        if (_allowFillerTokens && filler.Length > 0)
+        {
+            T fillerToken = CreateToken(null, filler.ToString());
+
+            fillerToken.Position = PositionFromIndex(lineStarts, s.Length - filler.Length);
+
+            tokens.Add(fillerToken);
+        }
+
+        if (successfulTokens.Count > 0)
+        {
+            string tokenText = s.Substring(firstValidIndex, s.Length - firstValidIndex);
+
+            tokenText = successfulTokens[0].TranslateToken(tokenText);
+
+            T token = CreateToken(successfulTokens[0].Matcher, tokenText);
+
+            token.Position = PositionFromIndex(lineStarts, firstValidIndex);
+
+            for (int i = 1; i < successfulTokens.Count; i++)
+            {
+                T alternateToken = CreateToken(successfulTokens[i].Matcher, tokenText);
+
+                alternateToken.Position = token.Position;
+
+                token.AddAlternate(alternateToken);
+            }
+
+            tokens.Add(token);
+        }
+
+        return tokens.ToArray();
     }
+
+    /// <summary>
+    /// Builds a table containing the character offset of the first character of
+    /// each line. Index 0 corresponds to line 1. Both '\n' and '\r\n' line endings
+    /// are supported (the position after the '\n' starts the next line).
+    /// </summary>
+    private static int[] BuildLineStarts(string s)
+    {
+        List<int> lineStarts = [0];
+
+        for (int i = 0; i < s.Length; i++)
+        {
+            if (s[i] == '\n')
+                lineStarts.Add(i + 1);
+        }
+
+        return lineStarts.ToArray();
+    }
+
+    /// <summary>
+    /// Translates a zero-based character index into a one-based line/column position
+    /// using the precomputed line-start table.
+    /// </summary>
+    private static SourcePosition PositionFromIndex(int[] lineStarts, int index)
+    {
+        if (index < 0)
+            return SourcePosition.Unknown;
+
+        // Binary search for the greatest line start that is <= index.
+        int low = 0;
+        int high = lineStarts.Length - 1;
+        int line = 0;
+
+        while (low <= high)
+        {
+            int mid = low + ((high - low) >> 1);
+
+            if (lineStarts[mid] <= index)
+            {
+                line = mid;
+                low = mid + 1;
+            }
+            else
+            {
+                high = mid - 1;
+            }
+        }
+
+        return new SourcePosition(index, line + 1, index - lineStarts[line] + 1);
+    }
+
+    private void Reset(TokenMatcher[] matchers)
+    {
+        foreach (var tokenMatcher in matchers)
+            tokenMatcher.Reset();
+    }
+
+    public virtual T CreateToken(ITokenMatcher? tokenMatcher, string token)
+    {
+        return new T
+        {
+            Text = token, 
+            TokenMatcher = tokenMatcher
+        };
+    }
+
 }

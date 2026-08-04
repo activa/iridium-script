@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -26,22 +26,21 @@
 
 using System;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+/// <summary>
+/// The hook the evaluation engine uses to give a debugger control around the
+/// execution of each statement. Implemented by <see cref="ScriptDebugger"/>.
+/// </summary>
+public interface IScriptDebugger
 {
     /// <summary>
-    /// The hook the evaluation engine uses to give a debugger control around the
-    /// execution of each statement. Implemented by <see cref="ScriptDebugger"/>.
+    /// Called by the runtime immediately before a statement executes. The
+    /// implementation may pause (e.g. at a breakpoint), then must invoke
+    /// <paramref name="evaluate"/> to run the statement and return its value.
     /// </summary>
-    public interface IScriptDebugger
-    {
-        /// <summary>
-        /// Called by the runtime immediately before a statement executes. The
-        /// implementation may pause (e.g. at a breakpoint), then must invoke
-        /// <paramref name="evaluate"/> to run the statement and return its value.
-        /// </summary>
-        /// <param name="statement">The statement about to execute (carries its <see cref="Expression.SourceSpan"/>).</param>
-        /// <param name="context">The scope the statement executes in.</param>
-        /// <param name="evaluate">Runs the statement; call to produce its value.</param>
-        ValueExpression Execute(Expression statement, IParserContext context, Func<IParserContext, ValueExpression> evaluate);
-    }
+    /// <param name="statement">The statement about to execute (carries its <see cref="Expression.SourceSpan"/>).</param>
+    /// <param name="context">The scope the statement executes in.</param>
+    /// <param name="evaluate">Runs the statement; call to produce its value.</param>
+    ValueExpression Execute(Expression statement, IParserContext context, Func<IParserContext, ValueExpression> evaluate);
 }

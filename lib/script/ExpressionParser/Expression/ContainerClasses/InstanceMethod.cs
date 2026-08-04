@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -29,32 +29,31 @@ using System.Globalization;
 using System.Reflection;
 using Iridium.Script.Reflection;
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+internal class InstanceMethod : MethodDefinition
 {
-    internal class InstanceMethod : MethodDefinition
+    private readonly object _object;
+
+    public InstanceMethod(MethodInfo methodInfo, object @object) : base(methodInfo)
     {
-        private readonly object _object;
+        _object = @object;
+    }
 
-        public InstanceMethod(MethodInfo methodInfo, object @object) : base(methodInfo)
-        {
-            _object = @object;
-        }
+    public InstanceMethod(Type type, string methodName, object @object) : base(type, methodName)
+    {
+        _object = @object;
+    }
 
-        public InstanceMethod(Type type, string methodName, object @object) : base(type, methodName)
-        {
-            _object = @object;
-        }
+    public override object? Invoke(Type[] types, object?[] parameters, out Type returnType)
+    {
+        MethodInfo? methodInfo = GetMethodInfo(types);
 
-        public override object? Invoke(Type[] types, object?[] parameters, out Type returnType)
-        {
-            MethodInfo? methodInfo = GetMethodInfo(types);
+        if (methodInfo == null)
+            throw new MissingMemberException(MethodName);
 
-            if (methodInfo == null)
-                throw new MissingMemberException(MethodName);
+        returnType = methodInfo.ReturnType;
 
-            returnType = methodInfo.ReturnType;
-
-            return SmartBinder.Invoke(methodInfo, _object, parameters!);
-        }
+        return SmartBinder.Invoke(methodInfo, _object, parameters!);
     }
 }

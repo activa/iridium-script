@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,17 +24,16 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
+namespace Iridium.Script;
+
+internal class ForEachTemplateNode : ExpressionTemplateNode
 {
-    internal class ForEachTemplateNode : ExpressionTemplateNode
+    public string Iterator { get; }
+
+    public ForEachTemplateNode(ForeachTemplateToken templateToken) : base(templateToken)
     {
-        public string Iterator { get; }
-
-        public ForEachTemplateNode(ForeachTemplateToken templateToken) : base(templateToken)
-        {
-            Iterator = templateToken.Iterator;
-        }
-
-        public new ForeachTemplateToken TemplateToken => (ForeachTemplateToken) base.TemplateToken;
+        Iterator = templateToken.Iterator;
     }
+
+    public new ForeachTemplateToken TemplateToken => (ForeachTemplateToken) base.TemplateToken;
 }

@@ -1,8 +1,8 @@
 #region License
 //=============================================================================
-// Iridium Script - Portable .NET Productivity Library 
+// Iridium Script - .NET scripting and templating engine 
 //
-// Copyright (c) 2008-2018 Philippe Leybaert
+// Copyright (c) 2008-2026 Philippe Leybaert
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal 
@@ -24,25 +24,24 @@
 //=============================================================================
 #endregion
 
-namespace Iridium.Script
-{
-    public class NegationExpression(Expression value) : UnaryExpression(value)
-    {
-        public override ValueExpression Evaluate(IParserContext context)
-        {
-            ValueExpression value = Value.Evaluate(context);
+namespace Iridium.Script;
 
-            if (context == null)
-                return Exp.Value(!((bool)value.Value));
-            else
-                return Exp.Value(!context.ToBoolean(value.Value));
-        }
+public class NegationExpression(Expression value) : UnaryExpression(value)
+{
+    public override ValueExpression Evaluate(IParserContext context)
+    {
+        ValueExpression value = Value.Evaluate(context);
+
+        if (context == null)
+            return Exp.Value(!((bool)value.Value));
+        else
+            return Exp.Value(!context.ToBoolean(value.Value));
+    }
 
 #if DEBUG
-        public override string ToString()
-        {
-            return $"(!{Value})";
-        }
-#endif
+    public override string ToString()
+    {
+        return $"(!{Value})";
     }
+#endif
 }
