@@ -75,7 +75,10 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
 
         rpn.Start();
 
-        ExpressionToken? firstToken = CurrentToken;
+        if (CurrentToken == null)
+            return Exp.Null();
+
+        ExpressionToken firstToken = CurrentToken;
         ExpressionToken? lastConsumedToken = null;
 
         while (CurrentToken != null && CurrentIndex <= lastToken)
@@ -101,10 +104,9 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
 
         rpn.Finish();
 
-        Expression? expression = rpn.Compile();
+        Expression expression = rpn.Compile();
 
-        if (expression != null)
-            SetSourceSpan(expression, firstToken, lastConsumedToken ?? firstToken);
+        SetSourceSpan(expression, firstToken, lastConsumedToken ?? firstToken);
 
         return expression;
     }
@@ -363,10 +365,8 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
                     if (CurrentToken.TokenType != TokenType.Term)
                         throw new LexerException("function name expected", CurrentToken.Text, CurrentToken.Position);
 
-                    var functionExpression = new FunctionDefinitionExpression
-                    {
-                        Name = CurrentToken.Text
-                    };
+                    var functionName = CurrentToken.Text;
+
 
                     MoveNext();
 
@@ -400,9 +400,12 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
                                 
                     var parameters = (CallExpression) CompileStatement(end);
 
-                    functionExpression.ParameterNames = (from p in parameters.Parameters select ((VariableExpression)p).VarName).ToArray();
-
-                    functionExpression.Body = Compile(multiple: false, inLoop: false);
+                    var functionExpression = new FunctionDefinitionExpression
+                    {
+                        Name = functionName,
+                        ParameterNames = (from p in parameters.Parameters select ((VariableExpression)p).VarName).ToArray(),
+                        Body = Compile(multiple: false, inLoop: false)
+                    };
 
                     functionExpression.SourceSpan = SpanFromTokenToExpression(token, functionExpression.Body);
 

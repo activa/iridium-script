@@ -28,8 +28,8 @@ namespace Iridium.Script;
 
 public class WhileExpression : Expression
 {
-    public Expression ConditionExpression { get; set; }
-    public Expression Body { get; set; }
+    public required Expression ConditionExpression { get; init; }
+    public required Expression Body { get; init; }
 
     public override ValueExpression Evaluate(IParserContext context)
     {

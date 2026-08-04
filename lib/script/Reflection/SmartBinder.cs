@@ -97,9 +97,9 @@ internal class SmartBinder
             .FirstOrDefault(match => match != null);
     }
 
-    private static object[] ConvertParameters(object[] parameters, ParameterInfo[] parameterTypes)
+    private static object?[] ConvertParameters(object?[] parameters, ParameterInfo[] parameterTypes)
     {
-        var newParameters = new object[parameters.Length];
+        var newParameters = new object?[parameters.Length];
 
         for (int i = 0; i < parameters.Length; i++)
         {
@@ -109,9 +109,9 @@ internal class SmartBinder
         return newParameters;
     }
 
-    public static object? Invoke(MethodBase method, object[] parameters)
+    public static object? Invoke(MethodBase method, object?[] parameters)
     {
-        object[] p = ConvertParameters(parameters, method.GetParameters());
+        object?[] p = ConvertParameters(parameters, method.GetParameters());
 
         if (method is ConstructorInfo constructorInfo)
             return constructorInfo.Invoke(p);

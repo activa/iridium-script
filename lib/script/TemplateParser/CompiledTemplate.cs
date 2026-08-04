@@ -40,5 +40,5 @@ public class CompiledTemplate
     internal Dictionary<string, TemplateNode> Macros { get; private set; }
     internal TemplateNode Tree { get; }
 
-    public string FileName { get; set; }
+    public string? FileName { get; set; }
 }

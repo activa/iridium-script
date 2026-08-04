@@ -32,14 +32,14 @@ public class ExpressionTokenMatcher : ITokenMatcher
 {
     private readonly ITokenMatcher _matcher;
 
-    public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, TokenEvaluator tokenEvaluator)
+    public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, TokenEvaluator? tokenEvaluator)
     {
         _matcher = matcher;
         TokenType = tokenType;
         Evaluator = tokenEvaluator;
     }
 
-    public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator tokenEvaluator)
+    public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator? tokenEvaluator)
     {
         _matcher = matcher;
         TokenType = tokenType;
@@ -59,12 +59,12 @@ public class ExpressionTokenMatcher : ITokenMatcher
     }
 
     public TokenType TokenType { get; }
-    public TokenEvaluator Evaluator { get; }
+    public TokenEvaluator? Evaluator { get; }
     public int Precedence { get; }
 
     public bool IsPartial => Root != null;
 
-    public ExpressionTokenMatcher Root { get; set; }
+    public ExpressionTokenMatcher? Root { get; set; }
     public OperatorAssociativity Associativity { get; }
     public int? NumTerms { get; set; }
 }

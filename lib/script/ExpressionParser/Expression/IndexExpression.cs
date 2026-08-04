@@ -66,7 +66,7 @@ public class IndexExpression(Expression target, Expression[] parameters) : Expre
             if (targetType.GetArrayRank() != parameters.Length)
                 throw new ExpressionEvaluationException("Array has a different rank. Number of arguments is incorrect", this);
 
-            var returnType = targetType.GetElementType();
+            var returnType = targetType.GetElementType()!;
 
             foreach (var t in parameterTypes)
             {
@@ -99,7 +99,7 @@ public class IndexExpression(Expression target, Expression[] parameters) : Expre
         }
     }
 
-    public ValueExpression Assign(IParserContext context, object newValue)
+    public ValueExpression Assign(IParserContext context, object? newValue)
     {
         return Evaluate(context, true, newValue);
     }

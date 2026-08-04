@@ -77,7 +77,7 @@ public class WrappedExpressionMatcher : ITokenMatcher, ITokenProcessor
         _startIndex = -1;
     }
 
-    private string Expression { get; set; }
+    private string _expression = null!;
 
     private bool IsMatch(char c1, char c2)
     {
@@ -126,7 +126,7 @@ public class WrappedExpressionMatcher : ITokenMatcher, ITokenProcessor
                     }
                     else if (_index == _parts[_parts.Length - 1].Length)
                     {
-                        Expression = fullExpression.Substring(_startIndex, currentIndex - _startIndex - _index + 1);
+                        _expression = fullExpression.Substring(_startIndex, currentIndex - _startIndex - _index + 1);
 
                         _state = State.Success;
                     }
@@ -196,6 +196,6 @@ public class WrappedExpressionMatcher : ITokenMatcher, ITokenProcessor
 
     protected virtual string TranslateToken(string originalToken, WrappedExpressionMatcher tokenProcessor)
     {
-        return tokenProcessor.Expression.Trim();
+        return tokenProcessor._expression.Trim();
     }
 }

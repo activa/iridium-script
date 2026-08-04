@@ -91,10 +91,10 @@ public class ScriptDebugBreakEventArgs : EventArgs
     /// current scope. Debugging is suppressed during this evaluation so it never
     /// triggers nested breakpoints.
     /// </summary>
-    public object Evaluate(string expression) => _debugger.EvaluateExpression(expression, Context);
+    public object? Evaluate(string expression) => _debugger.EvaluateExpression(expression, Context);
 
     /// <summary>Evaluates an expression and converts the result to <typeparamref name="T"/>.</summary>
-    public T Evaluate<T>(string expression) => _debugger.EvaluateExpression<T>(expression, Context);
+    public T? Evaluate<T>(string expression) => _debugger.EvaluateExpression<T>(expression, Context);
 
     /// <summary>
     /// Evaluates an expression, returning <c>false</c> instead of throwing if it

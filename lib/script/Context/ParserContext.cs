@@ -496,7 +496,7 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
             if (indexerPropInfo != null)
             {
                 if (!MemberAccessPolicy.IsSafe(indexerPropInfo))
-                    throw new ExpressionEvaluationException("Access to member " + indexerPropInfo.Name + " is not allowed", null);
+                    throw new ExpressionEvaluationException("Access to member " + indexerPropInfo.Name + " is not allowed");
 
                 value = indexerPropInfo.GetValue(obj, [propertyName]);
                 type = (value != null && indexerPropInfo.PropertyType == typeof(object)) ? value.GetType() : typeof(object);
@@ -510,7 +510,7 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
         if (members.Length >= 1 && members[0] is MethodInfo methodInfo)
         {
             if (!MemberAccessPolicy.IsSafe(methodInfo))
-                throw new ExpressionEvaluationException("Access to member " + methodInfo.Name + " is not allowed", null);
+                throw new ExpressionEvaluationException("Access to member " + methodInfo.Name + " is not allowed");
 
             value = new InstanceMethod(targetType, propertyName, obj);
             type = typeof(InstanceMethod);
@@ -528,7 +528,7 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
         }
 
         if (!MemberAccessPolicy.IsSafe(member))
-            throw new ExpressionEvaluationException("Access to member " + member.Name + " is not allowed", null);
+            throw new ExpressionEvaluationException("Access to member " + member.Name + " is not allowed");
 
         if (member is FieldInfo fieldInfo)
         {

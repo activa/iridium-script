@@ -30,12 +30,12 @@ public class AndAlsoExpression(Expression left, Expression right) : BinaryExpres
 {
     public override ValueExpression Evaluate(IParserContext context)
     {
-        object left = Left.Evaluate(context).Value;
+        object? left = Left.Evaluate(context).Value;
 
         if (!context.ToBoolean(left))
             return Exp.Value(false);
 
-        object rightValue = Right.Evaluate(context).Value;
+        object? rightValue = Right.Evaluate(context).Value;
 
         return Exp.Value(context.ToBoolean(rightValue));
     }

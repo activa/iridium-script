@@ -40,9 +40,9 @@ internal class StaticMethod : MethodDefinition
     {
     }
 
-    public override object Invoke(Type[] types, object[] parameters, out Type returnType)
+    public override object? Invoke(Type[] types, object?[] parameters, out Type returnType)
     {
-        MethodInfo methodInfo = GetMethodInfo(types);
+        MethodInfo? methodInfo = GetMethodInfo(types);
 
         if (methodInfo == null)
             throw new MissingMemberException(MethodName);

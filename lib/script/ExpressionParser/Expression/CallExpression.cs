@@ -71,7 +71,7 @@ public class CallExpression : Expression
                 else
                     throw new ExpressionEvaluationException($"{method.Name} is not a constructor", this);
 
-                return Exp.Value(value, method.DeclaringType);
+                return Exp.Value(value, method.DeclaringType!);
             }
 
             case Delegate[] delegates:

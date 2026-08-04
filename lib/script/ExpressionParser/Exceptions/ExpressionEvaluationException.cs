@@ -30,7 +30,11 @@ namespace Iridium.Script;
 
 public class ExpressionEvaluationException : ParserException
 {
-    public Expression ExpressionNode { get; private set; }
+    public Expression? ExpressionNode { get; private set; }
+
+    public ExpressionEvaluationException(string message) : base(message)
+    {
+    }
 
     public ExpressionEvaluationException(Expression expressionNode)
     {

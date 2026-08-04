@@ -69,7 +69,7 @@ public class ExpressionTokenizer : Tokenizer<ExpressionToken>
         AddTokenMatcher(partial2);
     }
 
-    public override ExpressionToken CreateToken(ITokenMatcher tokenMatcher, string token)
+    public override ExpressionToken CreateToken(ITokenMatcher? tokenMatcher, string token)
     {
         return new ExpressionToken((ExpressionTokenMatcher) tokenMatcher, token);
     }

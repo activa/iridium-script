@@ -29,8 +29,8 @@ namespace Iridium.Script;
 public class FunctionDefinitionExpression : Expression
 {
     public required string Name { get; init; }
-    public Expression Body { get; set; }
-    public string[] ParameterNames { get; set; }
+    public required Expression Body { get; init; }
+    public required string[] ParameterNames { get; init; }
 
     public override ValueExpression Evaluate(IParserContext context)
     {

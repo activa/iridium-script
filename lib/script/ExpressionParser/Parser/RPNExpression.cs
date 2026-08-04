@@ -203,7 +203,7 @@ internal class RPNExpression
         _tokenQueue.Clear();
     }
 
-    public Expression? Compile()
+    public Expression Compile()
     {
         Stack<Expression> resultStack = new Stack<Expression>();
 
@@ -237,6 +237,6 @@ internal class RPNExpression
             }
         }
 
-        return currentExpression;
+        return currentExpression ?? Exp.Null();
     }
 }

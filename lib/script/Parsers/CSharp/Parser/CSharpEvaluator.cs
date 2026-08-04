@@ -59,7 +59,7 @@ internal static class CSharpEvaluator
         if (token == "is")
             return new IsExpression(terms[0], terms[1]);
 
-        return null;
+        throw new LexerException($"Unexpected keyword: {token}", token);
     }
 
     public static Expression InOperator(string token, Expression[] terms)

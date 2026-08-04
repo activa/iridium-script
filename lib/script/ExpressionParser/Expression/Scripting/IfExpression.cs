@@ -30,8 +30,8 @@ public class IfExpression(Expression condition) : Expression
 {
     public Expression Condition { get; } = condition;
 
-    public Expression TrueExpression { get; set; }
-    public Expression FalseExpression { get; set; }
+    public required Expression TrueExpression { get; init; }
+    public  Expression? FalseExpression { get; set; }
 
     public override ValueExpression Evaluate(IParserContext context)
     {

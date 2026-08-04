@@ -220,7 +220,7 @@ public class ScriptDebugger : IScriptDebugger
 
         try
         {
-            return context.ToBoolean(EvaluateExpression(breakpoint.Condition, context));
+            return context.ToBoolean(EvaluateExpression(breakpoint.Condition!, context));
         }
         catch
         {
@@ -230,7 +230,7 @@ public class ScriptDebugger : IScriptDebugger
         }
     }
 
-    internal object EvaluateExpression(string expression, IParserContext context)
+    internal object? EvaluateExpression(string expression, IParserContext context)
     {
         bool previous = _suppressed;
         _suppressed = true;
@@ -245,7 +245,7 @@ public class ScriptDebugger : IScriptDebugger
         }
     }
 
-    internal T EvaluateExpression<T>(string expression, IParserContext context)
+    internal T? EvaluateExpression<T>(string expression, IParserContext context)
     {
         return EvaluateExpression(expression, context).Convert<T>();
     }
