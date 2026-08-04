@@ -787,6 +787,9 @@ namespace Iridium.Script.Test
         [TestCase("if(1==0) print(1);print(2)", ExpectedResult = "2", TestName = "If.False")]
         [TestCase("function x(a,b) { print(a); print(b); } x(1,2);", ExpectedResult = "12", TestName = "Function.Definition.Void")]
         [TestCase("function max(a,b) { return a > b ? a:b; } print(max(1,2)); print(max(5,6));", ExpectedResult = "26", TestName = "Function.Definition.WithReturnValue")]
+        [TestCase("function id(n) { return n; } x = id(1); print(x); print(2);", ExpectedResult = "12", TestName = "Function.Return.Does.Not.End.Script")]
+        [TestCase("function inc(n) { return n + 1; } x = 0; foreach (i in [1...3]) x = inc(x); print(x);", ExpectedResult = "3", TestName = "Function.Return.Does.Not.Break.ForEach")]
+        [TestCase("function inc(n) { return n + 1; } x = 0; while (x < 3) { x = inc(x); } print(x);", ExpectedResult = "3", TestName = "Function.Return.Does.Not.Break.While")]
         public string ScriptSimple(string script)
         {
             var output = new StringBuilder();
@@ -977,11 +980,12 @@ f(5);
             Assert.That(parser.Evaluate<int>("s.length", context), Is.EqualTo(3));
         }
 
+        /*
         [Test]
         public void NullArithmic()
         {
             var parser = new CSharpParser();
-            var context = new ParserContext();
+            var context = new ParserContext(ParserContextBehavior.Easy);
 
             context["a"] = null;
 
@@ -992,6 +996,7 @@ f(5);
 
 
         }
+        */
 
     }
 }

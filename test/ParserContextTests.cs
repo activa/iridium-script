@@ -98,6 +98,25 @@ namespace Iridium.Script.Test
 
         }
 
+        [Test]
+        public void CheckProhibitedMethods()
+        {
+            var ctx = new ParserContext();
+
+            ctx["a"] = 1;
+
+            Assert.DoesNotThrow(() => CSharpParser.Default.Evaluate("a.ToString()", ctx));
+            Assert.Throws<ExpressionEvaluationException>(() => CSharpParser.Default.Evaluate("a.GetType()", ctx));
+        }
+
+
+        [Test]
+        public void CheckProhibitedMethodsOnRoot()
+        {
+            var ctx = new ParserContext();
+
+            Assert.Throws<ExpressionEvaluationException>(() => CSharpParser.Default.Evaluate("GetType()", ctx));
+        }
 
     }
 }

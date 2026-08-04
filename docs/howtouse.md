@@ -179,6 +179,7 @@ If any of that looks useful, read on.
 - [The scripting language](#the-scripting-language)
 - [Debugging scripts](#debugging-scripts)
 - [Contexts: variables, types, functions & objects](#contexts-variables-types-functions--objects)
+- [Script safety: the reflection boundary](#script-safety-the-reflection-boundary)
 - [Template rendering](#template-rendering)
 - [Building expression trees by hand](#building-expression-trees-by-hand)
 - [Error handling](#error-handling)
@@ -697,6 +698,92 @@ ctx.FormatProvider = CultureInfo.GetCultureInfo("nl-BE");   // used by template 
 
 
 
+## Script safety: the reflection boundary
+
+Expressions, scripts and templates are typically authored by people who are *not* the application's developers: a rule editor in a back-office, a template stored in a database, a formula typed into a form. Those authors may name **any member of any object** the context can reach, and in .NET every object offers a door into the reflection API through `GetType()`. Walking through it is enough to leave the sandbox entirely:
+
+```csharp
+// Script source. If either of these were permitted, a one-line "rule" would own the process:
+customer.GetType().Assembly.GetType("System.Diagnostics.Process")
+typeof(int).Module.GetType("System.Environment")
+```
+
+Either chain yields an arbitrary `Type`, and from a `Type` a script can locate any method and invoke it. A single leaked `Type`, `Assembly` or `Module` is therefore equivalent to arbitrary code execution — regardless of how careful you were about what you put in the context.
+
+To close that off, member access is screened by `MemberAccessPolicy`. It is **always on**, applies to every context, and covers expressions, scripts and templates alike, because they all resolve members through the same code path.
+
+### What is refused
+
+A member is refused when it is **part of** the reflection object model, or when it would **hand a piece of that model out**:
+
+
+| Refused                                              | Examples                                                                                                          |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Any member declared on the reflection object model    | `Type.Assembly`, `Type.Module`, `Type.BaseType`, `Type.Name`, `Type.GetConstructors()`, `Assembly.GetType(…)`, `MethodBase.Invoke(…)` |
+| Members that return or expose one of those objects    | `object.GetType()`, a property typed `Type`, a `Type[]`, an `IEnumerable<Type>`, a property typed `Assembly`       |
+| Members that accept one of those objects              | `void Configure(Type type)`                                                                                       |
+
+
+"The reflection object model" means `Type`/`TypeInfo` and everything below `MemberInfo` (`MethodInfo`, `ConstructorInfo`, `FieldInfo`, `PropertyInfo`, `EventInfo`), plus `Assembly`, `Module`, `ParameterInfo`, delegates (they expose the method they point at), `AppDomain`, `Activator`, the runtime handles, and anything in the `System.Reflection`, `System.Runtime.CompilerServices`, `System.Runtime.InteropServices` and `System.Runtime.Loader` namespaces.
+
+Note that the rule is about the *declared* member, not about a name: blocking `GetType` by name would still leave `Module.GetType(...)`, `BaseType`, `ReflectedType` and others open. Denying the whole surface closes the routes nobody thought of too.
+
+A refused access throws `ExpressionEvaluationException`:
+
+```csharp
+try
+{
+    parser.Evaluate<string>("customer.GetType().Assembly.Location", context);
+}
+catch (ExpressionEvaluationException ex)
+{
+    // ex.Message == "Access to member GetType is not allowed"
+}
+```
+
+### What still works
+
+Everything a rule or template is actually meant to do. The boundary only removes the reflection surface, not your own objects:
+
+```csharp
+parser.Evaluate<string>("order.Customer.Name.ToUpper()");   // member chains and real .NET methods
+parser.Evaluate<int>("order.Customer.Name.Length");         // properties
+parser.Evaluate<string>("order.Lines[0].Product");          // indexers and array access
+parser.Evaluate<DateTime>("DateTime.Today");                // static members of a registered type
+parser.Evaluate<DateTime>("new DateTime(2026, 1, 1)");      // construction with 'new'
+parser.Evaluate<decimal>("round(order.Total * 0.9m)");      // delegates registered in the context
+parser.Evaluate<bool>("\"x\" is string");                   // is / as / casts
+parser.Evaluate<Type>("typeof(int)");                       // typeof still produces a Type...
+```
+
+`typeof(...)` keeps working and still returns a real `Type`, so `Evaluate<Type>` and `is`/`as` are unaffected. The value is simply inert inside a script: `typeof(int).Name` and `typeof(int).Module` are both refused, so there is nowhere to go from it.
+
+### Two things that may surprise you
+
+**`GetType()` is unavailable, even for harmless uses.** A script cannot ask an object what it is. If rule authors genuinely need that, expose exactly the answer you're willing to give as a function:
+
+```csharp
+context.Set("typeName", new Func<object, string>(o => o.GetType().Name));
+// scripts can now use: typeName(order)   ->   "Order"
+```
+
+**A delegate is callable as a context variable, but not as a member.** `context.Set("round", new Func<decimal, decimal>(...))` is callable as `round(x)`, and `AddFunction` works the same way, because neither goes through member resolution. A delegate reached *through an object* — `settings.Callback` — is refused, since a delegate hands out the method behind it. Register the callback in the context instead of exposing it as a property.
+
+### Choosing what a script can reach
+
+The policy is not configurable, and deliberately so: it is the floor that keeps a script inside the process boundary, not a general-purpose permission system. Deciding which of *your* types and members a script may use remains your call, and you make it the same way you always did — by choosing what goes into the context, and with [`AssignmentPermissions`](#controlling-assignment) to keep evaluation read-only:
+
+```csharp
+// Expose a narrow, purpose-built view instead of your whole domain model:
+var context = new ParserContext(new { order.Id, order.Total, order.Status });
+```
+
+One limitation worth knowing: the screening is based on member *signatures*. A member declared as returning `object` cannot be judged up front, so if it returns a `Type` at runtime the value does arrive in the script — but every member access on it is then resolved against `Type` and refused, so the chain still stops there.
+
+---
+
+
+
 ## Template rendering
 
 `TemplateParser<TConfig>` renders a text template by evaluating embedded expressions, loops, conditionals and macros. Pick a `TConfig` for the syntax you want; all of them use the same underlying expression/scripting engine and the same `ParserContext`.
@@ -848,6 +935,8 @@ Parsing and evaluation raise specific exception types so you can react precisely
 
 
 Under `ParserContextBehavior.Default`, using a non-`bool` in a boolean position throws `NullReferenceException` (for `null`) or `ArgumentException` (for other types); enable the `Falsy`/`Easy` behaviors to coerce instead.
+
+A member access refused by the [reflection boundary](#script-safety-the-reflection-boundary) also raises `ExpressionEvaluationException`, with a message of the form `Access to member GetType is not allowed`.
 
 **Templates** (`Iridium.Script`): `TemplateParsingException` (during `Parse`) and `TemplateRenderingException` (during `Render`) wrap the underlying cause in `InnerException`.
 

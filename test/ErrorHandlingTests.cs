@@ -108,6 +108,73 @@ namespace Iridium.Script.Test
         }
 
         // ---------------------------------------------------------------------
+        // 'break' is only meaningful inside a loop
+        // ---------------------------------------------------------------------
+
+        [Test]
+        public void BreakOutsideLoopReportsPosition()
+        {
+            var ex = Assert.Throws<LexerException>(() => ScriptParser().Parse("x = 1;\nbreak;"));
+
+            StringAssert.Contains("break", ex.Message);
+            Assert.AreEqual(2, ex.Position.Line);
+        }
+
+        // Outside a loop body there is no position where 'break' means anything, whether
+        // it is written as a statement or used as a value.
+        [TestCase("break;", TestName = "Break.At.Top.Level")]
+        [TestCase("if (x > 0) break;", TestName = "Break.In.If.Outside.Loop")]
+        [TestCase("foreach (i in [1...3]) { print(i); }\nbreak;", TestName = "Break.After.Loop")]
+        [TestCase("foreach (i in [1...3]) { function f() { break; } }", TestName = "Break.In.Function.Inside.Loop")]
+        [TestCase("x = break;", TestName = "Break.As.Assigned.Value")]
+        [TestCase("x = break + 1;", TestName = "Break.As.Operand")]
+        [TestCase("print(break);", TestName = "Break.As.Argument")]
+        [TestCase("while (break) { print(1); }", TestName = "Break.As.Loop.Condition")]
+        [TestCase("foreach (i in [1...3]) { x = break; }", TestName = "Break.As.Value.Inside.Loop")]
+        [TestCase("foreach (i in [1...3]) { return break; }", TestName = "Break.As.Return.Value")]
+        public void BreakOutsideLoopBodyIsRejected(string script)
+        {
+            Assert.Throws<LexerException>(() => ScriptParser().Parse(script));
+        }
+
+        // 'return' is a statement too, so it has no value either. Unlike 'break' it is
+        // valid at script level, where it produces the script's result.
+        [TestCase("x = return 1;", TestName = "Return.As.Assigned.Value")]
+        [TestCase("x = 1 + return 2;", TestName = "Return.As.Operand")]
+        [TestCase("print(return 1);", TestName = "Return.As.Argument")]
+        [TestCase("while (return 1) { print(1); }", TestName = "Return.As.Loop.Condition")]
+        [TestCase("return return 1;", TestName = "Return.Of.Return")]
+        [TestCase("foreach (i in [1...3]) { return break; }", TestName = "Return.Of.Break")]
+        public void ReturnUsedAsValueIsRejected(string script)
+        {
+            var ex = Assert.Throws<LexerException>(() => ScriptParser().Parse(script));
+
+            StringAssert.Contains("is not a value", ex.Message);
+        }
+
+        [TestCase("return 5;", ExpectedResult = 5, TestName = "Return.At.Script.Level")]
+        [TestCase("a = 1; if (a > 0) { return 2; } return 3;", ExpectedResult = 2, TestName = "Return.From.Block")]
+        [TestCase("foreach (i in [1...3]) { return i; }", ExpectedResult = 1, TestName = "Return.From.Loop")]
+        [TestCase("function f() { return 7; } return f();", ExpectedResult = 7, TestName = "Return.From.Function")]
+        public int ReturnAtScriptLevelStillProducesTheScriptValue(string script)
+        {
+            var context = new ParserContext { AssignmentPermissions = AssignmentPermissions.All };
+
+            return ScriptParser().Evaluate<int>(script, context);
+        }
+
+        [TestCase("foreach (i in [1...3]) { if (i > 1) break; }", TestName = "Break.In.ForEach")]
+        [TestCase("while (x < 3) { break; }", TestName = "Break.In.While")]
+        [TestCase("while (x < 3) { if (x > 1) break; else break; }", TestName = "Break.In.If.Else.Inside.Loop")]
+        [TestCase("foreach (i in [1...3]) break;", TestName = "Break.In.Braceless.ForEach.Body")]
+        [TestCase("function f() { foreach (i in [1...3]) break; }", TestName = "Break.In.Loop.Inside.Function")]
+        [TestCase("foreach (i in [1...3]) { foreach (j in [1...3]) { break; } break; }", TestName = "Break.In.Nested.Loops")]
+        public void BreakInsideLoopIsAccepted(string script)
+        {
+            Assert.DoesNotThrow(() => ScriptParser().Parse(script));
+        }
+
+        // ---------------------------------------------------------------------
         // Tokenizer errors report the offending position
         // ---------------------------------------------------------------------
 

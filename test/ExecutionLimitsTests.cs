@@ -141,7 +141,7 @@ namespace Iridium.Script.Test
             _context.ExecutionLimits = new ExecutionLimits { MaxCallDepth = 5 };
 
             // 100 sequential calls, never more than one deep.
-            Assert.That(Run<int>("function inc(n) { n + 1; } x = 0; foreach (i in [1...100]) x = inc(x); return x;"), Is.EqualTo(100));
+            Assert.That(Run<int>("function inc(n) { return n + 1; } x = 0; foreach (i in [1...100]) x = inc(x); return x;"), Is.EqualTo(100));
         }
 
         // ---------------------------------------------------------------------

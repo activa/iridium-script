@@ -495,6 +495,9 @@ namespace Iridium.Script
 
                 if (indexerPropInfo != null)
                 {
+                    if (!MemberAccessPolicy.IsSafe(indexerPropInfo))
+                        throw new ExpressionEvaluationException("Access to member " + indexerPropInfo.Name + " is not allowed", null);
+
                     value = indexerPropInfo.GetValue(obj, [propertyName]);
                     type = (value != null && indexerPropInfo.PropertyType == typeof(object)) ? value.GetType() : typeof(object);
 
@@ -504,8 +507,11 @@ namespace Iridium.Script
                 return false;
             }
 
-            if (members.Length >= 1 && members[0] is MethodInfo)
+            if (members.Length >= 1 && members[0] is MethodInfo methodInfo)
             {
+                if (!MemberAccessPolicy.IsSafe(methodInfo))
+                    throw new ExpressionEvaluationException("Access to member " + methodInfo.Name + " is not allowed", null);
+
                 value = new InstanceMethod(targetType, propertyName, obj);
                 type = typeof(InstanceMethod);
 
@@ -520,6 +526,9 @@ namespace Iridium.Script
                     if (memberInfo.DeclaringType == obj.GetType())
                         member = memberInfo;
             }
+
+            if (!MemberAccessPolicy.IsSafe(member))
+                throw new ExpressionEvaluationException("Access to member " + member.Name + " is not allowed", null);
 
             if (member is FieldInfo fieldInfo)
             {

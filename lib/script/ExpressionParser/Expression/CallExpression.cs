@@ -107,14 +107,14 @@ namespace Iridium.Script
 			        }
 
 			        if (monitor == null)
-			            return func.Body.EvaluateStatement(functionContext);
+			            return CallResult(func.Body.EvaluateStatement(functionContext));
 
 			        // Calling a script function is the only way a script can recurse.
 			        monitor.EnterCall(this);
 
 			        try
 			        {
-			            return func.Body.EvaluateStatement(functionContext);
+			            return CallResult(func.Body.EvaluateStatement(functionContext));
 			        }
 			        finally
 			        {
@@ -124,6 +124,16 @@ namespace Iridium.Script
 			}
 
             throw new ExpressionEvaluationException(MethodExpression + " is not a function", this);
+        }
+
+        /// <summary>
+        /// Turns the result of a function body into the value of the call. <c>return</c>
+        /// is a signal meant for the body only: letting it escape would also abort the
+        /// loop or statement sequence containing the call.
+        /// </summary>
+        private static ValueExpression CallResult(ValueExpression bodyResult)
+        {
+            return bodyResult is ReturnValueExpression ? Exp.Value(bodyResult.Value, bodyResult.Type) : bodyResult;
         }
 
 #if DEBUG

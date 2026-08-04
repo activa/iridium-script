@@ -13,7 +13,7 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
     {
         CurrentIndex = 0;
 
-        return Compile(multiple: true);
+        return Compile(multiple: true, inLoop: false);
     }
 
     private ExpressionToken? CurrentToken => _currentToken ??= (CurrentIndex < _tokens.Length ? _tokens[CurrentIndex] : null);
@@ -35,6 +35,14 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
         return CurrentIndex < _tokens.Length;
     }
 
+    /// <summary>
+    /// <c>break</c> and <c>return</c> are statements. They carry control flow and have
+    /// no value, so they are only valid where a statement is expected.
+    /// </summary>
+    private static bool IsStatementKeyword(ExpressionToken token) => token.TokenType is TokenType.Break or TokenType.Return;
+
+    private static LexerException KeywordUsedAsValue(ExpressionToken token) => new LexerException($"{token.Text} is not a value", token.Text, token.Position);
+
     private Expression CompileStatement(int lastToken = Int32.MaxValue)
     {
         RPNExpression rpn = new RPNExpression(_parser.FunctionEvaluator);
@@ -51,6 +59,12 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
                 MoveNext();
                 break;
             }
+
+            // Statement-level 'break' and 'return' never reach here (Compile() handles
+            // both), so either keyword in this position is being used as a value:
+            // 'x = break', 'f(return 1)', 'while (break)'.
+            if (IsStatementKeyword(CurrentToken))
+                throw KeywordUsedAsValue(CurrentToken);
 
             lastConsumedToken = CurrentToken;
 
@@ -165,7 +179,15 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
         throw new LexerException("Unterminated bracketed expression", null, openParenPosition);
     }
 
-    private Expression Compile(bool multiple)
+    /// <summary>
+    /// Compiles a statement or block. <paramref name="inLoop"/> says whether the code
+    /// being compiled is part of a loop body, which is the only place a <c>break</c>
+    /// statement is meaningful. It is passed down into nested constructs and deliberately
+    /// dropped when entering a function body: a loop around a function definition is not
+    /// one the function can break out of, because by the time the function is called that
+    /// loop may not even be running.
+    /// </summary>
+    private Expression Compile(bool multiple, bool inLoop)
     {
         if (CurrentToken == null)
             throw new LexerException("Unexpected end of input", null, SourcePosition.Unknown);
@@ -211,7 +233,7 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
                     {
                         Iterator = expression.Variable,
                         Expression = expression.Expression,
-                        Body = Compile(false)
+                        Body = Compile(multiple: false, inLoop: true)
                     };
 
                     forEach.SourceSpan = SpanFromTokenToExpression(token, forEach.Body);
@@ -230,7 +252,7 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
                     var whileExpression = new WhileExpression
                     {
                         ConditionExpression = conditionExpression,
-                        Body = Compile(false)
+                        Body = Compile(multiple: false, inLoop: true)
                     };
 
                     whileExpression.SourceSpan = SpanFromTokenToExpression(token, whileExpression.Body);
@@ -249,7 +271,7 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
 
                     ifExpression = new IfExpression(expr)
                     {
-                        TrueExpression = Compile(false)
+                        TrueExpression = Compile(multiple: false, inLoop)
                     };
 
                     ifExpression.SourceSpan = SpanFromTokenToExpression(token, ifExpression.TrueExpression);
@@ -265,7 +287,7 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
 
                     if (ifExpression != null)
                     {
-                        ifExpression.FalseExpression = Compile(false);
+                        ifExpression.FalseExpression = Compile(multiple: false, inLoop);
                         ifExpression = null;
                     }
 
@@ -276,7 +298,12 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
                 {
                     MoveNext();
 
-                    Expression expression = Compile(multiple: false);
+                    if (CurrentToken != null && IsStatementKeyword(CurrentToken))
+                        throw KeywordUsedAsValue(CurrentToken);
+
+                    // What follows 'return' is a value, so 'break' is not allowed in it
+                    // even when the return itself sits inside a loop.
+                    Expression expression = Compile(multiple: false, inLoop: false);
 
                     ReturnExpression returnExpression = new ReturnExpression(expression);
 
@@ -289,6 +316,9 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
 
                 case TokenType.Break:
                 {
+                    if (!inLoop)
+                        throw new LexerException("break outside of a loop", token.Text, token.Position);
+
                     MoveNext();
 
                     BreakLoopExpression breakExpression = new BreakLoopExpression();
@@ -346,7 +376,7 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
 
                     functionExpression.ParameterNames = (from p in parameters.Parameters select ((VariableExpression)p).VarName).ToArray();
 
-                    functionExpression.Body = Compile(false);
+                    functionExpression.Body = Compile(multiple: false, inLoop: false);
 
                     functionExpression.SourceSpan = SpanFromTokenToExpression(token, functionExpression.Body);
 
