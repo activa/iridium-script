@@ -36,7 +36,7 @@ public class ConstructorExpression(VariableExpression typeName, Expression[] par
 
     public override ValueExpression Evaluate(IParserContext context)
     {
-        TypeName typeName = TypeName.Evaluate(context).Value as TypeName;
+        TypeName? typeName = TypeName.Evaluate(context).Value as TypeName;
 
         if (typeName == null)
             throw new TypeInitializationException(TypeName.VarName,null);
@@ -47,7 +47,7 @@ public class ConstructorExpression(VariableExpression typeName, Expression[] par
 #if DEBUG
     public override string ToString()
     {
-        string[] parameters = Parameters.ConvertAll(expr => expr.ToString());
+        string[] parameters = Parameters.ConvertAll(expr => expr!.ToString())!;
 
         return $"(new {TypeName}({String.Join(",", parameters)}))";
     }

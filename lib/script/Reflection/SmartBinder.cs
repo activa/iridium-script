@@ -54,7 +54,7 @@ internal class SmartBinder
                 case ParameterCompareType.Assignable:
                     return targetType!.IsAssignableFrom(sourceType);
                 case ParameterCompareType.Implicit:
-                    return targetType!.GetMethod("op_Implicit", [sourceType]) != null;
+                    return targetType!.GetMethod("op_Implicit", [sourceType!]) != null;
                 case ParameterCompareType.Convertable:
                     return targetType == typeof(string);
                 default:

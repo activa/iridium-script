@@ -24,22 +24,23 @@
 //=============================================================================
 #endregion
 
+using System;
 using Iridium.Script;
 
 namespace Iridium.Script;
 
 public class ExpressionTokenMatcher : ITokenMatcher
 {
-    private readonly ITokenMatcher _matcher;
+    private readonly ITokenMatcher? _matcher;
 
-    public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, TokenEvaluator? tokenEvaluator)
+    public ExpressionTokenMatcher(ITokenMatcher? matcher, TokenType tokenType, TokenEvaluator? tokenEvaluator)
     {
         _matcher = matcher;
         TokenType = tokenType;
         Evaluator = tokenEvaluator;
     }
 
-    public ExpressionTokenMatcher(ITokenMatcher matcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator? tokenEvaluator)
+    public ExpressionTokenMatcher(ITokenMatcher? matcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator? tokenEvaluator)
     {
         _matcher = matcher;
         TokenType = tokenType;
@@ -50,12 +51,16 @@ public class ExpressionTokenMatcher : ITokenMatcher
 
     public ITokenProcessor CreateTokenProcessor()
     {
+        // todo: better error handling here, maybe return a null processor that throws an exception when used
+        if (_matcher == null) 
+            throw new Exception("Matcher is not set.");       
+
         return _matcher.CreateTokenProcessor();
     }
 
     public string TranslateToken(string originalToken, ITokenProcessor tokenProcessor)
     {
-        return _matcher.TranslateToken(originalToken, tokenProcessor);
+        return _matcher?.TranslateToken(originalToken, tokenProcessor) ?? originalToken;
     }
 
     public TokenType TokenType { get; }

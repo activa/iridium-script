@@ -44,13 +44,13 @@ public class ForEachExpression : Expression
             {
                 monitor?.CheckExecutionTime(this);
 
-                var localContext = context.CreateLocal();
+                var localContext = (context ?? ParserContext.Default).CreateLocal();
 
                 localContext.Set(Iterator.VarName, item);
 
                 var returnValue = Body.EvaluateStatement(localContext);
 
-                if (returnValue is ReturnValueExpression || returnValue is BreakLoopExpression)
+                if (returnValue is ReturnValueExpression or BreakLoopExpression)
                 {
                     return returnValue;
                 }

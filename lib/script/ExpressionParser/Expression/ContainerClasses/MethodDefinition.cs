@@ -54,7 +54,7 @@ internal abstract class MethodDefinition : IMethodDefinition
         if (_methodInfo != null)
             return _methodInfo;
 
-        Type? t = Type;
+        Type? t = Type!;
 
         do
         {
@@ -65,7 +65,7 @@ internal abstract class MethodDefinition : IMethodDefinition
             // than the first one that matches under any rule. The latter is
             // order-dependent and can incorrectly select, for example, an
             // overload only reachable through an implicit numeric conversion.
-            MethodInfo? methodInfo = SmartBinder.SelectBestMethod(candidates, parameterTypes);
+            var methodInfo = SmartBinder.SelectBestMethod(candidates, parameterTypes);
 
             if (methodInfo != null)
                 return methodInfo;

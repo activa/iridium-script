@@ -51,7 +51,7 @@ public class SequenceExpression(Expression[] expressions) : Expression
         if (returnValue != null)
             return returnValue;
 
-        return Exp.Value(null);
+        return Exp.Null();
     }
 
 #if DEBUG

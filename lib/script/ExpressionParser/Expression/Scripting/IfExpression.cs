@@ -37,14 +37,14 @@ public class IfExpression(Expression condition) : Expression
     {
         bool result = context.ToBoolean(Condition.Evaluate(context).Value);
 
-        ValueExpression expression = null;
+        ValueExpression? expression = null;
 
         if (result)
             expression = TrueExpression.EvaluateStatement(context);
         else if (FalseExpression != null)
             expression = FalseExpression.EvaluateStatement(context);
 
-        if (expression is ReturnValueExpression || expression is BreakLoopExpression)
+        if (expression is ReturnValueExpression or BreakLoopExpression)
             return expression;
 
         return Exp.NullValue();

@@ -43,7 +43,10 @@ public sealed class ExecutionLimits
     /// <summary>Limits recursion to <see cref="DefaultMaxCallDepth"/>, but not execution time.</summary>
     public static readonly ExecutionLimits Default = new();
 
-    /// <summary>Enforces nothing.</summary>
+    /// <summary>
+    /// Enforces nothing. This also gives up the protection against runaway recursion
+    /// described on <see cref="MaxCallDepth"/>, so use it only for trusted scripts.
+    /// </summary>
     public static readonly ExecutionLimits None = new() { MaxCallDepth = null };
 
     /// <summary>
@@ -67,6 +70,10 @@ public sealed class ExecutionLimits
     /// CLR stack, and a real <c>StackOverflowException</c> cannot be caught: it kills
     /// the process. Raising this much above the default only makes sense if the host
     /// thread runs with a correspondingly large stack.
+    /// <para/>
+    /// A limit here is the only reliable defence. Setting it to <c>null</c> leaves nothing
+    /// but the best-effort stack check in the runtime, which a runaway recursive script
+    /// can outrun and bring the process down.
     /// </summary>
     public int? MaxCallDepth { get; init; } = DefaultMaxCallDepth;
 

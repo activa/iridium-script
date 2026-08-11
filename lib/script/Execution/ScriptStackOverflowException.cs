@@ -30,9 +30,14 @@ namespace Iridium.Script;
 
 /// <summary>
 /// Thrown when a script recurses deeper than <see cref="ExecutionLimits.MaxCallDepth"/>,
-/// or when the CLR stack is about to run out. It replaces the fatal
-/// <c>StackOverflowException</c> that runaway recursion would otherwise cause, which
-/// cannot be caught and takes the whole process down.
+/// or when the CLR stack is found to be running out. It exists to stop runaway recursion
+/// before it causes a <c>StackOverflowException</c>, which cannot be caught and takes the
+/// whole process down.
+/// <para/>
+/// Only <see cref="ExecutionLimits.MaxCallDepth"/> delivers that reliably. The stack check
+/// is a secondary measure that reserves a fixed margin, which is not enough when a single
+/// script call consumes a number of frames that grows with the call depth. Do not rely on
+/// it with no depth limit configured.
 /// </summary>
 public class ScriptStackOverflowException : ScriptExecutionLimitException
 {

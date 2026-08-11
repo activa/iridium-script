@@ -103,7 +103,7 @@ internal class TypeTraits
         {
             flags |= TypeTraitFlags.Array;
 
-            if (_typeflagsMap.TryGetValue(Type.GetElementType(), out var arrayTypeFlags))
+            if (_typeflagsMap.TryGetValue(Type.GetElementType()!, out var arrayTypeFlags))
                 flags |= arrayTypeFlags;
 
             if ((_elementTypeTraits!.TraitFlags & TypeTraitFlags.CanBeNull) != 0)

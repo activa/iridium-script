@@ -26,4 +26,4 @@
 
 namespace Iridium.Script;
 
-public delegate Expression TokenEvaluator(string token, Expression[] terms);
+public delegate Expression TokenEvaluator(string token, Expression[]? terms);

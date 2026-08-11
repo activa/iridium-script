@@ -24,7 +24,7 @@ namespace Iridium.Script.Test
             public ScriptDebugger Debugger;
             public StringBuilder Output;
 
-            public IValueWithType Run(string script) => Parser.Evaluate(script);
+            public IValueWithType Run(string script) => Parser.Evaluate(script, Context);
         }
 
         private static Debuggee CreateDebuggee()
@@ -39,7 +39,7 @@ namespace Iridium.Script.Test
 
             context.Debugger = debugger;
 
-            var parser = new CScriptParser { DefaultContext = context };
+            var parser = new CScriptParser();
 
             return new Debuggee { Parser = parser, Context = context, Debugger = debugger, Output = output };
         }
@@ -415,9 +415,9 @@ namespace Iridium.Script.Test
             var context = new ParserContext { AssignmentPermissions = AssignmentPermissions.All };
             context.Set("print", new Action<object>(o => output.Append(o)));
 
-            var parser = new CScriptParser { DefaultContext = context };
+            var parser = new CScriptParser();
 
-            var result = parser.Evaluate<int>("x = 6;\ny = 7;\nreturn x * y;");
+            var result = parser.Evaluate<int>("x = 6;\ny = 7;\nreturn x * y;", context);
 
             Assert.AreEqual(42, result);
         }

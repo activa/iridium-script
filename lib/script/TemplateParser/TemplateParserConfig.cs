@@ -28,6 +28,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Iridium.Script;
 
 namespace Iridium.Script;
@@ -41,7 +42,7 @@ public abstract class TemplateParserConfig<T> : TemplateParserConfig where T:Tem
 
 public abstract class TemplateParserConfig
 {
-    public IFileResolver FileResolver { get; set; }
+    public IFileResolver? FileResolver { get; set; }
     public abstract Tokenizer<TemplateToken> Tokenizer { get; }
 
     protected virtual bool OnEvalIf(ExpressionParser parser, TemplateToken templateToken, IParserContext context)
@@ -90,7 +91,7 @@ public abstract class TemplateParserConfig
 
     protected virtual IEnumerable OnEvalForeach(ExpressionParser parser, ForeachTemplateToken templateToken, IParserContext context)
     {
-        return parser.Evaluate(templateToken.Expression, context).Value as IEnumerable;
+        return parser.Evaluate(templateToken.Expression, context).Value as IEnumerable ?? throw new ExpressionEvaluationException($"Parser error. Foreach expression {templateToken.Expression} did not evaluate to a list.");
     }
 
     protected virtual string OnEvalText(string text)
@@ -98,7 +99,7 @@ public abstract class TemplateParserConfig
         return text;
     }
 
-    protected virtual void OnEvalIteration(string iteratorName, int rowNum, object obj, IParserContext localContext)
+    protected virtual void OnEvalIteration(string iteratorName, int rowNum, object? obj, IParserContext localContext)
     {
         localContext.SetLocal(iteratorName + "@row", rowNum);
         localContext.SetLocal(iteratorName + "@index", rowNum-1);
@@ -121,7 +122,7 @@ public abstract class TemplateParserConfig
 
     internal string EvalExpression(ExpressionParser parser, TemplateToken templateToken, IParserContext context)
     {
-        return OnEvalExpression(parser, templateToken, context);
+        return OnEvalExpression(parser, templateToken, context) ?? "";
     }
 
     internal string EvalMacroCall(ExpressionParser parser, TemplateToken templateToken, IParserContext context, out Dictionary<string, IValueWithType> parameters)
@@ -139,7 +140,7 @@ public abstract class TemplateParserConfig
         return OnEvalText(text);
     }
 
-    internal void EvalIteration(string iteratorName, int rowNum, object obj, IParserContext localContext)
+    internal void EvalIteration(string iteratorName, int rowNum, object? obj, IParserContext localContext)
     {
         OnEvalIteration(iteratorName, rowNum, obj, localContext);
     }
@@ -160,20 +161,21 @@ public abstract class TemplateParserConfig
             parameters[var.Key] = parser.Evaluate(var.Value, context);
         }
 
-        string includeFile = Path.Combine(Path.GetDirectoryName(pExpr.MainExpression), fileName);
-
-        return templateParser.ParseFile(includeFile);
+        return templateParser.ParseFile(fileName);
     }
 
-    internal string EvalIncludeFile(ExpressionParser parser, string fileName, TemplateToken token, IParserContext context)
+    internal string? EvalIncludeFile(ExpressionParser parser, string fileName, TemplateToken token, IParserContext context)
     {
         return OnEvalIncludeFile(parser, fileName, token, context);
     }
 
-    protected virtual string OnEvalIncludeFile(ExpressionParser parser, string fileName, TemplateToken token, IParserContext context)
+    protected virtual string? OnEvalIncludeFile(ExpressionParser parser, string fileName, TemplateToken token, IParserContext context)
     {
-        string includeFile = Path.Combine(Path.GetDirectoryName(fileName), fileName);
+        if (FileResolver == null)
+            throw new InvalidOperationException("FileResolver is not set");
 
-        return FileResolver?.ReadFile(includeFile);
+        string includeFile = Path.Combine(Path.GetDirectoryName(fileName) ?? "", fileName);
+
+        return FileResolver.ReadFile(includeFile);
     }
 }

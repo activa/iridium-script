@@ -40,7 +40,6 @@ namespace Iridium.Script.Test
     {
         readonly TemplateParser curlyParser = new CurlyTemplateParser();
         readonly TemplateParser velocityParser = new VelocityTemplateParser();
-        readonly TemplateParser xmlParser = new TemplateParser<Xml>();
         readonly TemplateParser htmlCurlyParser = new HtmlDoubleCurlyTemplateParser();
 
         readonly ParserContext context = new ParserContext();
@@ -114,16 +113,6 @@ namespace Iridium.Script.Test
             string input = @"<!--{{foreach x in intList}}-->{{x}}/{{x*2}}/<!--{{end}}-->..";
 
             string s = htmlCurlyParser.Render(input, context);
-
-            Assert.AreEqual("3/6/4/8/5/10/..", s);
-        }
-
-        [Test]
-        public void TestForeachInts_Xml()
-        {
-            string input = @"<foreach var='x' in='intList'>${x}/${x*2}/</foreach>..";
-
-            string s = xmlParser.Render(input, context);
 
             Assert.AreEqual("3/6/4/8/5/10/..", s);
         }
@@ -224,60 +213,6 @@ namespace Iridium.Script.Test
             Assert.AreEqual("Y", s);
         }
 
-        [Test]
-        public void TestEscapes_Xml()
-        {
-            IParserContext vars = new FlexContext();
-
-            string input = "$X";
-
-            vars.Set("X","A>B");
-
-            string s = xmlParser.Render(input, vars);
-
-            Assert.AreEqual("A&gt;B",s);
-        }
-
-        [Test]
-        public void TestIf_Xml()
-        {
-            IParserContext newContext = context.CreateLocal();
-
-            string inputString = @"<?xml?>$A<if condition='A == 5'>X<else/>Y</if>";
-
-            newContext.Set("A", 5);
-
-            string s = xmlParser.Render(inputString, newContext);
-
-            Assert.AreEqual("<?xml?>5X", s);
-
-            newContext.Set("A", 6);
-
-            s = xmlParser.Render(inputString, newContext);
-
-            Assert.AreEqual("<?xml?>6Y", s);
-        }
-
-        [Test]
-        public void TestIf2_Xml()
-        {
-            IParserContext newContext = context.CreateLocal();
-
-            string inputString = @"<?xml?>$A<if condition='B > 5'>X<else/>Y</if>";
-
-            newContext.Set("A", 5);
-            newContext.Set("B", 4);
-
-            string s = xmlParser.Render(inputString, newContext);
-
-            Assert.AreEqual("<?xml?>5Y", s);
-
-            newContext.Set("B", 6);
-
-            s = xmlParser.Render(inputString, newContext);
-
-            Assert.AreEqual("<?xml?>5X", s);
-        }
 
         [Test]
         public void TestForeachObjs_Curly()

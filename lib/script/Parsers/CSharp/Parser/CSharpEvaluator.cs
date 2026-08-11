@@ -46,13 +46,19 @@ internal static class CSharpEvaluator
         };
     }
 
-    public static Expression TypeCast(string token, Expression[] terms)
+    public static Expression TypeCast(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 1)
+            throw new ExpressionEvaluationException($"Parser error. TypeCast operator {token} requires one term.");
+
         return new TypeCastExpression(VarName(token.Substring(1, token.Length - 2).Trim(), []), terms[0]);
     }
 
-    public static Expression IsAsOperator(string token, Expression[] terms)
+    public static Expression IsAsOperator(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException($"Parser error. Operator {token} requires two terms.");
+
         if (token == "as")
             return new AsExpression(terms[0], terms[1]);
 
@@ -62,16 +68,25 @@ internal static class CSharpEvaluator
         throw new LexerException($"Unexpected keyword: {token}", token);
     }
 
-    public static Expression InOperator(string token, Expression[] terms)
+    public static Expression InOperator(string token, Expression[]? terms)
     {
-        VariableExpression varExpression = terms[0] as VariableExpression;
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException($"Parser error. In operator {token} requires two terms.");
+
+        VariableExpression? varExpression = terms[0] as VariableExpression;
+
+        if (varExpression == null)
+            throw new ExpressionEvaluationException($"Parser error. In operator {token} requires a variable as the first term.");
 
         return new InExpression(varExpression, terms[1]);
     }
 
 
-    public static Expression Ternary(string token, Expression[] terms)
+    public static Expression Ternary(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 3)
+            throw new ExpressionEvaluationException($"Parser error. Ternary operator {token} requires three terms.");
+
         return new ConditionalExpression(terms[0], terms[1], terms[2]);
     }
 
@@ -114,21 +129,21 @@ internal static class CSharpEvaluator
         }
     }
 
-    public static Expression TypeOf(string token,Expression[] terms)
+    public static Expression TypeOf(string token,Expression[]? terms)
     {
         return new TypeOfExpression();
     }
 
-    public static Expression CharLiteral(string token, Expression[] terms)
+    public static Expression CharLiteral(string token, Expression[]? terms)
     {
         return Exp.Value(UnEscape(token.Substring(1, token.Length - 2)));
     }
 
-    public static Expression Number(string token, Expression[] terms)
+    public static Expression Number(string token, Expression[]? terms)
     {
         string s = token;
 
-        Type type = null;
+        Type? type = null;
 
         if (!char.IsDigit(s[^1]))
         {
@@ -185,7 +200,7 @@ internal static class CSharpEvaluator
         }
     }
 
-    public static Expression VarName(string token, Expression[] terms)
+    public static Expression VarName(string token, Expression[]? terms)
     {
         if (_keywords.TryGetValue(token, out var exp))
             return exp;
@@ -193,8 +208,11 @@ internal static class CSharpEvaluator
         return new VariableExpression(token);
     }
 
-    public static Expression Function(string token, Expression[] terms)
+    public static Expression Function(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length == 0)
+            throw new ExpressionEvaluationException("Parser error. Function expression without function body");
+
         Expression[] parameters = new Expression[terms.Length - 1];
 
         Array.Copy(terms, 1, parameters, 0, parameters.Length);
@@ -209,23 +227,35 @@ internal static class CSharpEvaluator
         }
     }
 
-    public static Expression Coalesce(string token, Expression[] terms)
+    public static Expression Coalesce(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException("Parser error. Coalesce expression requires two terms.");
+
         return new CoalesceExpression(terms[0], terms[1]);
     }
 
-    public static Expression DefaultValueOperator(string token, Expression[] terms)
+    public static Expression DefaultValueOperator(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException("Parser error. Default value expression requires two terms.");
+
         return new DefaultValueExpression(terms[0], terms[1]);
     }
 
-    public static Expression ValueOrNullOperator(string token, Expression[] terms)
+    public static Expression ValueOrNullOperator(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException("Parser error. Value or null expression requires two terms.");
+
         return new ValueOrNullExpression(terms[0], terms[1]);
     }
 
-    public static Expression ShortcutOperator(string token, Expression[] terms)
+    public static Expression ShortcutOperator(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException("Parser error. Shortcut operator requires two terms.");
+
         if (token == "&&")
             return new AndAlsoExpression(terms[0], terms[1]);
 
@@ -235,8 +265,11 @@ internal static class CSharpEvaluator
         throw new LexerException("Invalid shortcut operator: " + token);
     }
 
-    public static Expression Unary(string token, Expression[] terms)
+    public static Expression Unary(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 1)
+            throw new ExpressionEvaluationException("Parser error. Unary operator requires one term.");
+
         if (token == "!")
             return new NegationExpression(terms[0]);
 
@@ -246,25 +279,31 @@ internal static class CSharpEvaluator
         if (token == "~")
             return new BitwiseComplementExpression(terms[0]);
 
-        return null;
+        return Exp.Null();
     }
 
-    public static Expression StatementSeperator(string token, Expression[] terms)
+    public static Expression StatementSeperator(string token, Expression[]? terms)
     {
-        return new SequenceExpression(terms);
+        return new SequenceExpression(terms ?? []);
     }
 
-    public static Expression Operator(string token, Expression[] terms)
+    public static Expression Operator(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException($"Parser error. Operator {token} requires two terms.");
+
         return Exp.Op(token, terms[0], terms[1]);
     }
 
-    public static Expression Assignment(string token,Expression[] terms)
+    public static Expression Assignment(string token,Expression[]? terms)
     {
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException($"Parser error. Assignment {token} requires two terms.");
+
         return new AssignmentExpression(terms[0], terms[1]);
     }
 
-    public static Expression StringLiteral(string token, Expression[] terms)
+    public static Expression StringLiteral(string token, Expression[]? terms)
     {
         string s = token.Substring(1, token.Length - 2);
 
@@ -328,27 +367,33 @@ internal static class CSharpEvaluator
         return Exp.Value(output.ToString());
     }
 
-    public static Expression DotOperator(string token, Expression[] terms)
+    public static Expression DotOperator(string token, Expression[]? terms)
     {
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException($"Parser error. Dot operator {token} requires two terms.");
+
         if (terms[1] is VariableExpression varExpression) 
             return new FieldExpression(terms[0], varExpression.VarName);
 
         throw new UnknownPropertyException("Unkown member " + terms[1], terms[1]);
     }
 
-    public static Expression Constructor(string token, Expression[] terms)
+    public static Expression Constructor(string token, Expression[]? terms)
     {
         string className = token.Substring(3).Trim();
 
-        return new ConstructorExpression(new VariableExpression(className), terms);
+        return new ConstructorExpression(new VariableExpression(className), terms ?? []);
     }
 
-    public static Expression NumericRange(string token,  Expression[] terms)
+    public static Expression NumericRange(string token,  Expression[]? terms)
     {
+        if (terms == null || terms.Length < 2)
+            throw new ExpressionEvaluationException($"Parser error. Numeric range {token} requires two terms.");
+
         return new RangeExpression(terms[0], terms[1], token.StartsWith(">"), token.EndsWith("<"));
     }
 
-    private static readonly Dictionary<string, Expression> _keywords = new Dictionary<string, Expression>()
+    private static readonly Dictionary<string, Expression> _keywords = new()
     {
         { "int",  Exp.Value(ContextFactory.CreateType(typeof(int))) },
         { "uint", Exp.Value(ContextFactory.CreateType(typeof(uint))) },

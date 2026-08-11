@@ -49,9 +49,9 @@ public class RangeExpression(Expression from, Expression to, bool excludeFrom, b
             throw new ExpressionEvaluationException("Expression " + to + " does not evaluate to int or long", to);
 
         if (from.Type == typeof(long) || to.Type == typeof(long))
-            return Exp.Value(Range((long)System.Convert.ChangeType(from.Value, typeof(long), null), (long)System.Convert.ChangeType(to.Value, typeof(long), null)));
+            return Exp.Value(Range((long)System.Convert.ChangeType(from.Value, typeof(long), null)!, (long)System.Convert.ChangeType(to.Value, typeof(long), null)!));
         else
-            return Exp.Value(Range((int)System.Convert.ChangeType(from.Value, typeof(int), null), (int)System.Convert.ChangeType(to.Value, typeof(int), null)));
+            return Exp.Value(Range((int)System.Convert.ChangeType(from.Value, typeof(int), null)!, (int)System.Convert.ChangeType(to.Value, typeof(int), null)!));
     }
 
     private IEnumerable<int> Range(int from, int to)

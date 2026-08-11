@@ -60,29 +60,8 @@ public abstract class Expression
     /// </summary>
     internal ValueExpression EvaluateStatement(IParserContext context)
     {
-        var monitor = ExecutionMonitor.For(context);
+        ExecutionMonitor.For(context)?.CheckExecutionTime(this);
 
-        if (monitor == null)
-            return EvaluateStatementCore(context);
-
-        // The outermost statement delimits the run, so every top-level evaluation
-        // starts with a fresh time budget.
-        monitor.EnterScope();
-
-        try
-        {
-            monitor.CheckExecutionTime(this);
-
-            return EvaluateStatementCore(context);
-        }
-        finally
-        {
-            monitor.ExitScope();
-        }
-    }
-
-    private ValueExpression EvaluateStatementCore(IParserContext context)
-    {
         if (IsDebugTransparent || !SourceSpan.IsKnown)
             return Evaluate(context);
 
@@ -92,29 +71,43 @@ public abstract class Expression
         return Evaluate(context);
     }
 
-    internal object? EvaluateStatementToObject(IParserContext context)
+    /// <summary>
+    /// Evaluates this expression as a top-level evaluation. Only this delimits a run,
+    /// which is what gives the whole evaluation a single time budget and a single call
+    /// depth: the nested statements it executes must not restart either.
+    /// </summary>
+    internal ValueExpression Execute(IParserContext context)
     {
-        return EvaluateStatement(context).Value;
-    }
+        var monitor = ExecutionMonitor.For(context);
 
-    internal T? EvaluateStatement<T>(IParserContext context)
-    {
-        return EvaluateStatement(context).Value.Convert<T>();
+        if (monitor == null)
+            return EvaluateStatement(context);
+
+        monitor.BeginRun();
+
+        try
+        {
+            return EvaluateStatement(context);
+        }
+        finally
+        {
+            monitor.EndRun();
+        }
     }
 
     protected static ValueExpression[] EvaluateExpressionArray(Expression[] expressions, IParserContext context)
     {
-        return expressions.ConvertAll(expr => expr.Evaluate(context));
+        return expressions.ConvertAll(expr => expr!.Evaluate(context))!;
     }
 
     public object? EvaluateToObject(IParserContext context)
     {
-        return Evaluate(context).Value;
+        return Execute(context).Value;
     }
 
     public T? Evaluate<T>(IParserContext context)
     {
-        var value = Evaluate(context).Value;
+        var value = Execute(context).Value;
 
         return value.Convert<T>();
     }

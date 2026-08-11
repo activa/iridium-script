@@ -49,8 +49,8 @@ public class CallExpression : Expression
         object? methodObject = MethodExpression.Evaluate(context).Value;
 
         ValueExpression[] parameters = EvaluateExpressionArray(Parameters, context);
-        Type?[] parameterTypes = parameters.ConvertAll(expr => expr.Type?.RealType());
-        object?[] parameterValues = parameters.ConvertAll(expr => expr.Value);
+        Type[] parameterTypes = parameters.ConvertAll(expr => expr!.Type.RealType())!;
+        object?[] parameterValues = parameters.ConvertAll(expr => expr!.Value);
 
         switch (methodObject)
         {
@@ -59,7 +59,7 @@ public class CallExpression : Expression
 
             case ConstructorInfo[] constructors:
             {
-                MethodBase method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, constructors, parameterTypes, null);
+                MethodBase? method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, constructors, parameterTypes, null);
 
                 if (method == null)
                     throw new ExpressionEvaluationException("No match found for constructor " + constructors[0].Name, this);
@@ -76,9 +76,9 @@ public class CallExpression : Expression
 
             case Delegate[] delegates:
             {
-                MethodBase[] methods = delegates.ConvertAll<Delegate, MethodBase>(d => d.GetMethodInfo());
+                MethodBase[] methods = delegates.ConvertAll<Delegate, MethodBase>(d => d!.GetMethodInfo())!;
 
-                MethodBase method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, methods, parameterTypes!, null);
+                MethodBase? method = Type.DefaultBinder!.SelectMethod(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance, methods, parameterTypes!, null);
 
                 if (method == null)
                     throw new ExpressionEvaluationException("No match found for delegate " + MethodExpression, this);
@@ -139,7 +139,7 @@ public class CallExpression : Expression
 #if DEBUG
     public override string ToString()
     {
-        string?[] parameters = Parameters.ConvertAll(expr => expr.ToString());
+        string[] parameters = Parameters.ConvertAll(expr => expr!.ToString())!;
 
         return $"({MethodExpression}({String.Join(",", parameters)}))";
     }

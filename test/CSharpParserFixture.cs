@@ -66,15 +66,15 @@ namespace Iridium.Script.Test
             public int this[int x, int y] => x + y;
         }
 
-        private ExpressionParser CreateParserWithContext()
-        {
-            var parser = new CSharpParser();
-            var context = CreateTestContext();
-
-            parser.DefaultContext = context;
-
-            return parser;
-        }
+        // private ExpressionParser CreateParserWithContext()
+        // {
+        //     var parser = new CSharpParser();
+        //     var context = CreateTestContext();
+        //
+        //     parser.DefaultContext = context;
+        //
+        //     return parser;
+        // }
 
         private ParserContext CreateTestContext()
         {
@@ -88,10 +88,12 @@ namespace Iridium.Script.Test
 
             context.AddType("Math", typeof(Math));
             context.Set("Data", dataObject);
-            context.AddType("DataClass", typeof(DataClass));
+            context.AddType<DataClass>("DataClass");
             context.Set("Func", new Converter<int, int>(Func));
             context.AddFunction("Max", typeof(Math), "Max");
             context.AddFunction("fmt", typeof(String), "Format");
+            context.AddFunction("today", () => DateTime.Today);
+            context.AddFunction("add", (int x, int y) => x + y);
             context.Set("Value10", 10, typeof(int));
             context.Set("NullableValue5", 5, typeof(int?));
             context.Set("NullableValueNull", null, typeof(int?));
@@ -117,26 +119,37 @@ namespace Iridium.Script.Test
         }
 
         [Test]
+        public void FunctionsAsDelegates()
+        {
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
+
+            Assert.AreEqual(DateTime.Today, parser.Evaluate<DateTime>("today()", context));
+            Assert.AreEqual(5, parser.Evaluate<int>("add(2,3)", context));
+        }
+
+        [Test]
         public void ComplexExpressions()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(435, parser.Evaluate<int>("Math.Max(Data.Method2(Data.Int1+10,300),Data.Method1(Data.Int1))+(\"x\" + 5).Length"));
-            Assert.AreEqual(17, parser.Evaluate<int>("Data.Method2(Data.Method2(3,4),Data.Method1(5))"));
-            Assert.AreEqual(100, parser.Evaluate<int>("Max(Max(100,5),Func(10))"));
-            Assert.AreEqual(1000, parser.Evaluate<int>("Max(Max(100,5),Func(200))"));
+            Assert.AreEqual(435, parser.Evaluate<int>("Math.Max(Data.Method2(Data.Int1+10,300),Data.Method1(Data.Int1))+(\"x\" + 5).Length", context));
+            Assert.AreEqual(17, parser.Evaluate<int>("Data.Method2(Data.Method2(3,4),Data.Method1(5))", context));
+            Assert.AreEqual(100, parser.Evaluate<int>("Max(Max(100,5),Func(10))", context));
+            Assert.AreEqual(1000, parser.Evaluate<int>("Max(Max(100,5),Func(200))", context));
         }
 
         [Test]
         public void DelegateList()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(true, parser.Evaluate<bool>("g(\"test\")"));
-            Assert.AreEqual(false, parser.Evaluate<bool>("g(\"test1\")"));
-            Assert.AreEqual(true, parser.Evaluate<bool>("g(\"a\",\"b\")"));
-            Assert.AreEqual(false, parser.Evaluate<bool>("g(\"a\",\"b2\")"));
-
+            Assert.AreEqual(true, parser.Evaluate<bool>("g(\"test\")", context));
+            Assert.AreEqual(false, parser.Evaluate<bool>("g(\"test1\")", context));
+            Assert.AreEqual(true, parser.Evaluate<bool>("g(\"a\",\"b\")", context));
+            Assert.AreEqual(false, parser.Evaluate<bool>("g(\"a\",\"b2\")", context));
         }
 
         [Test]
@@ -181,11 +194,12 @@ namespace Iridium.Script.Test
         [Test]
         public void MemberMethods()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(2, parser.Evaluate<int>("Data.Method0()"));
-            Assert.AreEqual(2, parser.Evaluate<int>("Math.Max(1,2)"));
-            Assert.AreEqual(21, parser.Evaluate<int>("Data.Method0() + Data.Method1(5) + Data.Method2(5,4)"));
+            Assert.AreEqual(2, parser.Evaluate<int>("Data.Method0()", context));
+            Assert.AreEqual(2, parser.Evaluate<int>("Math.Max(1,2)", context));
+            Assert.AreEqual(21, parser.Evaluate<int>("Data.Method0() + Data.Method1(5) + Data.Method2(5,4)", context));
         }
 
         [TestCase("'x'", ExpectedResult = 'x')]
@@ -242,22 +256,24 @@ namespace Iridium.Script.Test
         [Test]
         public void ObjectCreation()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.IsInstanceOf<DataClass>(parser.Evaluate<object>("new DataClass(5)"));
+            Assert.IsInstanceOf<DataClass>(parser.Evaluate<object>("new DataClass(5)", context));
 
-            Assert.AreEqual(5, parser.Evaluate<int>("(new DataClass(5)).Int1"));
-            Assert.AreEqual(5, parser.Evaluate<int>("new DataClass(5).Int1"));
-            Assert.AreEqual(5, parser.Evaluate<int>("Math.Max(new DataClass(3+2).Int1,3)"));
+            Assert.AreEqual(5, parser.Evaluate<int>("(new DataClass(5)).Int1", context));
+            Assert.AreEqual(5, parser.Evaluate<int>("new DataClass(5).Int1", context));
+            Assert.AreEqual(5, parser.Evaluate<int>("Math.Max(new DataClass(3+2).Int1,3)", context));
         }
 
         [Test]
         public void Delegates()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(10, parser.Evaluate<int>("Func(2)"));
-            Assert.AreEqual(5, parser.Evaluate<int>("Max(4,5)"));
+            Assert.AreEqual(10, parser.Evaluate<int>("Func(2)", context));
+            Assert.AreEqual(5, parser.Evaluate<int>("Max(4,5)", context));
         }
 
         [TestCase("typeof(int)", ExpectedResult = typeof(int))]
@@ -329,52 +345,57 @@ namespace Iridium.Script.Test
         [Test]
         public void StaticFields()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(500, parser.Evaluate<int>("DataClass.Static1"));
-            Assert.AreEqual(501, parser.Evaluate<int>("DataClass.Static2"));
+            Assert.AreEqual(500, parser.Evaluate<int>("DataClass.Static1", context));
+            Assert.AreEqual(501, parser.Evaluate<int>("DataClass.Static2", context));
         }
 
         [Test]
         public void NullableLifting()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(15, parser.Evaluate<int?>("Value10 + NullableValue5"));
-            Assert.IsInstanceOf<int>(parser.Evaluate<int?>("Value10 + NullableValue5"));
-            Assert.AreEqual(null, parser.Evaluate<int?>("Value10 + NullableValueNull"));
+            Assert.AreEqual(15, parser.Evaluate<int?>("Value10 + NullableValue5", context));
+            Assert.IsInstanceOf<int>(parser.Evaluate<int?>("Value10 + NullableValue5", context));
+            Assert.AreEqual(null, parser.Evaluate<int?>("Value10 + NullableValueNull", context));
 
         }
 
         [Test]
         public void Indexing()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(30, parser.Evaluate<int>("Data[Func(5),5]"));
+            Assert.AreEqual(30, parser.Evaluate<int>("Data[Func(5),5]", context));
         }
 
         [Test]
         public void ArrayIndexing()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(8, parser.Evaluate<int>("MyArray[3]"));
-            Assert.AreEqual(8, parser.Evaluate<int>("MyArray2[2,1]"));
+            Assert.AreEqual(8, parser.Evaluate<int>("MyArray[3]", context));
+            Assert.AreEqual(8, parser.Evaluate<int>("MyArray2[2,1]", context));
 
-            Assert.AreEqual(16, parser.Evaluate<int>("MyArray[Data.Method0()+2]"));
-            Assert.AreEqual(8, parser.Evaluate<int>("MyArray2[Data.Method0()+1,0]"));
+            Assert.AreEqual(16, parser.Evaluate<int>("MyArray[Data.Method0()+2]", context));
+            Assert.AreEqual(8, parser.Evaluate<int>("MyArray2[Data.Method0()+1,0]", context));
 
         }
 
         [Test]
         public void ListIndexing()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(8, parser.Evaluate<int>("MyCollection[3]"));
+            Assert.AreEqual(8, parser.Evaluate<int>("MyCollection[3]", context));
 
-            Assert.AreEqual(16, parser.Evaluate<int>("MyCollection[Data.Method0()+2]"));
+            Assert.AreEqual(16, parser.Evaluate<int>("MyCollection[Data.Method0()+2]", context));
         }
 
         [Test]
@@ -383,27 +404,30 @@ namespace Iridium.Script.Test
             var parser = new CSharpParser();
             var context = new ParserContext();
 
-            parser.DefaultContext = context;
-
-            Assert.AreEqual(1, parser.Evaluate<int>("true ? 1:2"));
-            Assert.AreEqual(2, parser.Evaluate<int>("false ? 1:2"));
+            Assert.AreEqual(1, parser.Evaluate<int>("true ? 1:2", context));
+            Assert.AreEqual(2, parser.Evaluate<int>("false ? 1:2", context));
 
             context.Set("a", 1);
 
-            Assert.AreEqual(1, parser.Evaluate<int>("a==1 ? 1 : 2"));
-            Assert.AreEqual(2, parser.Evaluate<int>("a!=1 ? 1 : 2"));
-            Assert.AreEqual("1", parser.Evaluate<string>("a==1 ? \"1\" : \"2\""));
-            Assert.AreEqual("2", parser.Evaluate<string>("a!=1 ? \"1\" : \"2\""));
-            Assert.AreEqual(1, parser.Evaluate<int>("a==1 ? 1 : a==2 ? 2 : a==3 ? 3 : 4"));
+            Assert.AreEqual(1, parser.Evaluate<int>("a==1 ? 1 : 2", context));
+            Assert.AreEqual(2, parser.Evaluate<int>("a!=1 ? 1 : 2", context));
+            Assert.AreEqual("1", parser.Evaluate<string>("a==1 ? \"1\" : \"2\"", context));
+            Assert.AreEqual("2", parser.Evaluate<string>("a!=1 ? \"1\" : \"2\"", context));
+            Assert.AreEqual(1, parser.Evaluate<int>("a==1 ? 1 : a==2 ? 2 : a==3 ? 3 : 4", context));
 
-            Assert.AreEqual("x", parser.Evaluate<string>("a==1 ? \"x\" : a==2 ? \"y\" : a==3 ? \"z\" : \"error\""));
+            Assert.AreEqual("x", parser.Evaluate<string>("a==1 ? \"x\" : a==2 ? \"y\" : a==3 ? \"z\" : \"error\"", context));
+
             context.Set("a", 2);
-            Assert.AreEqual("y", parser.Evaluate<string>("a==1 ? \"x\" : a==2 ? \"y\" : a==3 ? \"z\" : \"error\""));
+            
+            Assert.AreEqual("y", parser.Evaluate<string>("a==1 ? \"x\" : a==2 ? \"y\" : a==3 ? \"z\" : \"error\"", context));
+            
             context.Set("a", 3);
-            Assert.AreEqual("z", parser.Evaluate<string>("a==1 ? \"x\" : a==2 ? \"y\" : a==3 ? \"z\" : \"error\""));
+            
+            Assert.AreEqual("z", parser.Evaluate<string>("a==1 ? \"x\" : a==2 ? \"y\" : a==3 ? \"z\" : \"error\"", context));
+            
             context.Set("a", 56443);
-            Assert.AreEqual("error", parser.Evaluate<string>("a==1 ? \"x\" : a==2 ? \"y\" : a==3 ? \"z\" : \"error\""));
-
+            
+            Assert.AreEqual("error", parser.Evaluate<string>("a==1 ? \"x\" : a==2 ? \"y\" : a==3 ? \"z\" : \"error\"", context));
         }
 
         [Test]
@@ -449,19 +473,21 @@ namespace Iridium.Script.Test
         [Test]
         public void NullValueOperator()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(10, parser.Evaluate<int>("NullableValueNull ?? 10"));
-            Assert.AreEqual(5, parser.Evaluate<int>("NullableValue5 ?? 10"));
+            Assert.AreEqual(10, parser.Evaluate<int>("NullableValueNull ?? 10", context));
+            Assert.AreEqual(5, parser.Evaluate<int>("NullableValue5 ?? 10", context));
         }
 
         [Test]
         public void NullOrValueOperator()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            Assert.AreEqual(123, parser.EvaluateToObject("(2>1) :: 123"));
-            Assert.AreEqual(null, parser.EvaluateToObject("(1>2) :: 123"));
+            Assert.AreEqual(123, parser.EvaluateToObject("(2>1) :: 123", context));
+            Assert.AreEqual(null, parser.EvaluateToObject("(1>2) :: 123", context));
         }
 
         [Test]
@@ -493,34 +519,26 @@ namespace Iridium.Script.Test
         //Bin[ExpectedException(typeof(IllegalAssignmentException))]
         public void PropertyAssignmentNotAllowed()
         {
-            try
-            {
-                var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-                parser.DefaultContext.AssignmentPermissions = AssignmentPermissions.None;
+            context.AssignmentPermissions = AssignmentPermissions.None;
 
-                Assert.AreEqual(123, parser.Evaluate<int>("Data.Int1 = 123"));
-
-                Assert.Fail();
-            }
-            catch (IllegalAssignmentException)
-            {
-
-
-            }
+            Assert.Throws<IllegalAssignmentException>(() => parser.Evaluate<int>("Data.Int1 = 123", context));
         }
 
 
         [Test]
         public void PropertyAssignment()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            parser.DefaultContext.AssignmentPermissions = AssignmentPermissions.Property;
+            context.AssignmentPermissions = AssignmentPermissions.Property;
 
-            Assert.AreEqual(123, parser.Evaluate<int>("Data.Int1 = 123"));
+            Assert.AreEqual(123, parser.Evaluate<int>("Data.Int1 = 123", context));
 
-            Assert.AreEqual(123, parser.Evaluate<int>("Data.Int1"));
+            Assert.AreEqual(123, parser.Evaluate<int>("Data.Int1", context));
         }
 
         public class XElement
@@ -556,25 +574,27 @@ namespace Iridium.Script.Test
         {
             XElement xEl = new XElement();
 
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            parser.DefaultContext.Set("xEl", xEl);
+            context.Set("xEl", xEl);
             
-            Assert.AreEqual("attr[Test]", parser.Evaluate<string>("xEl.Attribute(\"Test\")"));
+            Assert.AreEqual("attr[Test]", parser.Evaluate<string>("xEl.Attribute(\"Test\")", context));
         }
 
         [Test]
         public void CustomOperators()
         {
-            var parser = CreateParserWithContext();
+            var parser = new CSharpParser();
+            var context = CreateTestContext();
 
-            parser.DefaultContext.Set("date1", DateTime.Now);
-            parser.DefaultContext.Set("date2", DateTime.Now.AddHours(1));
+            context.Set("date1", DateTime.Now);
+            context.Set("date2", DateTime.Now.AddHours(1));
 
-            Assert.IsTrue(parser.Evaluate<bool>("date1 < date2"));
-            Assert.IsFalse(parser.Evaluate<bool>("date1 > date2"));
-            Assert.IsFalse(parser.Evaluate<bool>("date1 == date2"));
-            Assert.AreEqual(1, (int)parser.Evaluate<TimeSpan>("date2 - date1").TotalHours);
+            Assert.IsTrue(parser.Evaluate<bool>("date1 < date2", context));
+            Assert.IsFalse(parser.Evaluate<bool>("date1 > date2", context));
+            Assert.IsFalse(parser.Evaluate<bool>("date1 == date2", context));
+            Assert.AreEqual(1, (int)parser.Evaluate<TimeSpan>("date2 - date1", context).TotalHours);
 
         }
 
@@ -748,17 +768,13 @@ namespace Iridium.Script.Test
             Assert.That(parser.Evaluate<IEnumerable<long>>("1L " + op + " 5L").Sum(n => n), Is.EqualTo((long)expectedResult));
         }
 
-        private ExpressionParser CreateScriptParser(StringBuilder output)
+        private IParserContext CreateScriptContext(StringBuilder output)
         {
-            var parser = new CScriptParser();
-
             ParserContext context = new ParserContext() { AssignmentPermissions = AssignmentPermissions.All };
 
             context.Set("print", new Action<object>(o => output.Append(o)));
 
-            parser.DefaultContext = context;
-
-            return parser;
+            return context;
         }
 
         [TestCase("print(1);return 5;print(2);", "1", ExpectedResult = 5, TestName = "Return.Within.Sequence")]
@@ -766,9 +782,10 @@ namespace Iridium.Script.Test
         public int ScriptWithReturnValue(string script, string expectedOutput)
         {
             var output = new StringBuilder();
-            var parser = CreateScriptParser(output);
+            var parser = new CScriptParser();
+            var context = CreateScriptContext(output);
 
-            int returnValue = parser.Evaluate<int>(script);
+            int returnValue = parser.Evaluate<int>(script, context);
 
             Assert.That(output.ToString(), Is.EqualTo(expectedOutput));
 
@@ -793,9 +810,10 @@ namespace Iridium.Script.Test
         public string ScriptSimple(string script)
         {
             var output = new StringBuilder();
-            var parser = CreateScriptParser(output);
+            var parser = new CScriptParser();
+            var context = CreateScriptContext(output);
 
-            parser.Evaluate(script);
+            parser.Evaluate(script, context);
 
             return output.ToString();
         }
@@ -842,21 +860,22 @@ namespace Iridium.Script.Test
 
             context.Add("array", array);
 
-            string script =
-                @"
-foreach (i in [0...<array.Length-1])
-{
-   foreach (j in [i+1...<array.Length])
-   {
-        if (array[i] > array[j])
-        {
-             tmp = array[i];
-             array[i] = array[j];
-             array[j] = tmp;
-        }
-   }
-}
-";
+            string script = 
+                """
+                foreach (i in [0...<array.Length-1])
+                {
+                   foreach (j in [i+1...<array.Length])
+                   {
+                        if (array[i] > array[j])
+                        {
+                             tmp = array[i];
+                             array[i] = array[j];
+                             array[j] = tmp;
+                        }
+                   }
+                }
+                """;
+
             Assert.That(array, Is.Not.Ordered);
 
             new CScriptParser().Evaluate(script, context);
@@ -870,11 +889,12 @@ foreach (i in [0...<array.Length-1])
         {
             StringBuilder output = new StringBuilder();
 
-            var parser = CreateScriptParser(output);
+            var parser = new CScriptParser();
+            var context = CreateScriptContext(output);
 
-            parser.Evaluate("function x(a,b) { print(a); print(b); }");
+            parser.Evaluate("function x(a,b) { print(a); print(b); }", context);
 
-            parser.Evaluate("x(5,6)");
+            parser.Evaluate("x(5,6)", context);
 
             Assert.That(output.ToString(), Is.EqualTo("56"));
         }
@@ -883,7 +903,8 @@ foreach (i in [0...<array.Length-1])
         public void Recursion()
         {
             var output = new StringBuilder();
-            var parser = CreateScriptParser(output);
+            var parser = new CScriptParser();
+            var context = CreateScriptContext(output);
 
             var script = @"
 function f(level)
@@ -897,16 +918,16 @@ function f(level)
 f(5);
 ";
 
-            parser.Evaluate(script);
+            parser.Evaluate(script, context);
 
             Assert.That(output.ToString(), Is.EqualTo("54321"));
         }
 
 
         [TestCaseSource(nameof(ArithmicCases))][Parallelizable(ParallelScope.Self)]
-        public void BasicBinaryArithmic(string expr, object expectedResult, CSharpParser parser)
+        public void BasicBinaryArithmic(string expr, object expectedResult, CSharpParser parser, ParserContext context)
         {
-            var veloxResult = parser.EvaluateToObject(expr);
+            var veloxResult = parser.EvaluateToObject(expr, context);
 
             Assert.That(veloxResult, Is.TypeOf(expectedResult.GetType()).And.EqualTo(expectedResult));
 
@@ -954,11 +975,14 @@ f(5);
 
                 var testCases = testCaseProvider.GenerateTestCases();
 
-                CSharpParser parser = new CSharpParser() { DefaultContext = new ParserContext(testCaseProvider) };
+                CSharpParser parser = new CSharpParser();
+
+                var context = new ParserContext(testCaseProvider);
+
 
                 foreach (var expr in testCases.Keys)
                 {
-                    yield return new TestCaseData(expr, testCases[expr], parser).SetName(expr);
+                    yield return new TestCaseData(expr, testCases[expr], parser, context ).SetName(expr);
                 }
             }
         }

@@ -24,6 +24,7 @@
 //=============================================================================
 #endregion
 
+using System;
 using Iridium.Script;
 
 namespace Iridium.Script;
@@ -45,7 +46,7 @@ public class ExpressionTokenizer : Tokenizer<ExpressionToken>
         AddTokenMatcher(tokenMatcher, tokenType, precedence, OperatorAssociativity.Left, tokenEvaluator, numTerms);
     }
 
-    public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator tokenEvaluator, int? numTerms = null)
+    public void AddTokenMatcher(ITokenMatcher tokenMatcher, TokenType tokenType, int precedence, OperatorAssociativity associativity, TokenEvaluator? tokenEvaluator, int? numTerms = null)
     {
         var matcher = new ExpressionTokenMatcher(tokenMatcher, tokenType, precedence, associativity, tokenEvaluator);
 
@@ -71,6 +72,11 @@ public class ExpressionTokenizer : Tokenizer<ExpressionToken>
 
     public override ExpressionToken CreateToken(ITokenMatcher? tokenMatcher, string token)
     {
+        // todo: better error handling here
+
+        if (tokenMatcher == null)
+            throw new Exception("Token matcher is not set.");
+
         return new ExpressionToken((ExpressionTokenMatcher) tokenMatcher, token);
     }
 }

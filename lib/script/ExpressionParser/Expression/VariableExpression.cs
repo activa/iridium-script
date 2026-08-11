@@ -34,7 +34,7 @@ public class VariableExpression(string varName) : Expression
 
     public override ValueExpression Evaluate(IParserContext context)
     {
-        if (context.Get(VarName, out var value, out var type)) 
+        if (context != null && context.Get(VarName, out var value, out var type)) 
             return Exp.Value(value, type ?? typeof(object));
 
         return Exp.Null();

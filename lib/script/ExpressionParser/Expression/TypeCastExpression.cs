@@ -35,7 +35,7 @@ public class TypeCastExpression(Expression typeExpression, Expression targetExpr
 
     public override ValueExpression Evaluate(IParserContext context)
     {
-        TypeName typeName = TypeExpression.Evaluate(context).Value as TypeName;
+        TypeName? typeName = TypeExpression.Evaluate(context).Value as TypeName;
 
         if (typeName == null)
             throw new ExpressionEvaluationException("type cast requires a type. " + TypeExpression + " is not a type", this);

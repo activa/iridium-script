@@ -102,9 +102,9 @@ internal class ExpressionCompiler(ExpressionParser _parser, ExpressionToken[] _t
             MoveNext();
         }
 
-        rpn.Finish();
+        Expression expression = rpn.Finish();
 
-        Expression expression = rpn.Compile();
+        //Expression expression = rpn.Compile();
 
         SetSourceSpan(expression, firstToken, lastConsumedToken ?? firstToken);
 

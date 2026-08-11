@@ -258,7 +258,7 @@ public class BinaryArithmicExpression : BinaryExpression
 
         if (operatorMethod == null)
         {
-            MethodInfo customOperatorMethod = type1.GetMethod(_operatorOverloadNames[Operator], [type1, type2]);
+            MethodInfo? customOperatorMethod = type1.GetMethod(_operatorOverloadNames[Operator], [type1, type2]);
 
             if (customOperatorMethod != null)
             {
@@ -266,7 +266,7 @@ public class BinaryArithmicExpression : BinaryExpression
             }
 
             if (Operator is "==" or "!=")
-                return Exp.Value(BinaryExpressionHelper.CalcObject(Operator, values[0].Value, values[1].Value, context.StringComparison, this), typeof(bool));
+                return Exp.Value(BinaryExpressionHelper.CalcObject(Operator, values[0].Value, values[1].Value, context?.StringComparison ?? StringComparison.Ordinal, this), typeof(bool));
 
             throw new IllegalOperandsException("Operator " + Operator + " is not supported on " + values[0] + " and " + values[1], this);
         }

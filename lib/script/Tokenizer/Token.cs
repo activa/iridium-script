@@ -24,6 +24,7 @@
 //=============================================================================
 #endregion
 
+using System;
 using System.Collections.Generic;
 
 namespace Iridium.Script;
@@ -34,12 +35,13 @@ public class Token
 
     public Token()
     {
+        throw new NotSupportedException();
     }
 
-    protected Token(ITokenMatcher tokenMatcher)
-    {
-        TokenMatcher = tokenMatcher;
-    }
+    // protected Token(ITokenMatcher tokenMatcher)
+    // {
+    //     TokenMatcher = tokenMatcher;
+    // }
 
     protected Token(ITokenMatcher? tokenMatcher, string text)
     {
@@ -59,13 +61,12 @@ public class Token
 
     public void AddAlternate(Token token)
     {
-        if (_alternates == null)
-            _alternates = new LinkedList<Token>();
+        _alternates ??= new LinkedList<Token>();
 
         _alternates.AddLast(token);
     }
 
-    public string Text { get; set; } = "";
+    public string Text { get; init; }
 
 #if DEBUG
     public override string ToString()

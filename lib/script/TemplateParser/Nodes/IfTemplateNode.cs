@@ -32,6 +32,6 @@ internal class IfTemplateNode : ExpressionTemplateNode
     {
     }
 
-    public TemplateNode TrueNode;
-    public TemplateNode FalseNode;
+    public required TemplateNode TrueNode { get; init; }
+    public TemplateNode? FalseNode { get; set; }
 }

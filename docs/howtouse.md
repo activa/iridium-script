@@ -76,10 +76,10 @@ decimal amountToCharge = new CSharpParser().Evaluate<decimal>(rule, context);
 Feature flags, promotion targeting, segmentation — all as editable boolean expressions:
 
 ```csharp
-var parser = new CSharpParser { DefaultContext = context };
+var parser = new CSharpParser();
 
 bool eligibleForPromo = parser.Evaluate<bool>(
-    "customer.Country == \"BE\" && customer.Orders.Count > 3 && !customer.IsBlocked");
+    "customer.Country == \"BE\" && customer.Orders.Count > 3 && !customer.IsBlocked", context);
 ```
 
 
@@ -234,14 +234,15 @@ IValueWithType typed  = parser.Evaluate("unitPrice * quantity", context);       
 object val            = parser.Evaluate("unitPrice * quantity", out Type t, context); // value + out Type
 ```
 
-Each parser also carries a `DefaultContext`, so if you set it once you can omit the context on every call:
+Every `Evaluate` overload also comes in a form without the context argument, which falls back to `ParserContext.Default` — a shared, process-wide context using `Easy` behavior. It is meant for self-contained expressions that don't reference anything:
 
 ```csharp
-var parser = new CSharpParser { DefaultContext = context };
-parser.Evaluate<double>("unitPrice * quantity");   // uses DefaultContext
+new CSharpParser().Evaluate<int>("(5 + 4) / 2");   // no context needed
 ```
 
-There is also a ready-made shared instance for one-off, context-light use:
+Because that fallback context is shared, pass your own context whenever the expression references variables, types or functions, so evaluations can't see each other's state.
+
+There is also a ready-made shared parser instance for one-off use:
 
 ```csharp
 CSharpParser.Default.Evaluate("customer.IsPremium", context);
@@ -274,6 +275,8 @@ foreach (var line in lines)
 ## The expression language
 
 The expression syntax closely mirrors C#. The following are all evaluated exactly as they would be in C#.
+
+In the snippets below, `parser` is a `CSharpParser` and `context` is a context holding the `order` and `customer` objects from the domain model above. Expressions that reference nothing at all can be evaluated without a context.
 
 ### Literals
 
@@ -310,10 +313,10 @@ new CSharpParser().Evaluate<int>("5+~2");        // bitwise, &, |, ^, <<, >> all
 ### Comparisons, booleans & nullable lifting
 
 ```csharp
-parser.Evaluate<bool>("order.Total >= 100");                 // threshold check
-parser.Evaluate<bool>("order.Status == \"paid\" && order.Total > 0");  // && and || short-circuit
-parser.Evaluate<int?>("order.Total + surcharge");            // nullable operands are lifted...
-parser.Evaluate<int?>("order.Total + unknownFee");           // ...and null propagates if an operand is null
+parser.Evaluate<bool>("order.Total >= 100", context);                 // threshold check
+parser.Evaluate<bool>("order.Status == \"paid\" && order.Total > 0", context);  // && and || short-circuit
+parser.Evaluate<int?>("order.Total + surcharge", context);            // nullable operands are lifted...
+parser.Evaluate<int?>("order.Total + unknownFee", context);           // ...and null propagates if an operand is null
 ```
 
 Comparisons defer to the actual .NET operators on your types, so `DateTime`, `TimeSpan` and any type with overloaded operators just work:
@@ -322,8 +325,8 @@ Comparisons defer to the actual .NET operators on your types, so `DateTime`, `Ti
 context.Set("dueDate",  DateTime.Today.AddDays(30));
 context.Set("shipDate", order.ShippedDate);
 
-parser.Evaluate<bool>("shipDate < dueDate");                  // shipped on time?
-parser.Evaluate<double>("(dueDate - shipDate).TotalDays");    // days of slack
+parser.Evaluate<bool>("shipDate < dueDate", context);                  // shipped on time?
+parser.Evaluate<double>("(dueDate - shipDate).TotalDays", context);    // days of slack
 ```
 
 
@@ -332,16 +335,16 @@ parser.Evaluate<double>("(dueDate - shipDate).TotalDays");    // days of slack
 
 ```csharp
 // Tiered shipping label via chained ternary:
-parser.Evaluate<string>("order.Total >= 100 ? \"free\" : order.Total >= 50 ? \"reduced\" : \"standard\"");
+parser.Evaluate<string>("order.Total >= 100 ? \"free\" : order.Total >= 50 ? \"reduced\" : \"standard\"", context);
 
 // Null-coalescing ?? — fall back when a value is missing:
-parser.Evaluate<string>("customer.Country ?? \"unknown\"");
+parser.Evaluate<string>("customer.Country ?? \"unknown\"", context);
 
 // "default value" operator ?: — use the fallback when the left side is falsy/empty:
-parser.Evaluate<string>("customer.Name ?: \"Valued customer\"");
+parser.Evaluate<string>("customer.Name ?: \"Valued customer\"", context);
 
 // "value-or-null" operator :: — the value only when the condition holds, else null:
-parser.EvaluateToObject("order.IsPaid :: order.Total");   // Total if paid, otherwise null
+parser.EvaluateToObject("order.IsPaid :: order.Total", context);   // Total if paid, otherwise null
 ```
 
 
@@ -360,16 +363,16 @@ new CSharpParser().EvaluateToObject("(long)5");          // 5L — explicit cast
 ### Member access, methods, indexers & construction
 
 ```csharp
-parser.Evaluate<string>("order.Customer.Name.ToUpper()");  // member chains + real .NET methods
-parser.Evaluate<int>("order.Customer.Name.Length");        // property access
-parser.Evaluate<DateTime>("DateTime.Today");               // static members of a registered type
+parser.Evaluate<string>("order.Customer.Name.ToUpper()", context);  // member chains + real .NET methods
+parser.Evaluate<int>("order.Customer.Name.Length", context);        // property access
+parser.Evaluate<DateTime>("DateTime.Today", context);               // static members of a registered type
 
-parser.Evaluate<string>("order.Lines[0].Product");         // array element access
-parser.Evaluate<int>("customer.Orders[0].Id");             // IList element access
-parser.Evaluate<decimal>("priceMatrix[zone, weight]");     // multi-dimensional arrays / multi-arg indexers
+parser.Evaluate<string>("order.Lines[0].Product", context);         // array element access
+parser.Evaluate<int>("customer.Orders[0].Id", context);             // IList element access
+parser.Evaluate<decimal>("priceMatrix[zone, weight]", context);     // multi-dimensional arrays / multi-arg indexers
 
-parser.Evaluate<DateTime>("new DateTime(2026, 1, 1)");     // object construction with 'new'
-parser.Evaluate<int>("new DateTime(2026, 1, 1).Month");    // and immediate member access
+parser.Evaluate<DateTime>("new DateTime(2026, 1, 1)", context);     // object construction with 'new'
+parser.Evaluate<int>("new DateTime(2026, 1, 1).Month", context);    // and immediate member access
 ```
 
 The `?.` null-conditional member operator is also recognized, so `order.Customer?.Name` won't throw when `Customer` is null.
@@ -381,7 +384,7 @@ Any delegate placed in the context becomes callable — a clean way to expose tr
 ```csharp
 // Expose a rounding helper to expressions:
 context.Set("round", new Func<decimal, decimal>(d => Math.Round(d, 2)));
-parser.Evaluate<decimal>("round(order.Total * 0.9m)");
+parser.Evaluate<decimal>("round(order.Total * 0.9m)", context);
 
 // One name, several overloads:
 context.Set("discount", new Delegate[]
@@ -389,8 +392,8 @@ context.Set("discount", new Delegate[]
     new Func<decimal, decimal>(total => total * 0.95m),                        // flat 5% off
     new Func<decimal, bool, decimal>((total, premium) => total * (premium ? 0.90m : 0.98m))
 });
-parser.Evaluate<decimal>("discount(order.Total)");         // picks the 1-arg overload
-parser.Evaluate<decimal>("discount(order.Total, true)");   // picks the 2-arg overload
+parser.Evaluate<decimal>("discount(order.Total)", context);         // picks the 1-arg overload
+parser.Evaluate<decimal>("discount(order.Total, true)", context);   // picks the 2-arg overload
 ```
 
 
@@ -485,12 +488,12 @@ decimal gross = parser.Evaluate<decimal>(@"
 ", ctx);
 ```
 
-Functions can be defined in one `Evaluate` call and reused in a later one, as long as they share the same parser/context — handy for registering a script "library" up front:
+Functions can be defined in one `Evaluate` call and reused in a later one, as long as both calls run against the same context — handy for registering a script "library" up front:
 
 ```csharp
-parser.Evaluate("function shippingFor(total) { return total >= 50 ? 0.0m : 4.95m; }");
+parser.Evaluate("function shippingFor(total) { return total >= 50 ? 0.0m : 4.95m; }", ctx);
 
-parser.Evaluate<decimal>("shippingFor(order.Total)");   // reuses the definition above
+parser.Evaluate<decimal>("shippingFor(order.Total)", ctx);   // reuses the definition above
 ```
 
 > **Note:** Assignment (`x = ...`) requires the context to grant permission — see [AssignmentPermissions](#controlling-assignment). Scripts typically use `ParserContextBehavior.Easy` and `AssignmentPermissions.All`.
@@ -515,7 +518,7 @@ debugger.Break += (sender, e) =>
     e.Continue();                            // or StepInto/StepOver/StepOut/Stop
 };
 
-new CScriptParser { DefaultContext = context }.Evaluate(script);
+new CScriptParser().Evaluate(script, context);
 ```
 
 Debugging is fully opt-in and has zero cost when no debugger is attached. See the complete guide — breakpoints, conditional breakpoints, stepping semantics, the call stack, watch evaluation, and the threading model for wiring this into a UI — in **[docs/Debugging.md](docs/Debugging.md)**.
@@ -746,14 +749,14 @@ catch (ExpressionEvaluationException ex)
 Everything a rule or template is actually meant to do. The boundary only removes the reflection surface, not your own objects:
 
 ```csharp
-parser.Evaluate<string>("order.Customer.Name.ToUpper()");   // member chains and real .NET methods
-parser.Evaluate<int>("order.Customer.Name.Length");         // properties
-parser.Evaluate<string>("order.Lines[0].Product");          // indexers and array access
-parser.Evaluate<DateTime>("DateTime.Today");                // static members of a registered type
-parser.Evaluate<DateTime>("new DateTime(2026, 1, 1)");      // construction with 'new'
-parser.Evaluate<decimal>("round(order.Total * 0.9m)");      // delegates registered in the context
-parser.Evaluate<bool>("\"x\" is string");                   // is / as / casts
-parser.Evaluate<Type>("typeof(int)");                       // typeof still produces a Type...
+parser.Evaluate<string>("order.Customer.Name.ToUpper()", context);   // member chains and real .NET methods
+parser.Evaluate<int>("order.Customer.Name.Length", context);         // properties
+parser.Evaluate<string>("order.Lines[0].Product", context);          // indexers and array access
+parser.Evaluate<DateTime>("DateTime.Today", context);                // static members of a registered type
+parser.Evaluate<DateTime>("new DateTime(2026, 1, 1)", context);      // construction with 'new'
+parser.Evaluate<decimal>("round(order.Total * 0.9m)", context);      // delegates registered in the context
+parser.Evaluate<bool>("\"x\" is string", context);                   // is / as / casts
+parser.Evaluate<Type>("typeof(int)", context);                       // typeof still produces a Type...
 ```
 
 `typeof(...)` keeps working and still returns a real `Type`, so `Evaluate<Type>` and `is`/`as` are unaffected. The value is simply inert inside a script: `typeof(int).Name` and `typeof(int).Module` are both refused, so there is nowhere to go from it.
@@ -890,23 +893,25 @@ Each render runs in its own local scope with `AssignmentPermissions.Variable` gr
 
 If you'd rather construct expressions programmatically (no parsing), use the `Exp` factory to build a tree and evaluate it directly. This is handy for generating expressions from a UI or another DSL.
 
+A hand-built tree is an ordinary `Expression`, identical to what `Parse` returns, so you evaluate it by handing it a context — and you can hand it a different context each time:
+
 ```csharp
 using Iridium.Script;
 
 IParserContext context = new ParserContext();
 
 // unitPrice * quantity, assembled from parts:
-var lineTotal = new ExpressionWithContext(context, Exp.Multiply(Exp.Value(9.99m), Exp.Value(3)));
-lineTotal.Evaluate<decimal>();   // 29.97
-lineTotal.Evaluate().Type;       // typeof(decimal)
+Expression lineTotal = Exp.Multiply(Exp.Value(9.99m), Exp.Value(3));
+lineTotal.Evaluate<decimal>(context);   // 29.97
+lineTotal.Evaluate(context).Type;       // typeof(decimal)
 
 // Mixed types promote just like the parser would:
-var expr2 = new ExpressionWithContext(context, Exp.Add(Exp.Value(10), Exp.Value(2.5)));
-expr2.Evaluate().Value;   // 12.5   (int + double => double)
+Expression expr2 = Exp.Add(Exp.Value(10), Exp.Value(2.5));
+expr2.Evaluate(context).Value;   // 12.5   (int + double => double)
 
 // Arbitrary operators by symbol — e.g. a threshold check:
-var overThreshold = new ExpressionWithContext(context, Exp.Op(">=", Exp.Value(120m), Exp.Value(100)));
-overThreshold.Evaluate<bool>();   // true
+Expression overThreshold = Exp.Op(">=", Exp.Value(120m), Exp.Value(100));
+overThreshold.Evaluate<bool>(context);   // true
 ```
 
 `Exp` provides factories for `Add`/`Subtract`/`Multiply`/`Divide`, `Value`, `Op`, `AndAlso`/`OrElse`, `Equal`, `Field`, `As`, `Assign`, `BitwiseComplement`, `Call`, `Coalesce`, `Conditional`, `DefaultValue`, and more.
@@ -1013,7 +1018,7 @@ new CScriptParser()                // = CSharpParser(true)
 CSharpParser.Default               // shared instance
 ```
 
-**Evaluate (all have a** `..., IParserContext context` **overload; without it the parser's** `DefaultContext` **is used)**
+**Evaluate (all have a** `..., IParserContext context` **overload; without it the shared** `ParserContext.Default` **is used)**
 
 ```csharp
 T        Evaluate<T>(string s)
@@ -1021,7 +1026,6 @@ IValueWithType Evaluate(string s)
 object   Evaluate(string s, out Type type)
 object   EvaluateToObject(string s)
 Expression Parse(string s)                    // parse once, evaluate many
-ExpressionWithContext ParseWithContext(string s[, context])
 ```
 
 **Contexts** (`Iridium.Script`)
@@ -1055,10 +1059,10 @@ string  fromFile = t.RenderFile(fileName, context);  // via Config.FileResolver
 **Expression trees** (`Iridium.Script`)
 
 ```csharp
-var e = new ExpressionWithContext(context, Exp.Add(Exp.Value(1), Exp.Value(2)));
-e.Evaluate();          // IValueWithType
-e.Evaluate<int>();     // 3
-e.EvaluateToObject();  // (object)3
+Expression e = Exp.Add(Exp.Value(1), Exp.Value(2));
+e.Evaluate(context);          // ValueExpression (IValueWithType)
+e.Evaluate<int>(context);     // 3
+e.EvaluateToObject(context);  // (object)3
 ```
 
 ---

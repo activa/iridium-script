@@ -32,10 +32,7 @@ public class NegationExpression(Expression value) : UnaryExpression(value)
     {
         ValueExpression value = Value.Evaluate(context);
 
-        if (context == null)
-            return Exp.Value(!((bool)value.Value));
-        else
-            return Exp.Value(!context.ToBoolean(value.Value));
+        return Exp.Value(!(context ?? ParserContext.Default).ToBoolean(value.Value));
     }
 
 #if DEBUG

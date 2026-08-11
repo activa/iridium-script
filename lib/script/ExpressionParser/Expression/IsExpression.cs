@@ -36,7 +36,7 @@ public class IsExpression(Expression objectExpression, Expression typeExpression
 
     public override ValueExpression Evaluate(IParserContext context)
     {
-        TypeName typeName = TypeExpression.Evaluate(context).Value as TypeName;
+        TypeName? typeName = TypeExpression.Evaluate(context).Value as TypeName;
         ValueExpression objectValue = ObjectExpression.Evaluate(context);
         Type objectType = objectValue.Type;
 

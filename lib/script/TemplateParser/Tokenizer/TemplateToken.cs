@@ -34,6 +34,7 @@ namespace Iridium.Script;
 public class TemplateToken : Token
 {
     private static readonly object _lock = new object();
+
     private ParameterizedExpression? _parameterizedExpression;
 
     public TemplateToken()
@@ -45,10 +46,11 @@ public class TemplateToken : Token
     {
     }
 
-    private TemplateTokenMatcher? Matcher => (TemplateTokenMatcher?) TokenMatcher;
-    public bool RemoveEmptyLine => Matcher != null && Matcher.RemoveEmptyLine;
+    private TemplateTokenMatcher Matcher => (TemplateTokenMatcher) TokenMatcher!;
+
+    public bool RemoveEmptyLine => Matcher is { RemoveEmptyLine: true };
     public TemplateTokenType TokenType => Matcher.TokenType;
-    public string TokenId => Matcher.TokenId;
+    public string? TokenId => Matcher?.TokenId;
 
     public ParameterizedExpression ExtractParameters()
     {
@@ -63,8 +65,8 @@ public class TemplateToken : Token
 
     public class ParameterizedExpression
     {
-        public readonly string MainExpression;
-        public readonly Dictionary<string, string> Parameters;
+        public string MainExpression { get; } = null!;
+        public Dictionary<string, string> Parameters { get; }
 
         public ParameterizedExpression(string expression)
         {
@@ -73,7 +75,7 @@ public class TemplateToken : Token
             MatchCollection matches = Regex.Matches(expression, @"[,\s]*@(?<varname>[a-zA-Z_$][a-zA-Z_$0-9]*)\s*=");
 
             int index = -1;
-            string varName = null;
+            string? varName = null;
 
             if (matches.Count < 1)
             {

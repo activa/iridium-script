@@ -32,10 +32,10 @@ namespace Iridium.Script;
 /// A named value that is in scope at a break, as would be shown in an IDE's
 /// "locals"/"watch" panel.
 /// </summary>
-public sealed class DebugVariable(string name, object value, Type type)
+public sealed class DebugVariable(string name, object? value, Type type)
 {
     public string Name { get; } = name;
-    public object Value { get; } = value;
+    public object? Value { get; } = value;
     public Type Type { get; } = type;
 
     public override string ToString() => $"{Name} = {Value ?? "null"}";

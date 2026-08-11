@@ -44,7 +44,7 @@ public class AsExpression(Expression objectExpression, Expression typeExpression
         ValueExpression objectValue = ObjectExpression.Evaluate(context);
         Type? objectType = objectValue.Type;
 
-        if (objectValue.Value == null || objectType == null)
+        if (objectValue.Value == null)
             return Exp.Value(null, checkType);
 
         objectType = objectType.RealType();

@@ -32,7 +32,7 @@ namespace Iridium.Script;
 public abstract class ExpressionParser(ExpressionTokenizer _tokenizer, TokenEvaluator _functionEvaluator)
 {
     public TokenEvaluator FunctionEvaluator { get; } = _functionEvaluator;
-    public IParserContext DefaultContext { get; set; } = new ParserContext(ParserContextBehavior.Default);
+//    public IParserContext DefaultContext { get; set; } = new ParserContext(ParserContextBehavior.Default);
 
     public Expression Parse(string s)
     {
@@ -41,24 +41,24 @@ public abstract class ExpressionParser(ExpressionTokenizer _tokenizer, TokenEval
         return new ExpressionCompiler(this, tokens).Compile();
     }
 
-    public ExpressionWithContext ParseWithContext(string s, IParserContext context)
-    {
-        return new ExpressionWithContext(Parse(s), context);
-    }
-
-    public ExpressionWithContext ParseWithContext(string s)
-    {
-        return new ExpressionWithContext(Parse(s), DefaultContext);
-    }
+    // public ExpressionWithContext ParseWithContext(string s, IParserContext context)
+    // {
+    //     return new ExpressionWithContext(Parse(s), context);
+    // }
+    //
+    // public ExpressionWithContext ParseWithContext(string s)
+    // {
+    //     return new ExpressionWithContext(Parse(s), DefaultContext);
+    // }
 
     public object? EvaluateToObject(string s)
     {
-        return ParseWithContext(s).EvaluateToObject();
+        return Parse(s).EvaluateToObject(ParserContext.Default);
     }
 
     public object? Evaluate(string s, out Type type)
     {
-        IValueWithType value = ParseWithContext(s).Evaluate();
+        IValueWithType value = Parse(s).Execute(ParserContext.Default);
 
         type = value.Type;
 
@@ -67,27 +67,27 @@ public abstract class ExpressionParser(ExpressionTokenizer _tokenizer, TokenEval
 
     public IValueWithType Evaluate(string s)
     {
-        return ParseWithContext(s).Evaluate();
+        return Parse(s).Execute(ParserContext.Default);
     }
 
     public T? Evaluate<T>(string s)
     {
-        return ParseWithContext(s).Evaluate<T>();
+        return Parse(s).Evaluate<T>(ParserContext.Default);
     }
 
     public IValueWithType Evaluate(string s, IParserContext context)
     {
-        return ParseWithContext(s, context).Evaluate();
+        return Parse(s).Execute(context);
     }
 
     public object? EvaluateToObject(string s, IParserContext context)
     {
-        return ParseWithContext(s, context).EvaluateToObject();
+        return Parse(s).EvaluateToObject(context);
     }
 
     public object? Evaluate(string s, out Type type, IParserContext context)
     {
-        IValueWithType value = ParseWithContext(s, context).Evaluate();
+        IValueWithType value = Parse(s).Execute(context);
 
         type = value.Type;
 
@@ -96,6 +96,6 @@ public abstract class ExpressionParser(ExpressionTokenizer _tokenizer, TokenEval
 
     public T? Evaluate<T>(string s, IParserContext context)
     {
-        return ParseWithContext(s, context).Evaluate<T>();
+        return Parse(s).Evaluate<T>(context);
     }
 }

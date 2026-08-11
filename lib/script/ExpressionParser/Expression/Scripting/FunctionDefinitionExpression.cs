@@ -34,6 +34,9 @@ public class FunctionDefinitionExpression : Expression
 
     public override ValueExpression Evaluate(IParserContext context)
     {
+        if (context == null)
+            throw new ExpressionEvaluationException("Function declarations need a context");
+
         context.Set(Name,this);
 
         return new FunctionValueExpression(this);

@@ -34,11 +34,11 @@ public class FlexContext : ParserContext
     {
     }
 
-    public FlexContext(IDictionary<string, object> dic) : base(dic, ParserContextBehavior.Easy)
+    public FlexContext(IDictionary<string, object?> dic) : base(dic, ParserContextBehavior.Easy)
     {
     }
 
-    public FlexContext(object rootObject, IDictionary<string, object> dic) : base(rootObject, dic, ParserContextBehavior.Easy)
+    public FlexContext(object rootObject, IDictionary<string, object?> dic) : base(rootObject, dic, ParserContextBehavior.Easy)
     {
     }
 

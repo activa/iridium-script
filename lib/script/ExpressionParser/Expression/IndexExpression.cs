@@ -25,6 +25,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -46,7 +47,7 @@ public class IndexExpression(Expression target, Expression[] parameters) : Expre
 
         if (targetValue.Value == null)
         {
-            if (context.Behavior.HasBehavior(ParserContextBehavior.ReturnNullWhenNullReference))
+            if ((context ?? ParserContext.Default).Behavior.HasBehavior(ParserContextBehavior.ReturnNullWhenNullReference))
             {
                 return Exp.Null();
             }
@@ -58,8 +59,8 @@ public class IndexExpression(Expression target, Expression[] parameters) : Expre
         object targetObject = targetValue.Value!;
 
         ValueExpression[] parameters = EvaluateExpressionArray(Parameters, context);
-        Type[] parameterTypes = parameters.ConvertAll(expr => expr.Type!);
-        object[] parameterValues = parameters.ConvertAll(expr => expr.Value!);
+        Type[] parameterTypes = parameters.ConvertAll(expr => expr!.Type)!;
+        object?[] parameterValues = parameters.ConvertAll(expr => expr!.Value);
 
         if (targetType.IsArray)
         {
@@ -86,16 +87,25 @@ public class IndexExpression(Expression target, Expression[] parameters) : Expre
         }
         else
         {
-            var attributes = targetType.GetCustomAttributes<DefaultMemberAttribute>(true);
+            if (targetObject is IReadOnlyList<object?> list && parameterValues.Length == 1)
+            {
+                var value = list[System.Convert.ToInt32(parameterValues[0])];
 
-            MethodInfo? methodInfo = targetType.GetMethod("get_" + attributes.First().MemberName, parameterTypes);
+                return Exp.Value(value);
+            }
+            else
+            {
+                var attributes = targetType.GetCustomAttributes<DefaultMemberAttribute>(true);
 
-            if (methodInfo == null)
-                throw new ExpressionEvaluationException("No matching indexer found for " + targetType.Name, this);
+                MethodInfo? methodInfo = targetType.GetMethod("get_" + attributes.First().MemberName, parameterTypes);
 
-            object value = methodInfo.Invoke(targetObject, parameterValues);
+                if (methodInfo == null)
+                    throw new ExpressionEvaluationException("No matching indexer found for " + targetType.Name, this);
 
-            return Exp.Value(value, methodInfo.ReturnType);
+                object? value = methodInfo.Invoke(targetObject, parameterValues);
+
+                return Exp.Value(value, methodInfo.ReturnType);
+            }
         }
     }
 
@@ -107,7 +117,7 @@ public class IndexExpression(Expression target, Expression[] parameters) : Expre
 #if DEBUG
     public override string ToString()
     {
-        string[] parameters = Parameters.ConvertAll(expr => expr.ToString());
+        string[] parameters = Parameters.ConvertAll(expr => expr!.ToString())!;
 
         return $"({Target}[{String.Join(",", parameters)}])";
     }

@@ -65,6 +65,8 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
 
     public ParserContextBehavior Behavior { get; }
 
+    public static ParserContext Default { get; } = new(ParserContextBehavior.Easy);
+
     public ParserContext(ParserContextBehavior behavior)
     {
         Behavior = behavior;
@@ -75,7 +77,7 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
         }
         else
         {
-            _variables = new Dictionary<string, IValueWithType>();
+            _variables = new Dictionary<string, IValueWithType>(StringComparer.Ordinal);
         }
     }
 
@@ -93,24 +95,24 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
         _objects.Add(rootObject);
     }
 
-    public ParserContext(IDictionary<string, object> dic) : this()
+    public ParserContext(IDictionary<string, object?> dic) : this()
     {
         AddDictionary(dic);
     }
 
-    public ParserContext(IDictionary<string, object> dic, ParserContextBehavior behavior) : this(behavior)
+    public ParserContext(IDictionary<string, object?> dic, ParserContextBehavior behavior) : this(behavior)
     {
         AddDictionary(dic);
     }
 
-    public ParserContext(object rootObject, IDictionary<string, object> dic) : this()
+    public ParserContext(object rootObject, IDictionary<string, object?> dic) : this()
     {
         _objects.Add(rootObject);
 
         AddDictionary(dic);
     }
 
-    public ParserContext(object rootObject, IDictionary<string, object> dic, ParserContextBehavior behavior) : this(behavior)
+    public ParserContext(object rootObject, IDictionary<string, object?> dic, ParserContextBehavior behavior) : this(behavior)
     {
         _objects.Add(rootObject);
 
@@ -141,7 +143,7 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
     /// evaluating a script to enable breakpoints/stepping. It automatically
     /// propagates to local (child) scopes created during evaluation.
     /// </summary>
-    public IScriptDebugger Debugger { get; set; }
+    public IScriptDebugger? Debugger { get; set; }
 
     /// <summary>
     /// The limits enforced while evaluating with this context. Set this before
@@ -187,7 +189,7 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
         }
     }
 
-    public void AddDictionary(IDictionary<string, object>? dic)
+    public void AddDictionary(IDictionary<string, object?>? dic)
     {
         if (dic == null)
             return;
@@ -295,6 +297,11 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
         Set(name, ContextFactory.CreateType(type));
     }
 
+    public void AddType<T>(string name)
+    {
+        Set(name, ContextFactory.CreateType(typeof(T)));
+    }
+
     public void AddFunction(string name, Type type, string methodName)
     {
         Set(name, ContextFactory.CreateFunction(type, methodName));
@@ -314,6 +321,32 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
     {
         Set(name, ContextFactory.CreateFunction(methodInfo, targetObject));
     }
+
+    public void AddFunction<TReturn>(string name, Func<TReturn> function)
+    {
+        Set(name, function);
+    }
+
+    public void AddFunction<TParam1,TReturn>(string name, Func<TParam1,TReturn> function)
+    {
+        Set(name, function);
+    }
+
+    public void AddFunction<TParam1, TParam2, TReturn>(string name, Func<TParam1, TParam2, TReturn> function)
+    {
+        Set(name, function);
+    }
+
+    public void AddFunction<TParam1, TParam2, TParam3, TReturn>(string name, Func<TParam1, TParam2, TParam3, TReturn> function)
+    {
+        Set(name, function);
+    }
+
+    public void AddFunction<TParam1, TParam2, TParam3, TParam4, TReturn>(string name, Func<TParam1, TParam2, TParam3, TParam4, TReturn> function)
+    {
+        Set(name, function);
+    }
+
 
     public virtual bool Exists(string varName)
     {
@@ -445,7 +478,7 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
     {
         var seen = new HashSet<string>(_variables.Comparer);
 
-        for (ParserContext context = this; context != null; context = context._parentContext as ParserContext)
+        for (ParserContext? context = this; context != null; context = context._parentContext as ParserContext)
         {
             foreach (var variable in context._variables)
             {
@@ -460,30 +493,24 @@ public class ParserContext : IParserContext, IDebuggableContext, IExecutionLimit
         return GetEnumerator();
     }
 
-    private static bool TryGetObjectMember(object obj, string propertyName, out object? value, out Type? type)
+    private static bool TryGetObjectMember(object obj, string propertyName, out object? value, out Type type)
     {
         value = null;
         type = typeof(object);
 
-        /*
-        if (obj is IDynamicObject { IsObject: true } dynamicObject)
+        
+        if (obj is IReadOnlyDictionary<string,object?> dynamicObject)
         {
-            if (dynamicObject.TryGetValue(propertyName, out value, out type))
+            if (dynamicObject.TryGetValue(propertyName, out value))
             {
-                if (value is IDynamicObject { IsValue: true } dynField && dynField.TryGetValue(out var fieldValue, out var fieldType))
-                {
-                    value = fieldValue;
-                    type = fieldType;
-
-                    return true;
-                }
+                type = (value != null) ? value.GetType() : typeof(object);
 
                 return true;
             }
 
             return false;
         }
-        */
+        
 
         Type targetType = obj.GetType();
 

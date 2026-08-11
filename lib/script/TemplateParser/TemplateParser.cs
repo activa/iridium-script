@@ -50,10 +50,10 @@ public class TemplateParser
     public ExpressionParser Parser { get; }
     public TemplateParserConfig Config { get; }
 
-    public TemplateParser(TemplateParserConfig config)
-    {
-        Config = config;
-    }
+    // public TemplateParser(TemplateParserConfig config)
+    // {
+    //     Config = config;
+    // }
 
     public TemplateParser(TemplateParserConfig config, ExpressionParser parser)
     {
@@ -63,7 +63,10 @@ public class TemplateParser
 
     public CompiledTemplate ParseFile(string fileName)
     {
-        CompiledTemplate template = Parse(Config.FileResolver?.ReadFile(fileName));
+        if (Config.FileResolver == null)
+            throw new InvalidOperationException("FileResolver is not set");
+
+        CompiledTemplate template = Parse(Config.FileResolver.ReadFile(fileName));
 
         template.FileName = fileName;
 
@@ -154,9 +157,7 @@ public class TemplateParser
                     {
                         nodeStack.Push(currentNode);
 
-                        IfTemplateNode ifNode = (IfTemplateNode) currentNode.Add(new IfTemplateNode(token));
-
-                        ifNode.TrueNode = new TemplateNode();
+                        IfTemplateNode ifNode = (IfTemplateNode) currentNode.Add(new IfTemplateNode(token) {TrueNode = new TemplateNode()});
 
                         nodeStack.Push(ifNode);
 
@@ -170,9 +171,7 @@ public class TemplateParser
 
                         currentNode = ifNode.FalseNode = new TemplateNode();
 
-                        ifNode = (IfTemplateNode) currentNode.Add(new IfTemplateNode(token));
-
-                        ifNode.TrueNode = new TemplateNode();
+                        ifNode = (IfTemplateNode) currentNode.Add(new IfTemplateNode(token) {TrueNode = new TemplateNode()});
 
                         nodeStack.Push(ifNode);
 
@@ -262,7 +261,7 @@ public class TemplateParser
         return Render(Parse(inputString), context);
     }
 
-    private void BuildOutput(CompiledTemplate compiledTemplate, Dictionary<string, TemplateNode> macros, TemplateNode rootNode, StringBuilder outputBuffer, IParserContext context)
+    private void BuildOutput(CompiledTemplate compiledTemplate, Dictionary<string, TemplateNode> macros, TemplateNode? rootNode, StringBuilder outputBuffer, IParserContext context)
     {
         if (rootNode?.Children == null)
             return;
@@ -275,13 +274,13 @@ public class TemplateParser
                 {
                     IEnumerable list = EvalForeach(forEachNode.TemplateToken, context);
 
-                    if (list != null)
-                    {
+                    //if (list != null)
+                    // {
                         IParserContext localContext = context.CreateLocal();
 
                         int rowNum = 1;
 
-                        foreach (object listItem in list)
+                        foreach (object? listItem in list)
                         {
                             localContext.Set(forEachNode.Iterator, listItem, listItem == null ? typeof(object) : listItem.GetType());
 
@@ -291,7 +290,7 @@ public class TemplateParser
 
                             rowNum++;
                         }
-                    }
+                    // }
                     break;
                 }
 
@@ -308,7 +307,7 @@ public class TemplateParser
                 {
                     string value = EvalExpression(exprNode.TemplateToken, context);
 
-                    if (value != null)
+                    //if (value != null)
                         outputBuffer.Append(value);
 
                     break;
@@ -316,7 +315,7 @@ public class TemplateParser
 
                 case ParseFileTemplateNode parseFileNode:
                 {
-                    CompiledTemplate template = EvalParseFile(this, compiledTemplate.FileName, parseFileNode.TemplateToken, context, out var parameters);
+                    CompiledTemplate template = EvalParseFile(this, compiledTemplate.FileName!, parseFileNode.TemplateToken, context, out var parameters);
 
                     if (template != null)
                     {
@@ -335,7 +334,7 @@ public class TemplateParser
 
                 case IncludeFileTemplateNode includeNode:
                 {
-                    string value = EvalIncludeFile(compiledTemplate.FileName, includeNode.TemplateToken, context);
+                    string? value = EvalIncludeFile(compiledTemplate.FileName!, includeNode.TemplateToken, context);
 
                     if (value != null)
                         outputBuffer.Append(value);
@@ -394,12 +393,12 @@ public class TemplateParser
         return Config.EvalParseFile(Parser, templateParser, fileName, templateToken, context, out parameters);
     }
 
-    private string EvalIncludeFile(string fileName, TemplateToken templateToken, IParserContext context)
+    private string? EvalIncludeFile(string fileName, TemplateToken templateToken, IParserContext context)
     {
         return OnEvalIncludeFile(fileName, templateToken, context);
     }
 
-    protected virtual string OnEvalIncludeFile(string fileName, TemplateToken templateToken, IParserContext context)
+    protected virtual string? OnEvalIncludeFile(string fileName, TemplateToken templateToken, IParserContext context)
     {
         return Config.EvalIncludeFile(Parser, fileName, templateToken, context);
     }
@@ -445,12 +444,12 @@ public class TemplateParser
         return Config.EvalForeach(Parser, templateToken, context);
     }
 
-    private void EvalIteration(string iteratorName, int rowNum, object obj, IParserContext localContext)
+    private void EvalIteration(string iteratorName, int rowNum, object? obj, IParserContext localContext)
     {
         OnEvalIteration(iteratorName, rowNum, obj, localContext);
     }
 
-    protected virtual void OnEvalIteration(string iteratorName, int rowNum, object obj, IParserContext localContext)
+    protected virtual void OnEvalIteration(string iteratorName, int rowNum, object? obj, IParserContext localContext)
     {
         Config.EvalIteration(iteratorName, rowNum, obj, localContext);
     }

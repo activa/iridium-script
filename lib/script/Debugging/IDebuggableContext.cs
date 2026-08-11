@@ -35,5 +35,5 @@ namespace Iridium.Script;
 public interface IDebuggableContext
 {
     /// <summary>The debugger attached to this execution, or <c>null</c> if none.</summary>
-    IScriptDebugger Debugger { get; }
+    IScriptDebugger? Debugger { get; }
 }

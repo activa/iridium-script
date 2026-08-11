@@ -270,9 +270,7 @@ namespace Iridium.Script.Test
         {
             var parser = ScriptParser();
 
-            parser.DefaultContext = new ParserContext { AssignmentPermissions = AssignmentPermissions.All };
-
-            var result = parser.Evaluate<int>("a = 3;\nb = 4;\nreturn a * b;");
+            var result = parser.Evaluate<int>("a = 3;\nb = 4;\nreturn a * b;", new ParserContext { AssignmentPermissions = AssignmentPermissions.All });
 
             Assert.AreEqual(12, result);
         }

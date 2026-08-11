@@ -24,6 +24,7 @@
 //=============================================================================
 #endregion
 
+using System;
 using System.Collections.Generic;
 
 namespace Iridium.Script;
@@ -32,7 +33,7 @@ internal class RPNExpression
 {
     private class TokenQueue : Queue<ExpressionToken>
     {
-        private ExpressionToken _waiting;
+        private ExpressionToken? _waiting;
 
         public new void Enqueue(ExpressionToken token)
         {
@@ -40,7 +41,7 @@ internal class RPNExpression
             {
                 if (_waiting != null)
                 {
-                    if (_waiting.Root == token.Root)
+                    if (_waiting.Root == token.Root && token.Root != null)
                         base.Enqueue(new ExpressionToken(token.Root,_waiting.Text+token.Text));
                     else 
                         throw new LexerException("Mismatched ternary operators", token.Text, token.Position);
@@ -65,7 +66,7 @@ internal class RPNExpression
     private bool _lastWasFunction;
     private bool _lastWasOperator = true;
 
-    private ExpressionToken[] _tokenList;
+    //private ExpressionToken[] _tokenList;
 
     private readonly TokenEvaluator _functionEvaluator;
 
@@ -193,17 +194,20 @@ internal class RPNExpression
         _lastWasFunction = false;
     }
 
-    internal void Finish()
+    internal Expression Finish()
     {
         while (_operatorStack.Count > 0)
             _tokenQueue.Enqueue(_operatorStack.Pop());
 
-        _tokenList = _tokenQueue.ToArray();
+        var expression = Compile(_tokenQueue.ToArray());
+        //_tokenList = _tokenQueue.ToArray();
 
         _tokenQueue.Clear();
+
+        return expression;
     }
 
-    public Expression Compile()
+    public Expression Compile(ExpressionToken[] _tokenList)
     {
         Stack<Expression> resultStack = new Stack<Expression>();
 
@@ -211,7 +215,10 @@ internal class RPNExpression
 
         foreach (ExpressionToken token in _tokenList)
         {
-            TokenEvaluator evaluator = token.Evaluator;
+            TokenEvaluator? evaluator = token.Evaluator;
+
+            if (evaluator == null)
+                throw new LexerException("Parser error. No evaluator found for token " + token.Text, token.Text, token.Position);
 
             if (token.IsTerm)
             {

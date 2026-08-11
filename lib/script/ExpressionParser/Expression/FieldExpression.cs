@@ -25,6 +25,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -66,19 +67,17 @@ public class FieldExpression : Expression
                 return Exp.Value(null, targetType);
         }
 
-        /*
-        if (targetObject is IDynamicObject dynamicObject)
+        if (targetObject is IReadOnlyDictionary<string,object?> dict)
         {
-            if (dynamicObject.TryGetValue(Member, out var value, out var type) && value is IDynamicObject dynField && dynField.IsValue && dynField.TryGetValue(out var fieldValue, out var fieldType))
-                return Exp.Value(fieldValue, fieldType);
+            if (dict.TryGetValue(Member, out var value))
+                return Exp.Value(value, value?.GetType() ?? typeof(object));
             else
-                return Exp.Value(value, type);
+                return Exp.Value(null);
         }
-        */
 
         targetType = targetType.RealType();
 
-        MemberInfo[] members = FindMemberInHierarchy(targetType, Member, (context.Behavior & ParserContextBehavior.CaseInsensitiveMembers) == ParserContextBehavior.CaseInsensitiveMembers);
+        MemberInfo[] members = FindMemberInHierarchy(targetType, Member, (context?.Behavior & ParserContextBehavior.CaseInsensitiveMembers) == ParserContextBehavior.CaseInsensitiveMembers);
 
         if (members.Length == 0)
         {

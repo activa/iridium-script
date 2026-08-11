@@ -36,7 +36,7 @@ namespace Iridium.Script;
 /// debugging support (mapping executing expressions back to their source location
 /// for breakpoints, stepping and variable evaluation).
 /// </summary>
-public readonly struct SourcePosition : IEquatable<SourcePosition>
+public readonly struct SourcePosition(int index, int line, int column) : IEquatable<SourcePosition>
 {
     /// <summary>
     /// Represents an unknown/unset position (e.g. for synthesized tokens).
@@ -44,20 +44,13 @@ public readonly struct SourcePosition : IEquatable<SourcePosition>
     public static readonly SourcePosition Unknown = default;
 
     /// <summary>Zero-based character offset from the start of the script.</summary>
-    public int Index { get; }
+    public int Index { get; } = index;
 
     /// <summary>One-based line number.</summary>
-    public int Line { get; }
+    public int Line { get; } = line;
 
     /// <summary>One-based column number within the line.</summary>
-    public int Column { get; }
-
-    public SourcePosition(int index, int line, int column)
-    {
-        Index = index;
-        Line = line;
-        Column = column;
-    }
+    public int Column { get; } = column;
 
     /// <summary>
     /// True when this position refers to a real location. Lines are one-based,
@@ -67,7 +60,7 @@ public readonly struct SourcePosition : IEquatable<SourcePosition>
 
     public bool Equals(SourcePosition other) => Index == other.Index && Line == other.Line && Column == other.Column;
 
-    public override bool Equals(object obj) => obj is SourcePosition other && Equals(other);
+    public override bool Equals(object? obj) => obj is SourcePosition other && Equals(other);
 
     public override int GetHashCode() => (Index * 397) ^ (Line * 17) ^ Column;
 

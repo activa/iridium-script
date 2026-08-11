@@ -75,13 +75,13 @@ debugger.Break += (sender, e) =>
     e.Continue();                            // resume execution
 };
 
-var parser = new CScriptParser { DefaultContext = context };
+var parser = new CScriptParser();
 
 parser.Evaluate(@"
 price = 20.0m;
 qty   = 3;
 total = price * qty;      // line 4 in this string (line 1 is blank)
-");
+", context);
 ```
 
 The `Break` event fires **synchronously on the thread running the script**;
@@ -416,8 +416,8 @@ context.Debugger = debugger;
 var session = new InteractiveDebugSession(debugger);
 session.Breakpoints.Add(10);
 
-var parser = new CScriptParser { DefaultContext = context };
-var runTask = session.RunAsync(() => parser.Evaluate(script));
+var parser = new CScriptParser();
+var runTask = session.RunAsync(() => parser.Evaluate(script, context));
 
 // UI loop:
 while (!runTask.IsCompleted)

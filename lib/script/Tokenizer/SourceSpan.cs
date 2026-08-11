@@ -64,7 +64,7 @@ public readonly struct SourceSpan : IEquatable<SourceSpan>
 
     public bool Equals(SourceSpan other) => Start.Equals(other.Start) && End.Equals(other.End);
 
-    public override bool Equals(object obj) => obj is SourceSpan other && Equals(other);
+    public override bool Equals(object? obj) => obj is SourceSpan other && Equals(other);
 
     public override int GetHashCode() => (Start.GetHashCode() * 397) ^ End.GetHashCode();
 

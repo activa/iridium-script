@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
-		<Version>2.5.0.7211</Version>
+		<Version>3.0.0.8061</Version>
 		<Authors>Philippe Leybaert</Authors>
 		<PackageTags>iridium scripting c# expression templates mobile xamarin maui</PackageTags>
 		<RepositoryUrl>https://github.com/activa/iridium-script</RepositoryUrl>

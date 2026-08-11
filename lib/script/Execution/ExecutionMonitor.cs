@@ -47,7 +47,7 @@ public sealed class ExecutionMonitor
     private readonly int _maxCallDepth;
 
     private long _startTimestamp;
-    private int _activeScopes;
+    private int _runDepth;
     private int _callDepth;
 
     internal ExecutionMonitor(ExecutionLimits limits)
@@ -65,25 +65,28 @@ public sealed class ExecutionMonitor
     public int CallDepth => _callDepth;
 
     /// <summary>How long the current execution has been running, or zero when idle.</summary>
-    public TimeSpan Elapsed => _activeScopes == 0 ? TimeSpan.Zero : TimeSpan.FromSeconds((double)(Stopwatch.GetTimestamp() - _startTimestamp) / Stopwatch.Frequency);
+    public TimeSpan Elapsed => _runDepth == 0 ? TimeSpan.Zero : TimeSpan.FromSeconds((double)(Stopwatch.GetTimestamp() - _startTimestamp) / Stopwatch.Frequency);
 
     internal static ExecutionMonitor? For(IParserContext context) => (context as IExecutionLimitedContext)?.ExecutionMonitor;
 
     /// <summary>
-    /// Marks the start of a statement. The outermost scope delimits the run: it starts
-    /// the clock, so that every top-level evaluation gets the full time budget.
+    /// Marks the start of a top-level evaluation: it starts the clock, so that every
+    /// evaluation gets the full time budget.
+    /// <para/>
+    /// Runs nest when a debugger evaluates a watch expression while a script is paused.
+    /// Only the outermost one delimits the budget.
     /// </summary>
-    internal void EnterScope()
+    internal void BeginRun()
     {
-        if (_activeScopes++ == 0)
+        if (_runDepth++ == 0)
             _startTimestamp = Stopwatch.GetTimestamp();
     }
 
-    internal void ExitScope()
+    internal void EndRun()
     {
         // Depth is also reset here so that an exception unwinding out of a run doesn't
         // leave the next one starting halfway down the stack.
-        if (--_activeScopes == 0)
+        if (--_runDepth == 0)
             _callDepth = 0;
     }
 
@@ -97,8 +100,9 @@ public sealed class ExecutionMonitor
             throw new ScriptStackOverflowException(node, _maxCallDepth);
 
         // Each script call consumes an unknown number of CLR frames (nested expressions
-        // evaluate recursively), so the depth limit alone can't guarantee the stack
-        // holds. This is the backstop that does.
+        // evaluate recursively), so the depth limit alone can't guarantee the stack holds.
+        // This narrows the window, but it only reserves a fixed margin: with no depth limit
+        // set, recursion still outruns it and the process dies.
         try
         {
             RuntimeHelpers.EnsureSufficientExecutionStack();
@@ -123,7 +127,9 @@ public sealed class ExecutionMonitor
     /// </summary>
     internal void CheckExecutionTime(Expression node)
     {
-        if (_maxTicks == 0 || _activeScopes == 0)
+        // No run in progress means the host bypassed the evaluation entry points, in
+        // which case there is no clock to compare against.
+        if (_maxTicks == 0 || _runDepth == 0)
             return;
 
         if (Stopwatch.GetTimestamp() - _startTimestamp > _maxTicks)

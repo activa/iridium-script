@@ -32,13 +32,10 @@ internal class TemplateNode
 {
     public virtual TemplateNode Add(TemplateNode n)
     {
-        if (Children == null)
-            Children = new List<TemplateNode>();
-
         Children.Add(n);
 
         return n;
     }
 
-    public List<TemplateNode> Children;
+    public List<TemplateNode> Children = [];
 }

@@ -26,6 +26,7 @@
 
 namespace Iridium.Script;
 
+/*
 public class ExpressionWithContext
 {
     private Expression Expression { get; }
@@ -52,3 +53,4 @@ public class ExpressionWithContext
         return Expression.EvaluateStatement<T>(Context);
     }
 }
+*/

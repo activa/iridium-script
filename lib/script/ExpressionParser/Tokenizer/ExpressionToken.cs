@@ -36,7 +36,7 @@ public class ExpressionToken : Token
 
     public new ExpressionTokenMatcher? TokenMatcher => (ExpressionTokenMatcher?)base.TokenMatcher;
 
-    public ExpressionToken()
+    public ExpressionToken() : base(null,"")
     {
         throw new NotSupportedException();
     }
@@ -67,7 +67,7 @@ public class ExpressionToken : Token
     internal TokenType TokenType { get; set; }
     internal OperatorAssociativity Associativity { get; }
     internal int Precedence { get; set; }
-    internal TokenEvaluator Evaluator { get; set; }
+    internal TokenEvaluator? Evaluator { get; set; }
 
     internal bool IsOperator => (TokenType == TokenType.Operator) || (TokenType == TokenType.UnaryOperator);
     internal bool IsTerm => (TokenType == TokenType.Term);
@@ -80,7 +80,7 @@ public class ExpressionToken : Token
     public bool IsStatementSeperator => TokenType == TokenType.StatementSeparator;
 
     public ExpressionToken? Alternate => (ExpressionToken?) Alternates?.FirstOrDefault();
-    public ExpressionTokenMatcher Root => TokenMatcher.Root;
+    public ExpressionTokenMatcher? Root => TokenMatcher?.Root;
     public bool IsOpenBrace => TokenType == TokenType.OpenBrace;
     public bool IsCloseBrace => TokenType == TokenType.CloseBrace;
 
